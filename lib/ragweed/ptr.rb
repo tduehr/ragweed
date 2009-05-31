@@ -1,3 +1,5 @@
+#XXX - TODO: make read/write work for other oses
+
 class Ragweed::Ptr
   # A dubious achievement. Wrap Integers in a pointer class, which,
   # when you call to_s, returns the marshalled type, and which exports

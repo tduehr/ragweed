@@ -1,3 +1,5 @@
+require 'rasm'
+
 pushv = $VERBOSE
 $VERBOSE = nil
 

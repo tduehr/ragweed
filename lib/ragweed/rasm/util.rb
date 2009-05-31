@@ -14,13 +14,13 @@ class Object
   end
 end
 
-class String
-  # this is just horrible
-  def distorm
-    Frasm::DistormDecoder.new.decode(self)
-  end
-
-  def disasm
-    distorm.each {|i| puts i.mnem}
-  end
-end
+# class String
+#   # this is just horrible
+#   def distorm
+#     Frasm::DistormDecoder.new.decode(self)
+#   end
+# 
+#   def disasm
+#     distorm.each {|i| puts i.mnem}
+#   end
+# end

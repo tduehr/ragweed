@@ -351,26 +351,26 @@ module Ragweed::Wrapx
   end
 end
 
-if __FILE__ == $0
-    include Ragweed
-    require 'pp'
-    require 'constants'
-    addr = data = 0
-    pid = 1319
-    int = "\x00" * 4
-    port = 0
-    Wrapx::ptrace(Wrapx::Ptrace::ATTACH,pid,0,0)
-    #  status = Wrapx::waitpid(pid,0)
-    #  Wrapx::ptrace(Wrapx::Ptrace::CONTINUE,pid,1,0)
-    mts = Wrapx::mach_task_self
-    port = Wrapx::task_for_pid(mts,pid)
-    port2 = Wrapx::task_for_pid(mts,pid)
-    threads = Wrapx::task_threads(port)
-    state = Wrapx::thread_get_state(threads.first)
-    pp port
-    pp port2
-    pp threads
-    pp state
-    #  Wrapx::thread_set_state(threads.first,state)
-    Wrapx::ptrace(Wrapx::Ptrace::DETACH,pid,0,0)
-end
+# if __FILE__ == $0
+#     include Ragweed
+#     require 'pp'
+#     require 'constants'
+#     addr = data = 0
+#     pid = 1319
+#     int = "\x00" * 4
+#     port = 0
+#     Wrapx::ptrace(Wrapx::Ptrace::ATTACH,pid,0,0)
+#     #  status = Wrapx::waitpid(pid,0)
+#     #  Wrapx::ptrace(Wrapx::Ptrace::CONTINUE,pid,1,0)
+#     mts = Wrapx::mach_task_self
+#     port = Wrapx::task_for_pid(mts,pid)
+#     port2 = Wrapx::task_for_pid(mts,pid)
+#     threads = Wrapx::task_threads(port)
+#     state = Wrapx::thread_get_state(threads.first)
+#     pp port
+#     pp port2
+#     pp threads
+#     pp state
+#     #  Wrapx::thread_set_state(threads.first,state)
+#     Wrapx::ptrace(Wrapx::Ptrace::DETACH,pid,0,0)
+# end

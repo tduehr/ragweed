@@ -1,4 +1,4 @@
-class Ragweed::Debugger
+class Ragweed::Debugger32
   # Hook function calls
   # nargs is the number of arguments taken by function at ip
   # callable/block is called with ev, ctx, dir (:enter or :leave), and args Array (see examples/hook_notepad.rb)

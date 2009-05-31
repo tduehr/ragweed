@@ -10,7 +10,7 @@
 # (2) If you want to do more advanced event handling, you can subclass from
 #     debugger and define your own on_whatever events. If you handle an event
 #     that Debugger already handles, call "super", too.
-class Ragweed::Debugger
+class Ragweed::Debugger32
   include Ragweed
 
   # Breakpoint class. Handles the actual setting, removal and triggers for
