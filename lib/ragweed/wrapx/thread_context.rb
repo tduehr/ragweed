@@ -1,5 +1,5 @@
 module Ragweed; end
-module Ragweed::Wrapx
+module Ragweed::Wraposx
   module EFlags
     CARRY =         0x1
     X0 =            0x2
@@ -26,7 +26,7 @@ module Ragweed::Wrapx
   end
 end
 
-class Ragweed::Wrapx::ThreadContext
+class Ragweed::Wraposx::ThreadContext
   include Ragweed
   (FIELDS = [ [:eax, "I"],
               [:ebx, "I"],
@@ -64,23 +64,23 @@ class Ragweed::Wrapx::ThreadContext
   end
 
   def self.get(h)
-    Wrapx::thread_suspend(h)
-    r = self.new(Wrapx::thread_get_state_raw(h))
-    Wrapx::thread_resume(h)
+    Wraposx::thread_suspend(h)
+    r = self.new(Wraposx::thread_get_state_raw(h))
+    Wraposx::thread_resume(h)
     return r
   end
 
   def get(h)
-    Wrapx::thread_suspend(h)
-    r = refresh(Wrapx::thread_get_state_raw(h))
-    Wrapx::thread_resume(h)
+    Wraposx::thread_suspend(h)
+    r = refresh(Wraposx::thread_get_state_raw(h))
+    Wraposx::thread_resume(h)
     return r
   end
 
   def set(h)
-    Wrapx::thread_suspend(h)
-    r = Wrapx::thread_set_state_raw(h, self.to_s)
-    Wrapx::thread_resume(h)
+    Wraposx::thread_suspend(h)
+    r = Wraposx::thread_set_state_raw(h, self.to_s)
+    Wraposx::thread_resume(h)
     return 
   end
 
@@ -110,21 +110,21 @@ class Ragweed::Wrapx::ThreadContext
     ESI: #{self.esi.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.esi)}
     EBP: #{self.ebp.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.ebp)}
     ESP: #{self.esp.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.esp)}
-    EFL: #{self.eflags.to_s(2).rjust(32, "0")} #{Wrapx::EFlags.flag_dump(self.eflags)}
+    EFL: #{self.eflags.to_s(2).rjust(32, "0")} #{Wraposx::EFlags.flag_dump(self.eflags)}
 EOM
   end
 
   # sets/clears the TRAP flag
   def single_step(v=true)
     if v
-      @eflags |= Wrapx::EFlags::TRAP
+      @eflags |= Wraposx::EFlags::TRAP
     else
-      @eflags &= ~(Wrapx::EFlags::TRAP)
+      @eflags &= ~(Wraposx::EFlags::TRAP)
     end
   end
 end
 
-module Ragweed::Wrapx
+module Ragweed::Wraposx
 
   # FIXME - constants need to be in separate sub modules
   # XXX - move to class based implementation a la region_info

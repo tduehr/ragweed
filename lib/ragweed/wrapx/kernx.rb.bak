@@ -1,9 +1,9 @@
-# Exception objects for kernel errors likely in wrapx
+# Exception objects for kernel errors likely in Wraposx
 # FIXME - needs class for each error which is a subclass of KernelError
 
 module Ragweed; end
-module Ragweed::Wrapx; end
-module Ragweed::Wrapx::KernelError
+module Ragweed::Wraposx; end
+module Ragweed::Wraposx::KernelError
   SUCCESS =               0
   INVALID_ADDRESS =       1 #Specified address is not currently valid.
   PROTECTION_FAILURE =    2 #Specified memory is valid, but does not permit the required forms of access.
@@ -57,7 +57,7 @@ module Ragweed::Wrapx::KernelError
   RETURN_MAX =            0x100 #Maximum return value allowable
 end
 
-module Ragweed::Wrapx
+module Ragweed::Wraposx
   class KernelCallError < StandardError
     attr_reader :error
     attr_reader :call
@@ -72,13 +72,13 @@ module Ragweed::Wrapx
       case err
       when nil
         m = "Unspecified Kernel Error"
-      when Ragweed::Wrapx::KernelError::INVALID_ADDRESS
+      when Ragweed::Wraposx::KernelError::INVALID_ADDRESS
         m = "Invalid Address"
-      when Ragweed::Wrapx::KernelError::PROTECTION_FAILURE
+      when Ragweed::Wraposx::KernelError::PROTECTION_FAILURE
         m = "Protection Failure"
-      when Ragweed::Wrapx::KernelError::FAILURE
+      when Ragweed::Wraposx::KernelError::FAILURE
         m = "Failure"
-      when Ragweed::Wrapx::KernelError::INVALID_ARGUMENT
+      when Ragweed::Wraposx::KernelError::INVALID_ARGUMENT
         m = "Invalid Argument"
       else
         m = "Unknown Error"

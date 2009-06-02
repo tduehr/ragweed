@@ -1,6 +1,6 @@
 module Ragweed; end
-module Ragweed::Wrapx;end
-module Ragweed::Wrapx::Ptrace
+module Ragweed::Wraposx;end
+module Ragweed::Wraposx::Ptrace
   TRACE_ME = 0 # child declares it's being traced
   #(READ|WRITE)_[IDU] are not valid in OSX but defined in ptrace.h
   READ_I = 1 # read word in child's I space
@@ -22,7 +22,7 @@ module Ragweed::Wrapx::Ptrace
   FIRSTMACH = 32 # for machine-specific requests
 end
 
-module Ragweed::Wrapx::Signal
+module Ragweed::Wraposx::Signal
   #the Ruby module Signal also has this information
   SIGHUP = 1 # hangup
   SIGINT = 2 # interrupt
@@ -66,7 +66,7 @@ module Ragweed::Wrapx::Signal
   SIGUSR2 = 31 # user defined signal 2
 end
 
-module Ragweed::Wrapx::Wait
+module Ragweed::Wraposx::Wait
   NOHANG = 0x01 # [XSI] no hang in wait/no child to reap
   UNTRACED = 0x02 # [XSI] notify on stop, untraced child
   EXITED = 0x04 # [XSI] Processes which have exitted
@@ -75,8 +75,8 @@ module Ragweed::Wrapx::Wait
   NOWWAIT = 0x20 # [XSI] Leave process returned waitable
 end
 
-module Ragweed::Wrapx::Vm; end
-module Ragweed::Wrapx::Vm::Prot
+module Ragweed::Wraposx::Vm; end
+module Ragweed::Wraposx::Vm::Prot
   #vm_protect permission flags for memory spaces
   READ = 0x1 #read permission
   WRITE = 0x2 #write permission
@@ -85,7 +85,7 @@ module Ragweed::Wrapx::Vm::Prot
   ALL = 0x7 #all permissions
 end
 
-module Ragweed::Wrapx::Dl
+module Ragweed::Wraposx::Dl
   RTLD_LAZY = 0x1
   RTLD_NOW = 0x2
   RTLD_LOCAL = 0x4

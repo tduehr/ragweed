@@ -25,8 +25,8 @@ class Debuggerx
   def on_segv(thread)
     pp self.get_registers(thread)
     pp self.threads
-    self.threads.each {|thread| puts Wrapx::ThreadContext.get(thread).dump}
-    self.threads.each {|thread| puts Wrapx::ThreadInfo.get(thread).dump}
+    self.threads.each {|thread| puts Wraposx::ThreadContext.get(thread).dump}
+    self.threads.each {|thread| puts Wraposx::ThreadInfo.get(thread).dump}
     throw(:break)
   end
     
@@ -54,8 +54,8 @@ pp d.wait 1
 pp d.threads
 
 d.threads.each do |t|
-  r = Wrapx::ThreadContext.get(t)
-  i = Wrapx::ThreadInfo.get(t)
+  r = Wraposx::ThreadContext.get(t)
+  i = Wraposx::ThreadInfo.get(t)
   pp r
   puts r.dump
   pp i

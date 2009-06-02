@@ -1,8 +1,8 @@
-# Dir[File.expand_path("#{File.dirname(__FILE__)}/wrapx/*.rb")].each do |file|
+# Dir[File.expand_path("#{File.dirname(__FILE__)}/wraposx/*.rb")].each do |file|
 #   require file
 # end
 module Ragweed; end
-module Ragweed::Wrapx
+module Ragweed::Wraposx
 
   # :stopdoc:
   VERSION = '0.1.0'
@@ -47,8 +47,8 @@ module Ragweed::Wrapx
     # require File.dirname(File.basename(__FILE__)) + "/#{x}"
 
   end
-end  # module Ragweed::Wrapx
+end  # module Ragweed::Wraposx
 
-Ragweed::Wrapx.require_all_libs_relative_to(__FILE__)
+Ragweed::Wraposx.require_all_libs_relative_to(__FILE__)
 
 # EOF

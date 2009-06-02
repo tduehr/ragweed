@@ -19,9 +19,9 @@ require 'ragweed'
 task :default => 'spec:run'
 
 PROJ.name = 'ragweed'
-PROJ.authors = 'FIXME (who is writing this software)'
-PROJ.email = 'FIXME (your e-mail)'
-PROJ.url = 'FIXME (project homepage)'
+PROJ.authors = 'tduehr, tqbf, struct'
+PROJ.email = 'td@matasano.com'
+PROJ.url = 'github.com/tduehr/ragweed'
 PROJ.version = Ragweed::VERSION
 PROJ.rubyforge.name = 'ragweed'
 

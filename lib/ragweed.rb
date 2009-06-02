@@ -52,7 +52,7 @@ module Ragweed
     when RUBY_PLATFORM =~ /win(dows|32)/i
       pkgs = '32'
     when RUBY_PLATFORM =~ /darwin/i
-      pkgs = 'x'
+      pkgs = 'osx'
     when RUBY_PLATFORM =~ /linux/i
       pkgs = 'tux'
     when RUBY_PLATFORM =~ /java/i
@@ -69,7 +69,7 @@ end  # module Ragweed
 
 # pkgs = %w[arena sbuf ptr process event rasm blocks detour trampoline device debugger hooks]
 # pkgs << 'wrap32' if RUBY_PLATFORM =~ /win(dows|32)/i
-# pkgs << 'wrapx' if RUBY_PLATFORM =~ /darwin/i
+# pkgs << 'wraposx' if RUBY_PLATFORM =~ /darwin/i
 # pkgs << 'wraptux' if RUBY_PLATFORM =~ /linux/i
 # pkgs.each do |x|
 #   require File.dirname(__FILE__) + "/#{x}"

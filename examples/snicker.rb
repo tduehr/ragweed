@@ -38,7 +38,7 @@ class Debuggerx
     pp self.threads
     self.threads.each do |t|
       pp self.get_registers(t)
-      pp Wrapx::ThreadInfo.get(t)
+      pp Wraposx::ThreadInfo.get(t)
     end
     debugger
     @exited = true
@@ -47,7 +47,7 @@ class Debuggerx
 
   def on_sigbus
     pp "sigbus"
-    pp Wrapx::vm_read(@task,0x420f,169)
+    pp Wraposx::vm_read(@task,0x420f,169)
     # Kernel.debugger
     # Debugger.breakpoint
     # Debugger.catchpoint
@@ -62,13 +62,13 @@ if pid == 0
 end
 
 if pid.nil?
-  ptraceloc = Wrapx::LIBS['/usr/lib/libc.dylib'].sym("ptrace", "IIIII").to_ptr.ref.to_s(Wrapx::SIZEOFINT).unpack("I_").first
+  ptraceloc = Wraposx::LIBS['/usr/lib/libc.dylib'].sym("ptrace", "IIIII").to_ptr.ref.to_s(Wraposx::SIZEOFINT).unpack("I_").first
 
   pp ptraceloc
   rd.close
   wr.puts ptraceloc
 
-  Wrapx::ptrace(Wrapx::Ptrace::TRACE_ME, 0, 0, 0)
+  Wraposx::ptrace(Wraposx::Ptrace::TRACE_ME, 0, 0, 0)
   puts "Traced!"
   # sleep(1)
 
@@ -92,18 +92,18 @@ else
     d.breakpoint_set(ptraceloc,"Ptrace",(bpl = lambda do |t, r, s|
       puts "#{ s.breakpoints[r.eip].first.function } hit in thread #{ t }\n"
       pp r
-      # if Wrapx::dl_bignum_to_ulong(r.esp + 16).to_s(4).unpack("I").first == Wrapx::Ptrace::DENY_ATTACH
+      # if Wraposx::dl_bignum_to_ulong(r.esp + 16).to_s(4).unpack("I").first == Wraposx::Ptrace::DENY_ATTACH
         r.eax = 0
         # r.esp = r.ebp
-        # r.ebp = Wrapx::vm_read(s.task,r.esp,4).unpack("I_").first
-        # r.eip = Wrapx::vm_read(s.task,r.esp+4,4).unpack("I_").first
+        # r.ebp = Wraposx::vm_read(s.task,r.esp,4).unpack("I_").first
+        # r.eip = Wraposx::vm_read(s.task,r.esp+4,4).unpack("I_").first
         # r.esp +=8
-        r.eip = Wrapx::vm_read(s.task,r.esp,4).unpack("I_").first
+        r.eip = Wraposx::vm_read(s.task,r.esp,4).unpack("I_").first
         r.esp+=4
         pp "bounced"
       # else
-        pp Wrapx::dl_bignum_to_ulong(r.esp).to_s(5*4).unpack("IIIII")
-        pp Wrapx::dl_bignum_to_ulong(r.esp + 16).to_s(4).unpack("I")
+        pp Wraposx::dl_bignum_to_ulong(r.esp).to_s(5*4).unpack("IIIII")
+        pp Wraposx::dl_bignum_to_ulong(r.esp + 16).to_s(4).unpack("I")
       # end
     end))
 
@@ -156,8 +156,8 @@ else
     end
   end
 
-  blpwd = Wrapx::vm_read(d.task,0x420f,16)
-  bbus = Wrapx::vm_read(d.task,0x4220,32)
+  blpwd = Wraposx::vm_read(d.task,0x420f,16)
+  bbus = Wraposx::vm_read(d.task,0x4220,32)
 
   catch(:break) { d.loop() }
 
@@ -165,8 +165,8 @@ else
     pp d.threads
 
     d.threads.each do |t|
-      r = Wrapx::ThreadContext.get(t)
-      i = Wrapx::ThreadInfo.get(t)
+      r = Wraposx::ThreadContext.get(t)
+      i = Wraposx::ThreadInfo.get(t)
       pp r
       puts r.dump
       pp i

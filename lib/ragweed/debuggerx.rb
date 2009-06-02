@@ -1,7 +1,5 @@
-require 'wrapx'
-require 'pp'
+require 'ragweed/wraposx'
 
-$:.unshift File.join(File.dirname(__FILE__), '../')
 require 'libmatty'
 
 module Ragweed; end
@@ -14,8 +12,8 @@ module Ragweed; end
 #
 # (2) If you want to do more advanced event handling, you can subclass from
 #     debugger and define your own on_whatever events. If you handle an event
-#     that Debuggerx already handles, call "super", too.
-class Ragweed::Debuggerx
+#     that Debuggerosx already handles, call "super", too.
+class Ragweed::Debuggerosx
   include Ragweed
 
   attr_reader :pid
@@ -25,7 +23,7 @@ class Ragweed::Debuggerx
   attr_accessor :breakpoints
 
   class Breakpoint
-    #    include Ragweed::Wrapx
+    #    include Ragweed::Wraposx
     INT3 = 0xCC
     attr_accessor :orig
     attr_accessor :bpid
@@ -48,25 +46,25 @@ class Ragweed::Debuggerx
 
     # Install this breakpoint.
     def install
-      Wrapx::task_suspend(@bp.task)
+      Wraposx::task_suspend(@bp.task)
       @bp.hook if not @bp.hooked?
-      Wrapx::vm_protect(@bp.task,@addr,1,false,Wrapx::Vm::Prot::ALL)
-      @orig = Wrapx::vm_read(@bp.task,@addr,1)
+      Wraposx::vm_protect(@bp.task,@addr,1,false,Wraposx::Vm::Prot::ALL)
+      @orig = Wraposx::vm_read(@bp.task,@addr,1)
       if(@orig != INT3)
-        Wrapx::vm_write(@bp.task,@addr, [INT3].pack('C'))
+        Wraposx::vm_write(@bp.task,@addr, [INT3].pack('C'))
       end
       @installed = true
-      Wrapx::task_resume(@bp.task)
+      Wraposx::task_resume(@bp.task)
     end
 
     # Uninstall this breakpoint.
     def uninstall
-      Wrapx::task_suspend(@bp.task)
+      Wraposx::task_suspend(@bp.task)
       if(@orig != INT3)
-        Wrapx::vm_write(@bp.task, @addr, @orig)
+        Wraposx::vm_write(@bp.task, @addr, @orig)
       end
       @installed = false
-      Wrapx::task_resume(@bp.task)
+      Wraposx::task_resume(@bp.task)
     end
 
     def installed?; @installed; end
@@ -119,10 +117,10 @@ class Ragweed::Debuggerx
   # opts: option flags to waitpid(2)
   #
   # returns and array containing the pid of the stopped or terminated child and the status of that child
-  # r[0]: pid of stopped/terminated child or 0 if Wrapx::Wait:NOHANG was passed and there was nothing to report
-  # r[1]: staus of child or 0 if Wrapx::Wait:NOHANG was passed and there was nothing to report
+  # r[0]: pid of stopped/terminated child or 0 if Wraposx::Wait:NOHANG was passed and there was nothing to report
+  # r[1]: staus of child or 0 if Wraposx::Wait:NOHANG was passed and there was nothing to report
   def wait(opts = 0)
-    r = Wrapx::waitpid(@pid,opts)
+    r = Wraposx::waitpid(@pid,opts)
     status = r[1]
     wstatus = status & 0x7f
     signal = status >> 8
@@ -169,12 +167,12 @@ class Ragweed::Debuggerx
   # these event functions are stubs. Implementations should override these
   def on_single_step
     pp "Single stepping #{ thread } (on_single_step)"
-    pp Wrapx::ThreadInfo.get(thread)
+    pp Wraposx::ThreadInfo.get(thread)
   end
 
   def on_sigsegv
-    pp Wrapx::ThreadContext.get(thread)
-    pp Wrapx::ThreadInfo.get(thread)
+    pp Wraposx::ThreadContext.get(thread)
+    pp Wraposx::ThreadInfo.get(thread)
   end
 
   def on_exit(status)
@@ -217,8 +215,8 @@ class Ragweed::Debuggerx
   # opts is a hash for automatically firing other functions as an overide for @opts
   # returns 0 on no error
   def attach(opts=@opts)
-    r = Wrapx::ptrace(Wrapx::Ptrace::ATTACH,@pid,0,0)
-    # Wrapx::ptrace(Wrapx::Ptrace::CONTINUE,@pid,1,0)
+    r = Wraposx::ptrace(Wraposx::Ptrace::ATTACH,@pid,0,0)
+    # Wraposx::ptrace(Wraposx::Ptrace::CONTINUE,@pid,1,0)
     @attached = true
     self.hook(opts) if (opts[:hook] and not @hooked)
     self.install_bps if (opts[:install] and not @installed)
@@ -230,7 +228,7 @@ class Ragweed::Debuggerx
   # returns 0 on no error
   def detach(opts=@opts)
     self.uninstall_bps if @installed
-    r = Wrapx::ptrace(Wrapx::Ptrace::DETACH,@pid,0,Wrapx::Wait::UNTRACED)
+    r = Wraposx::ptrace(Wraposx::Ptrace::DETACH,@pid,0,Wraposx::Wait::UNTRACED)
     @attached = false
     self.unhook(opts) if opts[:hook] and @hooked
     return r
@@ -240,7 +238,7 @@ class Ragweed::Debuggerx
   # opts is a hash for automatically firing other functions as an overide for @opts
   # returns the task port for @pid
   def hook(opts=@opts)
-    @task = Wrapx::task_for_pid(@pid)
+    @task = Wraposx::task_for_pid(@pid)
     @hooked = true
     self.attach(opts) if opts[:attach] and not @attached
     return @task
@@ -258,20 +256,20 @@ class Ragweed::Debuggerx
   # thread: thread id of thread to be resumed
   def resume(thread = nil)
     thread = (thread or self.threads.first)
-    Wrapx::thread_resume(thread)
+    Wraposx::thread_resume(thread)
   end
 
   # suspends thread
   # thread: thread id of thread to be suspended
   def suspend(thread = nil)
     thread = (thread or self.threads.first)
-    Wrapx::thread_suspend(thread)
+    Wraposx::thread_suspend(thread)
   end
 
   # sends a signal to process with id @pid
   # sig: signal to be sent to process @pid
   def kill(sig = 0)
-    Wrapx::kill(@pid,sig)
+    Wraposx::kill(@pid,sig)
   end
 
   # adds a breakpoint and callable block to be installed into child process
@@ -327,7 +325,7 @@ class Ragweed::Debuggerx
       #uninstall breakpoint to continue past it
       @breakpoints[eip].first.uninstall
       #set trap flag so we don't go too far before reinserting breakpoint
-      r.eflags |= Wrapx::EFlags::TRAP
+      r.eflags |= Wraposx::EFlags::TRAP
       #set registers to commit eip and eflags changes
       self.set_registers(thread, r)
 
@@ -337,7 +335,7 @@ class Ragweed::Debuggerx
       # now we wait() to prevent a race condition that'll SIGBUS us
       # Yup, a race condition where the child may not complete a single 
       # instruction before the parent completes many
-      Wrapx::waitpid(@pid,0)
+      Wraposx::waitpid(@pid,0)
 
       #reset breakpoint
       @breakpoints[eip].first.install
@@ -347,21 +345,21 @@ class Ragweed::Debuggerx
   # returns an array of the thread ids of the child process
   def threads
     self.hook if not @hooked
-    Wrapx::task_threads(@task)
+    Wraposx::task_threads(@task)
   end
 
-  # returns a Wrapx::ThreadContext object containing the register states
+  # returns a Wraposx::ThreadContext object containing the register states
   # thread: thread to get the register state of
   def get_registers(thread=nil)
     thread = (thread or self.threads.first)
-    Wrapx::ThreadContext.get(thread)
+    Wraposx::ThreadContext.get(thread)
   end
 
   # sets the register state of a thread
   # thread: thread id to set registers for
-  # regs: Wrapx::ThreadContext object containing the new register state for the thread
+  # regs: Wraposx::ThreadContext object containing the new register state for the thread
   def set_registers(thread, regs)
-    raise "Must supply registers and thread to set" if (not (thread and regs) or not thread.kind_of? Numeric or not regs.kind_of? Wrapx::ThreadContext)
+    raise "Must supply registers and thread to set" if (not (thread and regs) or not thread.kind_of? Numeric or not regs.kind_of? Wraposx::ThreadContext)
     regs.set(thread)
   end
 
@@ -369,7 +367,7 @@ class Ragweed::Debuggerx
   # addr: address from which to continue child. defaults to current position.
   # data: signal to be sent to child. defaults to no signal.
   def continue(addr = 1, data = 0)
-    Wrapx::ptrace(Wrapx::Ptrace::CONTINUE,@pid,addr,data)
+    Wraposx::ptrace(Wraposx::Ptrace::CONTINUE,@pid,addr,data)
   end
 
   # Do not use this function unless you know what you're doing!
@@ -377,7 +375,7 @@ class Ragweed::Debuggerx
   # same arguments as Debugerx#continue
   # single steps the child process
   def stepp(addr = 1, data = 0)
-    Wrapx::ptrace(Wrapx::Ptrace::STEP,@pid,addr,data)
+    Wraposx::ptrace(Wraposx::Ptrace::STEP,@pid,addr,data)
   end
 
   # sends a signal to a thread of the child's
@@ -386,7 +384,7 @@ class Ragweed::Debuggerx
   # sig: signal to be sent to child's thread
   def thread_update(thread = nil, sig = 0)
     thread = thread or self.threads.first
-    Wrapx::ptrace(Wrapx::Ptrace::THUPDATE,@pid,thread,sig)
+    Wraposx::ptrace(Wraposx::Ptrace::THUPDATE,@pid,thread,sig)
   end
 
   def hooked?; @hooked; end
@@ -396,18 +394,18 @@ class Ragweed::Debuggerx
   def region_info(addr, flavor = :basic)
     case flavor
     when :basic
-      return Wrapx::RegionBasicInfo.get(@task, addr)
+      return Wraposx::RegionBasicInfo.get(@task, addr)
 
     # Extended and Top info flavors are included in case Apple re implements them
     when :extended
       warn "VM Region Extended Info not implemented by Apple. Returning RegionBasicInfo"
-      return Wrapx::RegionBasicInfo.get(@task, addr)
+      return Wraposx::RegionBasicInfo.get(@task, addr)
     when :top
       warn "VM Region Top Info not implemented be Apple. Returning RegionBasicInfo"
-      return Wrapx::RegionBasicInfo.get(@task, addr)
+      return Wraposx::RegionBasicInfo.get(@task, addr)
     else
       warn "Unknown flavor requested. Returning RegionBasicInfo."
-      return Wrapx::RegionBasicInfo.get(@task, addr)
+      return Wraposx::RegionBasicInfo.get(@task, addr)
     end
   end
 

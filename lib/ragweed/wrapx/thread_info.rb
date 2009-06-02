@@ -1,5 +1,5 @@
 module Ragweed; end
-module Ragweed::Wrapx::ThreadState
+module Ragweed::Wraposx::ThreadState
   #Thread run states
   RUNNING = 1 #/* thread is running normally */
   STOPPED = 2 #/* thread is stopped */
@@ -8,13 +8,13 @@ module Ragweed::Wrapx::ThreadState
   HALTED = 5 #/* thread is halted at a clean point */
 end
 
-module Ragweed::Wrapx::TFlags
+module Ragweed::Wraposx::TFlags
   #Thread flags (flags field).
   SWAPPED = 0x1 #/* thread is swapped out */
   IDLE = 0x2 #/* thread is an idle thread */
 end
     
-class Ragweed::Wrapx::ThreadInfo
+class Ragweed::Wraposx::ThreadInfo
   include Ragweed
   attr_accessor :user_time
   attr_accessor :system_time
@@ -50,11 +50,11 @@ class Ragweed::Wrapx::ThreadInfo
   end
 
   def self.get(t)
-    self.new(Wrapx::thread_info_raw(t))
+    self.new(Wraposx::thread_info_raw(t))
   end
 
   def get(t)
-    refresh(Wrapx::thread_info_raw(t))
+    refresh(Wraposx::thread_info_raw(t))
   end
 
   def inspect
@@ -80,12 +80,12 @@ class Ragweed::Wrapx::ThreadInfo
     run_state:     #{self.run_state.to_s.rjust(8, "0")} #{maybe_hex.call(self.run_state)}
     suspend_count: #{self.suspend_count.to_s.rjust(8, "0")} #{maybe_hex.call(self.suspend_count)}
     sleep_time:    #{self.sleep_time.to_s.rjust(8, "0")} #{maybe_hex.call(self.sleep_time)}
-    flags:         #{self.flags.to_s(2).rjust(32, "0")} #{Wrapx::TFlags.flag_dump(self.flags)}
+    flags:         #{self.flags.to_s(2).rjust(32, "0")} #{Wraposx::TFlags.flag_dump(self.flags)}
 EOM
   end
 end
 
-module Ragweed::Wrapx
+module Ragweed::Wraposx
 
   # FIXME - constants should be un separate sub-modules
   # XXX - implement more thread info flavors (if possible)

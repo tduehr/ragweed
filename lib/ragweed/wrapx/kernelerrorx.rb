@@ -1,9 +1,9 @@
-# Exception objects for kernel errors likely in wrapx
+# Exception objects for kernel errors likely in Wraposx
 # If this were a C extension I'd use #ifdef on each to only create the required ones.
 
 module Ragweed; end
-module Ragweed::Wrapx; end
-module Ragweed::Wrapx::KernelReturn
+module Ragweed::Wraposx; end
+module Ragweed::Wraposx::KernelReturn
   SUCCESS =               { :value => 0, :message => 'Not an error'}
   INVALID_ADDRESS =       { :value => 1, :message => 'Specified address is not currently valid.'}
   PROTECTION_FAILURE =    { :value => 2, :message => 'Specified memory is valid, but does not permit the required forms of access.'}
@@ -63,11 +63,11 @@ module Ragweed::Wrapx::KernelReturn
   end
 end
 
-module Ragweed::Wrapx::KErrno; end
+module Ragweed::Wraposx::KErrno; end
 
 # Exception class for mach kernel calls. Works mostly like SystemCallError.
 # Subclasses are individual error conditions and case equality (===) is done by class then error number (KErrno)
-class Ragweed::Wrapx::KernelCallError < StandardError
+class Ragweed::Wraposx::KernelCallError < StandardError
   DEFAULT_MESSAGE = "Unknown Error"
   attr_reader :kerrno
   
@@ -79,14 +79,14 @@ class Ragweed::Wrapx::KernelCallError < StandardError
     end
     mesg = ""
 
-    klass = Ragweed::Wrapx::KErrno.constants.detect{|x| Ragweed::Wrapx::KErrno.const_get(x).const_get("KErrno") == err}
+    klass = Ragweed::Wraposx::KErrno.constants.detect{|x| Ragweed::Wraposx::KErrno.const_get(x).const_get("KErrno") == err}
     if (klass.nil? or klass.empty?)
       o = self.allocate
       o.instance_variable_set("@kerrno", err)
       mesg = "Unknown kernel error"
     else
-      o = Ragweed::Wrapx::KErrno.const_get(klass).allocate
-      mesg = Ragweed::Wrapx::KernelReturn.const_get(klass)[:message]
+      o = Ragweed::Wraposx::KErrno.const_get(klass).allocate
+      mesg = Ragweed::Wraposx::KernelReturn.const_get(klass)[:message]
     end
     
     if o.class.const_defined?("KErrno")
@@ -103,8 +103,8 @@ class Ragweed::Wrapx::KernelCallError < StandardError
 
   # Case equality. Returns true if self and other are KernelCallError or when error numbers match.
   def self.===(other)
-    return false if not other.kind_of?(Ragweed::Wrapx::KernelCallError)
-    return true if self == Ragweed::Wrapx::KernelCallError
+    return false if not other.kind_of?(Ragweed::Wraposx::KernelCallError)
+    return true if self == Ragweed::Wraposx::KernelCallError
     
     begin
       return self.const_get("KErrno") == other.const_get("KErrno")
@@ -118,19 +118,19 @@ class Ragweed::Wrapx::KernelCallError < StandardError
   end
 
   # This block builds the subclasses for KernelCallError
-  Ragweed::Wrapx::KernelReturn.list.each do |k, v|
+  Ragweed::Wraposx::KernelReturn.list.each do |k, v|
     case k.intern
     when :SUCCESS
     when :RETURN_MAX
     else
-      klass = Ragweed::Wrapx::KErrno.const_set(k, Class.new(Ragweed::Wrapx::KernelCallError){
+      klass = Ragweed::Wraposx::KErrno.const_set(k, Class.new(Ragweed::Wraposx::KernelCallError){
         def self.new(msg = "")
           o = self.allocate
           o.instance_variable_set "@kerrno", self.const_get("KErrno")
           mesg = ""
           klass = self.name.split("::").last
-          if Ragweed::Wrapx::KernelReturn.const_defined?(klass)
-            mesg = Ragweed::Wrapx::KernelReturn.const_get(klass)[:message]
+          if Ragweed::Wraposx::KernelReturn.const_defined?(klass)
+            mesg = Ragweed::Wraposx::KernelReturn.const_get(klass)[:message]
           else
             mesg = "Unknown kernel error"
           end

@@ -1,14 +1,20 @@
-test_empty
-    by FIXME (your name)
-    FIXME (url)
+Ragweed
+    by tduehr, struct, and tqbf (your name)
+    http://matasano.com/log
 
 == DESCRIPTION:
 
-FIXME (describe your package)
+* Ragweed is a set of scriptable debugging tools written mostly in native ruby.
+
+* Where required the Ruby/DL and Win32API libraries are used to interface the machine
+and OS native system calls.
 
 == FEATURES/PROBLEMS:
 
-* FIXME (list of features or problems)
+* This suite is currently fairly piecemeal. Each OS has it's own set of tools.
+The most complete set is for Win32.
+
+* Work is ongoing to complete and unify the OSX and Linux portions.
 
 == SYNOPSIS:
 
@@ -16,7 +22,7 @@ FIXME (describe your package)
 
 == REQUIREMENTS:
 
-* FIXME (list of requirements)
+* NONE
 
 == INSTALL:
 
@@ -24,25 +30,4 @@ FIXME (describe your package)
 
 == LICENSE:
 
-(The MIT License)
-
-Copyright (c) 2008 FIXME (different license?)
-
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-'Software'), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+Copyright 2009 Matasano Security, LLC All Rights Reserved

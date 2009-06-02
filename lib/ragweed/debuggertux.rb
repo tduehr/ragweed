@@ -1,7 +1,6 @@
-require 'wraptux'
-# require 'pp'
+require 'ragweed/wraptux'
 
-## Modeled after wrapx written by tduehr
+## Modeled after wraposx written by tduehr
 
 $:.unshift File.join(File.dirname(__FILE__), '../')
 require 'libmatty'

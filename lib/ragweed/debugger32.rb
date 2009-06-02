@@ -1,3 +1,5 @@
+require 'ragweed/wrap32'
+
 # I am not particularly proud of this code, which I basically debugged
 # into existence, but it does work.
 

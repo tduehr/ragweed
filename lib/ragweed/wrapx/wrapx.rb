@@ -1,7 +1,7 @@
 require 'dl'
 
 module Ragweed; end
-module Ragweed::Wrapx
+module Ragweed::Wraposx
   
   # These hashes are the magic glue of the ragweed system calls.
   # This one holds the library references from Ruby/DL.
@@ -54,7 +54,7 @@ module Ragweed::Wrapx
 
     # Apple's ptrace is fairly gimped. The memory read and write functionality has been
     # removed. We will be using mach kernel calls for that. see vm_read and vm_write.
-    # for details on ptrace and the process for the wrapx/debuggerx port see:
+    # for details on ptrace and the process for the Wraposx/debuggerx port see:
     # http://www.matasano.com/log/1100/what-ive-been-doing-on-my-summer-vacation-or-it-has-to-work-otherwise-gdb-wouldnt/
     #
     #int
@@ -359,18 +359,18 @@ end
 #     pid = 1319
 #     int = "\x00" * 4
 #     port = 0
-#     Wrapx::ptrace(Wrapx::Ptrace::ATTACH,pid,0,0)
-#     #  status = Wrapx::waitpid(pid,0)
-#     #  Wrapx::ptrace(Wrapx::Ptrace::CONTINUE,pid,1,0)
-#     mts = Wrapx::mach_task_self
-#     port = Wrapx::task_for_pid(mts,pid)
-#     port2 = Wrapx::task_for_pid(mts,pid)
-#     threads = Wrapx::task_threads(port)
-#     state = Wrapx::thread_get_state(threads.first)
+#     Wraposx::ptrace(Wraposx::Ptrace::ATTACH,pid,0,0)
+#     #  status = Wraposx::waitpid(pid,0)
+#     #  Wraposx::ptrace(Wraposx::Ptrace::CONTINUE,pid,1,0)
+#     mts = Wraposx::mach_task_self
+#     port = Wraposx::task_for_pid(mts,pid)
+#     port2 = Wraposx::task_for_pid(mts,pid)
+#     threads = Wraposx::task_threads(port)
+#     state = Wraposx::thread_get_state(threads.first)
 #     pp port
 #     pp port2
 #     pp threads
 #     pp state
-#     #  Wrapx::thread_set_state(threads.first,state)
-#     Wrapx::ptrace(Wrapx::Ptrace::DETACH,pid,0,0)
+#     #  Wraposx::thread_set_state(threads.first,state)
+#     Wraposx::ptrace(Wraposx::Ptrace::DETACH,pid,0,0)
 # end
