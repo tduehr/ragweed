@@ -87,7 +87,7 @@ end
 
 module Ragweed::Wraposx
 
-  # FIXME - constants should be un separate sub-modules
+  # FIXME - constants should be under separate sub-modules
   # XXX - implement more thread info flavors (if possible)
   # XXX - move to class based implementation a la region_info
   # info interfaces

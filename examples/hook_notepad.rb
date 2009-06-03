@@ -1,4 +1,4 @@
-require "#{File.dirname(__FILE__)}/../ragweed"
+require "ragweed"
 include Ragweed
 
 dbg = Debugger.find_by_regex /notepad/i

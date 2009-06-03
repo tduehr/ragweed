@@ -115,7 +115,7 @@ module Ragweed::Wraposx
       CALLS["libc!mach_task_self:=I"].call().first
     end
 
-    # Require sudo to use as of 10.5 or 10.4.11(ish)
+    # Requires sudo to use as of 10.5 or 10.4.11(ish)
     # Returns the task id for a process.
     #
     # kern_return_t task_for_pid(

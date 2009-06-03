@@ -1,4 +1,4 @@
-require 'rasm'
+require 'ragweed/rasm'
 
 pushv = $VERBOSE
 $VERBOSE = nil

@@ -5,7 +5,7 @@ module Ragweed; end
 module Ragweed::Rasm
 
   # :stopdoc:
-  VERSION = '0.1.0'
+  VERSION = '0.1.1'
   LIBPATH = ::File.expand_path(::File.dirname(__FILE__)) + ::File::SEPARATOR
   PATH = ::File.dirname(LIBPATH) + ::File::SEPARATOR
   # :startdoc:
@@ -42,13 +42,12 @@ module Ragweed::Rasm
     search_me = ::File.expand_path(
         ::File.join(::File.dirname(fname), dir, '**', '*.rb'))
     
-    puts search_me
     Dir.glob(search_me).sort.each {|rb| require rb}
     # require File.dirname(File.basename(__FILE__)) + "/#{x}"
 
   end
 end  # module Ragweed::Rasm
 
-Ragweed::Wraptux.require_all_libs_relative_to(__FILE__)
+Ragweed::Rasm.require_all_libs_relative_to(__FILE__)
 
 # EOF
