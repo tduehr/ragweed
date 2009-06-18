@@ -43,8 +43,6 @@ end
 # are included for completeness.
 #
 class Ragweed::Wraposx::RegionInfo
-  include Ragweed
-
   def initialize(str=nil)
     refresh(str) if str
   end
@@ -67,11 +65,11 @@ class Ragweed::Wraposx::RegionInfo
   end
 
   def self.get(t, a, flavor)
-    self.new(Wraposx::vm_region_raw(t, a, flavor))
+    self.new(Ragweed::Wraposx::vm_region_raw(t, a, flavor))
   end
 
   def get(t, a)
-    refresh(Wraposx::vm_region_raw(t, a, self.class.const_get(:FLAVOR)))
+    refresh(Ragweed::Wraposx::vm_region_raw(t, a, self.class.const_get(:FLAVOR)))
   end
 
   def inspect
@@ -91,8 +89,8 @@ class Ragweed::Wraposx::RegionInfo
     string =<<EOM
     -----------------------------------------------------------------------
     INFO:
-    protection:       #{self.protection.to_s(2).rjust(8, "0")} #{Wraposx::Vm::Pflags.flag_dump(self.protection)}
-    max_protection:   #{self.max_protection.to_s(2).rjust(8, "0")} #{Wraposx::Vm::Pflags.flag_dump(self.max_protection)}
+    protection:       #{self.protection.to_s(2).rjust(8, "0")} #{Ragweed::Wraposx::Vm::Pflags.flag_dump(self.protection)}
+    max_protection:   #{self.max_protection.to_s(2).rjust(8, "0")} #{Ragweed::Wraposx::Vm::Pflags.flag_dump(self.max_protection)}
     inheritance:      #{self.inheritance.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.inheritance)}
     shared:           #{self.shared.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.shared)}
     reserved:         #{self.reserved.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.reserved)}
@@ -105,9 +103,8 @@ EOM
 end
 
 class Ragweed::Wraposx::RegionBasicInfo < Ragweed::Wraposx::RegionInfo
-  include Ragweed
 
-  FLAVOR = 10
+  FLAVOR = Ragweed::Wraposx::Vm::REGION_BASIC_INFO
 
   (FIELDS = [ [:protection, "i"],       # The current protection for the region. 
               [:max_protection, "i"],   # The maximum protection allowed for the region.
@@ -127,8 +124,8 @@ class Ragweed::Wraposx::RegionBasicInfo < Ragweed::Wraposx::RegionInfo
     string =<<EOM
     -----------------------------------------------------------------------
     INFO:
-    protection:       #{self.protection.to_s(2).rjust(8, "0")} #{Wraposx::Vm::Pflags.flag_dump(self.protection)}
-    max_protection:   #{self.max_protection.to_s(2).rjust(8, "0")} #{Wraposx::Vm::Pflags.flag_dump(self.max_protection)}
+    protection:       #{self.protection.to_s(2).rjust(8, "0")} #{Ragweed::Wraposx::Vm::Pflags.flag_dump(self.protection)}
+    max_protection:   #{self.max_protection.to_s(2).rjust(8, "0")} #{Ragweed::Wraposx::Vm::Pflags.flag_dump(self.max_protection)}
     inheritance:      #{self.inheritance.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.inheritance)}
     shared:           #{self.shared.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.shared)}
     reserved:         #{self.reserved.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.reserved)}
@@ -140,14 +137,13 @@ EOM
   end
 
   def self.get(t, a)
-    self.new(Wraposx::vm_region_raw(t, a, FLAVOR))
+    self.new(Ragweed::Wraposx::vm_region_raw(t, a, FLAVOR))
   end
 end
 
 class Ragweed::Wraposx::RegionExtendedInfo < Ragweed::Wraposx::RegionInfo
-  include Ragweed
 
-  FLAVOR = 11
+  FLAVOR = Ragweed::Wraposx::Vm::REGION_EXTENDED_INFO
   (FIELDS = [ [:protection, "i"],
               [:user_tag, "I"],
               [:pages_resident, "I"],
@@ -167,7 +163,7 @@ class Ragweed::Wraposx::RegionExtendedInfo < Ragweed::Wraposx::RegionInfo
     string =<<EOM
     -----------------------------------------------------------------------
     INFO:
-    protection:               #{self.protection.to_s(2).rjust(8, "0")} #{Wraposx::Vm::Pflags.flag_dump(self.protection)}
+    protection:               #{self.protection.to_s(2).rjust(8, "0")} #{Ragweed::Wraposx::Vm::Pflags.flag_dump(self.protection)}
     user_tag:                 #{self.user_tag.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.user_tag)}
     pages_resident:           #{self.pages_resident.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.pages_resident)}
     pages_shared_now_private: #{self.pages_shared_now_private.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.pages_shared_now_private)}
@@ -182,14 +178,13 @@ EOM
   end
 
   def self.get(t, a)
-    self.new(Wraposx::vm_region_raw(t, a, FLAVOR))
+    self.new(Ragweed::Wraposx::vm_region_raw(t, a, FLAVOR))
   end
 end
 
 class Ragweed::Wraposx::RegionTopInfo < Ragweed::Wraposx::RegionInfo
-  include Ragweed
 
-  FLAVOR = 12
+  FLAVOR = Ragweed::Wraposx::Vm::REGION_TOP_INFO
 
   (FIELDS = [ [:obj_id, "I"],
               [:ref_count, "I"],
@@ -215,7 +210,7 @@ EOM
   end
 
   def self.get(t, a)
-    self.new(Wraposx::vm_region_raw(t, a, FLAVOR))
+    self.new(Ragweed::Wraposx::vm_region_raw(t, a, FLAVOR))
   end
 end
 

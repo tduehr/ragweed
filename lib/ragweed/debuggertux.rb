@@ -2,9 +2,6 @@ require 'ragweed/wraptux'
 
 ## Modeled after wraposx written by tduehr
 
-# $:.unshift File.join(File.dirname(__FILE__), '../')
-# require 'libmatty'
-
 module Ragweed; end
 
 ## Debugger class for Linux

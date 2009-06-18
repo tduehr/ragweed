@@ -54,7 +54,7 @@ module Ragweed::Wraposx
 
     # Apple's ptrace is fairly gimped. The memory read and write functionality has been
     # removed. We will be using mach kernel calls for that. see vm_read and vm_write.
-    # for details on ptrace and the process for the Wraposx/debuggerx port see:
+    # for details on ptrace and the process for the Wraposx/debuggerosx port see:
     # http://www.matasano.com/log/1100/what-ive-been-doing-on-my-summer-vacation-or-it-has-to-work-otherwise-gdb-wouldnt/
     #
     #int
@@ -68,7 +68,7 @@ module Ragweed::Wraposx
       return r
     end
 
-    # Oringially coded for use in debuggerx but I've switched to waitpid for 
+    # Oringially coded for use in debuggerosx but I've switched to waitpid for 
     # usability and debugging purposes.
     #
     # Returns status of child when child recieves a signal.
@@ -84,7 +84,7 @@ module Ragweed::Wraposx
       return status.to_s(SIZEOFINT).unpack('i_').first
     end
 
-    # The wait used in debuggerx.
+    # The wait used in debuggerosx.
     # opt is an OR of the options to be used.
     #
     # Returns an array. The first element is the pid of the child process
@@ -183,12 +183,12 @@ module Ragweed::Wraposx
 
     # Reads sz bytes from task's address space starting at addr.
     #
-    # kern_return_t   vm_read
-    #                (vm_task_t                          target_task,
-    #                 vm_address_t                           address,
-    #                 vm_size_t                                 size,
-    #                 size                                  data_out,
-    #                 target_task                         data_count);
+    # kern_return_t   vm_read_overwrite
+    #                (vm_task_t                           target_task,
+    #                 vm_address_t                        address,
+    #                 vm_size_t                           size,
+    #                 vm_address_t                        *data_out,
+    #                 mach_msg_type_number_t              *data_size);
     #
     # There is no man page for this function.
     def vm_read(task, addr, sz=256)

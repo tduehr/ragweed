@@ -96,7 +96,7 @@ class Ragweed::Wraposx::KernelCallError < StandardError
       mesg = "#{mesg}: #{err}" if err
     end
 
-    mesg = "#{mesg} - #{msg}" if !(msg.nil? or msg.empty?)  
+    mesg = "#{mesg} - #{msg}" if !(msg.nil? or msg.to_s.empty?)  
     o.send(:initialize, mesg)
     return o
   end

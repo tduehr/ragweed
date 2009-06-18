@@ -1,10 +1,10 @@
 #!/usr/bin/env ruby
 
-# A simple hittracer to debug and test Debuggerx.
+# A simple hittracer to debug and test Debuggerosx.
 # FILE is CSV file,address
 # PID is the proces id to attach to.
 
-require 'debuggerx'
+require 'debuggerosx'
 require 'pp'
 require 'irb'
 include Ragweed
@@ -12,9 +12,9 @@ include Ragweed
 filename = ARGV[0]
 pid = ARGV[1].to_i
 
-raise "hittracerx.rb FILE PID" if (ARGV.size < 2 or pid <= 0)
+raise "hittracerosx.rb FILE PID" if (ARGV.size < 2 or pid <= 0)
 
-class Debuggerx
+class Debuggerosx
   def on_exit
     exit(1)
   end
@@ -35,7 +35,7 @@ class Debuggerx
   end
 end
 
-d = Debuggerx.new(pid)
+d = Debuggerosx.new(pid)
 d.attach
 
 File.open(filename, "r") do |fd|

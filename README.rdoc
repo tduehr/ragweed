@@ -1,5 +1,5 @@
 Ragweed
-    by tduehr, struct, and tqbf (your name)
+    by tduehr, struct, and tqbf
     http://matasano.com/log
 
 == DESCRIPTION:
@@ -18,15 +18,17 @@ The most complete set is for Win32.
 
 == SYNOPSIS:
 
-  FIXME (code sample of usage)
+  require 'debuggerosx'
+  d = Debuggerosx.new(514) # pid of process to trace
 
 == REQUIREMENTS:
 
-* NONE
+* NONE - no really, this is pure native ruby hooking system libraries. There are no other dependencies, none.
 
 == INSTALL:
 
-* FIXME (sudo gem install, anything else)
+* gem sources -a http://gems.github.com
+* sudo gem install tduehr-ragweed
 
 == LICENSE:
 
