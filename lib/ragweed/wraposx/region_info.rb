@@ -50,7 +50,7 @@ class Ragweed::Wraposx::RegionInfo
   # (re)loads the data from str
   def refresh(str)
     fields = self.class.const_get :FIELDS
-    pp self.class
+    # pp self.class
     if str and not str.empty?
       str.unpack(fields.map {|x| x[1]}.join("")).each_with_index do |val, i|
         raise "i is nil" if i.nil?

@@ -55,8 +55,10 @@ module Ragweed
       pkgs = 'osx'
     when RUBY_PLATFORM =~ /linux/i
       pkgs = 'tux'
-    when RUBY_PLATFORM =~ /java/i
+    # when RUBY_PLATFORM =~ /java/i
       # XXX -TODO
+    else
+      warn "Platform not supported no wrapper libraries loaded."
     end
     
     if not pkgs.empty?
