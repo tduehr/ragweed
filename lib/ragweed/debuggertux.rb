@@ -112,13 +112,6 @@ class Ragweed::Debuggertux
 	  end
   end
 
-  ## Return an array of thread PIDs
-  def self.get_thread_pids(pid)
-    a = Dir.entries("/proc/#{pid}/task/")
-    a.delete_if do |x| x == '.' end
-    a.delete_if do |x| x == '..' end
-  end
-
   def install_bps
     @breakpoints.each do |k,v|
       v.install
