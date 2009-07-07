@@ -247,6 +247,13 @@ class Ragweed::Debuggertux
     end
   end
 
+  ## Return an array of thread PIDs
+  def threads(pid)
+    a = Dir.entries("/proc/#{pid}/task/")
+    a.delete_if do |x| x == '.' end
+    a.delete_if do |x| x == '..' end
+  end
+
   ## Gets the registers for the given process
   def get_registers
     size = Wraptux::SIZEOFLONG * 17

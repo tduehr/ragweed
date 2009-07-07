@@ -10,7 +10,7 @@ require 'debuggertux'
 pid = Debuggertux.find_by_regex(/gcalctool/)
 
 begin
-	t = Wraptux::ThreadInfo.get_thread_pids(pid)
+	t = Debuggertux.threads(pid)
 	puts "Which thread do you want to attach to?"
 	t.each do |h| puts h end
 	pid = STDIN.gets.chomp.to_i
