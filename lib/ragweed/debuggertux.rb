@@ -248,7 +248,7 @@ class Ragweed::Debuggertux
   end
 
   ## Return an array of thread PIDs
-  def threads(pid)
+  def self.threads(pid)
     a = Dir.entries("/proc/#{pid}/task/")
     a.delete_if do |x| x == '.' end
     a.delete_if do |x| x == '..' end
