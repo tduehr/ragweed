@@ -17,10 +17,6 @@ class Object
           end
       end
 
-      def pbpaste
-        `pbpaste`
-      end if RUBY_PLATFORM =~ /darwin/
-
       ## This is from Topher Cyll's Stupd IRB tricks
       def mymethods
         (self.methods - self.class.superclass.methods).sort
@@ -40,6 +36,11 @@ class String
   def shift_l16; shift(2).to_l16; end
   def shift_b16; shift(2).to_b16; end
   def shift_u8; shift(1).to_u8; end
+  
+  def shift(count=1)
+      return self if count == 0
+      slice! 0..(count-1)
+  end
 end
 
 class Integer

@@ -1,5 +1,17 @@
 module Ragweed; end
 module Ragweed::Wraposx::ThreadInfo
+  class << self
+    #factory method to get a ThreadInfo variant
+    def self.get(flavor,tid)
+      found = false
+      klass = self.constants.detect{|c| con = self.const_get(c); con.kind_of?(Class) && (flavor == con.const_get(:FLAVOR))}
+      if klass.nil?
+        raise Ragwed::Wraposx::KErrno::INVALID_ARGUMENT
+      else
+        klass.get(tid)
+      end
+    end
+  end
 
   # info interfaces
   BASIC_INFO = 3  #basic information
@@ -58,7 +70,7 @@ module Ragweed::Wraposx::ThreadInfo
           "#{f[0]}=#{send(f[0]).to_s}"
         end.join(", ")
       end
-      "#<#{self.class} #{body.call}>"
+      "#<#{self.class.name.split('::').last(2).join('::')} #{body.call}>"
     end
 
     def self.get(t)
@@ -91,7 +103,7 @@ module Ragweed::Wraposx::ThreadInfo
     
     attr_accessor :user_time
     attr_accessor :system_time
-    alias_method :__refresh :refresh
+    alias_method :__refresh, :refresh
     (FIELDS = [ [:user_time_s, "I"],
                 [:user_time_us, "I"],
                 [:system_time_s, "I"],
