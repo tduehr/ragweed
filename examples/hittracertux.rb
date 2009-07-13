@@ -1,9 +1,10 @@
 #!/usr/bin/env ruby
 
+require 'ragweed'
 require 'debuggertux'
 require 'pp'
 require 'irb'
-include Ragweed
+#include Ragweed
 
 filename = ARGV[0]
 pid = ARGV[1].to_i

@@ -3,21 +3,22 @@
 ## Simple example of attaching to a process and letting it run
 
 require 'pp'
+require 'ragweed'
 require 'debuggertux'
 include Ragweed
 
-pid = Debuggertux.find_by_regex(/gcalctool/)
+pid = Ragweed::Debuggertux.find_by_regex(/gcalctool/)
 
-begin
-	t = Debuggertux.get_thread_pids(pid)
+#begin
+	t = Ragweed::Debuggertux.threads(pid)
 	puts "Which thread do you want to attach to?"
 	t.each do |h| puts h end
 	pid = STDIN.gets.chomp.to_i
 
-	d = Debuggertux.new(pid)
+	d = Ragweed::Debuggertux.new(pid)
 	d.attach
 	d.continue
 	catch(:throw) { d.loop }
-rescue
-	puts "Maybe your PID is wrong?"
-end
+#rescue
+#	puts "Maybe your PID is wrong?"
+#end

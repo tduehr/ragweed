@@ -1,3 +1,7 @@
-#include Ragweed
+## New 'ThreadInfo' sub module
+## so Wraptux matches the API 
+module Ragweed; end
+module Ragweed::Wraptux; end
 
-# Todo :)
+module Ragweed::Wraptux::ThreadInfo
+end
