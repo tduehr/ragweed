@@ -1,5 +1,3 @@
-require 'ragweed/wraptux'
-
 ## Modeled after wraposx written by tduehr
 
 module Ragweed; end
