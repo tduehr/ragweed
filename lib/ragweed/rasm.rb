@@ -5,7 +5,7 @@ module Ragweed; end
 module Ragweed::Rasm
 
   # :stopdoc:
-  VERSION = '0.1.6'
+  VERSION = '0.1.7'
   LIBPATH = ::File.expand_path(::File.dirname(__FILE__)) + ::File::SEPARATOR
   PATH = ::File.dirname(LIBPATH) + ::File::SEPARATOR
   # :startdoc:

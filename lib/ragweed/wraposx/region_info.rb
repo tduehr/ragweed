@@ -26,9 +26,9 @@ module Ragweed::Wraposx::Vm
   #define VM_REGION_BASIC_INFO_COUNT ((mach_msg_type_number_t) (sizeof(vm_region_basic_info_data_t)/sizeof(int)))
   #define VM_REGION_EXTENDED_INFO_COUNT   ((mach_msg_type_number_t) (sizeof(vm_region_extended_info_data_t)/sizeof(int)))
   #define VM_REGION_TOP_INFO_COUNT ((mach_msg_type_number_t) (sizeof(vm_region_top_info_data_t)/sizeof(int)))
-  FLAVORS = { REGION_BASIC_INFO => {:size => 30, :count => 9},
-      REGION_EXTENDED_INFO => {:size => 32, :count => 9},
-      REGION_TOP_INFO => {:size => 17,:count => 9}
+  FLAVORS = { REGION_BASIC_INFO => {:size => 30, :count => 8},
+      REGION_EXTENDED_INFO => {:size => 32, :count => 8},
+      REGION_TOP_INFO => {:size => 17,:count => 5}
   }
 
   module Pflags
@@ -39,8 +39,8 @@ module Ragweed::Wraposx::Vm
 end
 
 # Memory region info base class.
-# Currently Apple only supports the basic flavor. The other two flavors
-# are included for completeness.
+#
+# to change slightly in 0.2.0+
 #
 class Ragweed::Wraposx::RegionInfo
   def initialize(str=nil)
@@ -113,7 +113,8 @@ class Ragweed::Wraposx::RegionBasicInfo < Ragweed::Wraposx::RegionInfo
               [:offset, "L"],           # The region's offset into the memory object. The region begins at this offset. 
               [:behavior, "i"],         # Expected reference pattern for the memory.
               [:user_wired_count, "S"],
-              [:size, "I"]              # size of memory region returned
+              [:size, "I"],              # size of memory region returned
+              [:base_address, "L"]
               ]).each {|x| attr_accessor x[0]}
 
   def dump(&block)
@@ -122,7 +123,9 @@ class Ragweed::Wraposx::RegionBasicInfo < Ragweed::Wraposx::RegionInfo
 
     string =<<EOM
     -----------------------------------------------------------------------
-    INFO:
+    BASIC INFO:
+    base address:     #{self.base_address.to_s(16).rjust(8, "0")}
+    
     protection:       #{self.protection.to_s(2).rjust(8, "0")} #{Ragweed::Wraposx::Vm::Pflags.flag_dump(self.protection)}
     max_protection:   #{self.max_protection.to_s(2).rjust(8, "0")} #{Ragweed::Wraposx::Vm::Pflags.flag_dump(self.max_protection)}
     inheritance:      #{self.inheritance.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.inheritance)}
@@ -153,7 +156,8 @@ class Ragweed::Wraposx::RegionExtendedInfo < Ragweed::Wraposx::RegionInfo
               [:shadow_depth, "S"],
               [:external_pager, "C"],
               [:share_mode, "C"],
-              [:size, "I"] ]).each {|x| attr_accessor x[0]}
+              [:size, "I"],
+              [:base_address, "I"] ]).each {|x| attr_accessor x[0]}
 
   def dump(&block)
     maybe_hex = lambda {|a| begin; "\n" + (" " * 9) + block.call(a, 16).hexdump(true)[10..-2]; rescue; ""; end }      
@@ -161,7 +165,9 @@ class Ragweed::Wraposx::RegionExtendedInfo < Ragweed::Wraposx::RegionInfo
 
     string =<<EOM
     -----------------------------------------------------------------------
-    INFO:
+    EXTENDED INFO:
+    base address:             #{self.base_address.to_s(16).rjust(8, "0")}
+    
     protection:               #{self.protection.to_s(2).rjust(8, "0")} #{Ragweed::Wraposx::Vm::Pflags.flag_dump(self.protection)}
     user_tag:                 #{self.user_tag.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.user_tag)}
     pages_resident:           #{self.pages_resident.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.pages_resident)}
@@ -190,7 +196,8 @@ class Ragweed::Wraposx::RegionTopInfo < Ragweed::Wraposx::RegionInfo
               [:private_pages_resident, "I"],
               [:shared_pages_resident, "I"],
               [:share_mode, "C"],
-              [:size, "I"]]).each {|x| attr_accessor x[0]}
+              [:size, "I"],
+              [:base_address,"I"]]).each {|x| attr_accessor x[0]}
 
   def dump(&block)
     maybe_hex = lambda {|a| begin; "\n" + (" " * 9) + block.call(a, 16).hexdump(true)[10..-2]; rescue; ""; end }
@@ -198,7 +205,9 @@ class Ragweed::Wraposx::RegionTopInfo < Ragweed::Wraposx::RegionInfo
 
     string =<<EOM
     -----------------------------------------------------------------------
-    INFO:
+    TOP INFO:
+    base address:           #{self.base_address.to_s(16).rjust(8, "0")}
+    
     obj_id:                 #{self.obj_id.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.obj_id)}
     ref_count:              #{self.ref_count.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.ref_count)}
     private_pages_resident: #{self.private_pages_resident.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.private_pages_resident)}
@@ -218,8 +227,9 @@ module Ragweed::Wraposx
 
     # Returns a string containing the memory region information for task
     # at address.
-    # Currently Apple only supports the basic flavor. The other two flavors
-    # are included for completeness.
+    #
+    # The order of the elements in the returned string will change in 0.2.0+
+    # to match the argument order.
     #
     # kern_return_t   vm_region
     #                  (vm_task_t                    target_task,
@@ -230,14 +240,15 @@ module Ragweed::Wraposx
     #                   mach_msg_type_number_t        info_count,
     #                   memory_object_name_t         object_name);
     def vm_region_raw(task, address, flavor)
-      info = ("\x00"*64).to_ptr
+      info = ("\x00"*Vm::FLAVORS[flavor][:size]).to_ptr
       count = ([Vm::FLAVORS[flavor][:count]].pack("I_")).to_ptr
       address = ([address].pack("I_")).to_ptr
       objn = ([0].pack("I_")).to_ptr
       sz = ("\x00"*SIZEOFINT).to_ptr
-      r = CALLS["libc!vm_region:IPPIPPP=I"].call(task, address, sz, Vm::FLAVORS[flavor][:count], info, count, objn).first
+      r = CALLS["libc!vm_region:IPPIPPP=I"].call(task, address, sz, flavor, info, count, objn).first
       raise KernelCallError.new(:vm_region, r) if r != 0
-      return "#{info.to_s(Vm::FLAVORS[flavor][:size])}#{sz.to_s(SIZEOFINT)}"
+      # this 
+      return "#{info.to_s(Vm::FLAVORS[flavor][:size])}#{sz.to_s(SIZEOFINT)}#{address.to_s(SIZEOFINT)}"
     end
   end
 end

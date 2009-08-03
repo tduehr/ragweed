@@ -209,17 +209,19 @@ module Ragweed::Wraposx
   class << self
 
     # Returns the packed string representation of the thread_info_t struct for later parsing.
+    #
     # kern_return_t   thread_info
     #                (thread_act_t                     target_thread,
     #                 thread_flavor_t                         flavor,
     #                 thread_info_t                      thread_info,
     #                 mach_msg_type_number_t       thread_info_count);
     def thread_info_raw(thread, flavor)
-      info = ("\x00"*1024).to_ptr
+      raise KErrno::INVALID_ARGUMENT if ThreadInfo::FLAVORS[flavor].nil?
+      info = ("\x00"*ThreadInfo::FLAVORS[flavor][:size]).to_ptr
       count = ([Ragweed::Wraposx::ThreadInfo::FLAVORS[flavor][:count]].pack("I_")).to_ptr
       r = CALLS["libc!thread_info:IIPP=I"].call(thread,flavor,info,Ragweed::Wraposx::ThreadInfo::FLAVORS[flavor][:count]).first
       raise KernelCallError.new(r) if r != 0
-      return info.to_s(Ragweed::Wraposx::ThreadInfo::FLAVORS[flavor][:size])
+      return "#{info.to_s(ThreadInfo::FLAVORS[flavor][:size])}#{count.to_s(SizeOf::INT)}"
     end
   end
 end

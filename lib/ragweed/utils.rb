@@ -41,6 +41,19 @@ class String
       return self if count == 0
       slice! 0..(count-1)
   end
+
+  # Convert a string into hex characters
+  def hexify
+      l = []
+      each_byte{|b| l << "%02x" % b}
+      l.join
+  end
+
+  # Convert a string of raw hex characters (no %'s or anything) into binary
+  def dehexify
+      (ret||="") << (me||=clone).shift(2).to_i(16).chr while not (me||=clone).empty?
+      return ret
+  end
 end
 
 class Integer

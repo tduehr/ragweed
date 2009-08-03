@@ -23,7 +23,9 @@ module Ragweed::Wraposx::Ptrace
 end
 
 module Ragweed::Wraposx::Signal
-  #the Ruby module Signal also has this information
+  # the Ruby module Signal also has this information.
+  # in reality, that is a better source since it's based on the signals
+  # available at the time ruby was compiled.
   SIGHUP = 1 # hangup
   SIGINT = 2 # interrupt
   SIGQUIT = 3 # quit
@@ -77,12 +79,31 @@ end
 
 module Ragweed::Wraposx::Vm; end
 module Ragweed::Wraposx::Vm::Prot
-  #vm_protect permission flags for memory spaces
+  # vm_protect permission flags for memory spaces
   READ = 0x1 #read permission
   WRITE = 0x2 #write permission
   EXECUTE = 0x4 #execute permission
   NONE = 0x0 #no rights
   ALL = 0x7 #all permissions
+end
+module Ragweed::Wraposx::Vm::Sm
+  # share mode constants
+  COW = 1
+  PRIVATE = 2
+  EMPTY = 3
+  SHARED = 4
+  TRUESHARED = 5
+  PRIVATE_ALIASED = 6
+  SHARED_ALIASED = 7
+end
+
+# this should be moved to an include for all wrappers
+module Ragweed::Wraposx::SizeOf
+  INT = [1].pack("I_").size
+  SHORT = [1].pack("S_").size
+  LONG = [1].pack("L_").size
+  DOUBLE = [1].pack("D").size
+  FLOAT = [1].pack("F").size
 end
 
 module Ragweed::Wraposx::Dl
