@@ -1,3 +1,4 @@
+require ::File.join(::File.dirname(__FILE__),'wraptux')
 ## Modeled after wraposx written by tduehr
 
 module Ragweed; end

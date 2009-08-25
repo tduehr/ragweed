@@ -1,4 +1,4 @@
-require 'ragweed/rasm'
+require ::File.join(::File.dirname(__FILE__),'rasm')
 
 pushv = $VERBOSE
 $VERBOSE = nil

@@ -1,4 +1,4 @@
-require 'ragweed/wraposx'
+require ::File.join(::File.dirname(__FILE__),'wraposx')
 
 module Ragweed; end
 

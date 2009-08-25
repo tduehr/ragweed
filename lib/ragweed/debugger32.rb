@@ -1,4 +1,4 @@
-require 'ragweed/wrap32'
+require ::File.join(::File.dirname(__FILE__),'wrap32')
 
 # I am not particularly proud of this code, which I basically debugged
 # into existence, but it does work.

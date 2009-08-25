@@ -42,7 +42,7 @@ module Ragweed::Wraposx
     search_me = ::File.expand_path(
         ::File.join(::File.dirname(fname), dir, '**', '*.rb'))
     
-    Dir.glob(search_me).sort.each {|rb| require rb}
+    Dir.glob(search_me).reject{|rb| rb =~ /#{__FILE__}/}.sort.each {|rb| require rb}
     # require File.dirname(File.basename(__FILE__)) + "/#{x}"
 
   end

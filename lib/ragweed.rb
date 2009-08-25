@@ -40,7 +40,7 @@ module Ragweed
         ::File.join(::File.dirname(fname), dir, '**', '*.rb'))
 
     # Don't want to load wrapper or debugger here.
-    Dir.glob(search_me).sort.reject{|rb| rb =~ /(wrap|debugger|rasm[^.])/}.each {|rb| require rb}
+    Dir.glob(search_me).sort.reject{|rb| rb =~ /(wrap|debugger|rasm[^\.])/}.each {|rb| require rb}
     # require File.dirname(File.basename(__FILE__)) + "/#{x}"d
   end
 
@@ -62,8 +62,8 @@ module Ragweed
     end
     
     if not pkgs.empty?
-      search_me = File.expand_path(File.join(File.dirname(fname), dir,"**", "*#{pkgs}.rb"))
-      Dir.glob(search_me).sort.each {|rb| require rb}
+      search_me = File.expand_path(File.join(File.dirname(fname), dir, "*#{pkgs}.rb"))
+      Dir.glob(search_me).sort.reverse.each {|rb| require rb}
     end
   end
 end  # module Ragweed
