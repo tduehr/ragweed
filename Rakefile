@@ -19,11 +19,13 @@ require 'ragweed'
 task :default => 'spec:run'
 
 PROJ.name = 'ragweed'
+PROJ.ignore_file = '.gitignore'
 PROJ.authors = 'tduehr, tqbf, struct'
 PROJ.email = 'td@matasano.com'
-PROJ.url = 'github.com/tduehr/ragweed'
+PROJ.description = 'General debugging tool written in Ruby for OSX/Win32/Linux'
+PROJ.url = 'http://github.com/tduehr/ragweed/tree/master'
 PROJ.version = Ragweed::VERSION
-PROJ.rubyforge.name = 'ragweed'
+# PROJ.rubyforge.name = 'ragweed'
 
 PROJ.spec.opts << '--color'
 

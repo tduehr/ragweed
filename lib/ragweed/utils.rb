@@ -21,6 +21,19 @@ class Object
       def mymethods
         (self.methods - self.class.superclass.methods).sort
       end
+      # self-evident
+      def callable?; respond_to? :call; end
+      def number?; kind_of? Numeric; end
+
+      # while X remains callable, keep calling it to get its value
+      def derive
+        # also, don't drink and derive
+        x = self
+        while x.callable?
+          x = x()
+        end
+        return x
+      end
     end
     include ObjectExtensions
 end

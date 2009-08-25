@@ -3,12 +3,13 @@
 # Rasm: a half-assed X86 assembler.
 #
 # Rasm implements a small subset of the X86 instruction set, and only in
-# simple encodings. 
+# simple encodings.
 #
 # However, Rasm implements enough X86 to do interesting things. I wrote it
 # to inject trampoline functions and detours into remote processes. This
-# is Ruby code; you'd never use it where performance matters. It's not 
+# is Ruby code; you'd never use it where performance matters. It's not
 # enough to write a decent compiler, but it's enough to fuck up programs.
+module Ragweed; end
 module Ragweed::Rasm
   class NotImp < RuntimeError; end
   class Insuff < RuntimeError; end
@@ -39,6 +40,8 @@ module Ragweed::Rasm
       (rc1 << 8|rc2)
     end
 
+    def scaled?; @scale and @scale > 0; end
+    def combined?; @combined; end
     def reg1
       if combined?
         self.class.new((code>>8)&0xff)
@@ -68,7 +71,7 @@ module Ragweed::Rasm
       elsif x.kind_of? Register
         ret = clone
         ret.combined = true
-        ret.indir = 1 
+        ret.indir = 1
         ret.scale = x.scale
         ret.code = self.class.comb(ret.code, x.code)
         return ret
@@ -101,19 +104,16 @@ module Ragweed::Rasm
       end
 
       return self
-    end  
+    end
 
-    def scaled?; @scale and @scale > 0; end
-    def combined?; @combined; end
-
-    def self.eax(opts={}); Eax.clone.regopts opts; end      
-    def self.ecx(opts={}); Ecx.clone.regopts opts; end      
-    def self.edx(opts={}); Edx.clone.regopts opts; end      
-    def self.ebx(opts={}); Ebx.clone.regopts opts; end      
-    def self.esp(opts={}); Esp.clone.regopts opts; end      
-    def self.ebp(opts={}); Ebp.clone.regopts opts; end      
-    def self.esi(opts={}); Esi.clone.regopts opts; end      
-    def self.edi(opts={}); Edi.clone.regopts opts; end      
+    def self.eax(opts={}); Eax.clone.regopts opts; end
+    def self.ecx(opts={}); Ecx.clone.regopts opts; end
+    def self.edx(opts={}); Edx.clone.regopts opts; end
+    def self.ebx(opts={}); Ebx.clone.regopts opts; end
+    def self.esp(opts={}); Esp.clone.regopts opts; end
+    def self.ebp(opts={}); Ebp.clone.regopts opts; end
+    def self.esi(opts={}); Esi.clone.regopts opts; end
+    def self.edi(opts={}); Edi.clone.regopts opts; end
 
     def initialize(code, opts={})
       @combined = false
@@ -132,7 +132,7 @@ module Ragweed::Rasm
       @disp = disp
       @indir = true
     end
-  end  
+  end
 
   ## ------------------------------------------------------------------------
 
@@ -146,7 +146,7 @@ module Ragweed::Rasm
   Esp = Register.new(Register::ESP)
   Ebp = Register.new(Register::EBP)
   Esi = Register.new(Register::ESI)
-  Edi = Register.new(Register::EDI)  
+  Edi = Register.new(Register::EDI)
   def eax(opts={}); Register.eax opts; end
   def ecx(opts={}); Register.ecx opts; end
   def edx(opts={}); Register.edx opts; end
@@ -167,14 +167,14 @@ module Ragweed::Rasm
   ## ------------------------------------------------------------------------
 
   # A code fragment. Push instructions into it. You can push Label
-  # objects to create jump targets. 
+  # objects to create jump targets.
   class Subprogram < Array
 
     # Patch code offsets into the instructions to replace abstract
     # labels. Produces raw instruction stream.
     def assemble
       patches = {}
-      buf = Ragweed::Sbuf.new
+      buf = Sbuf.new
 
       each do |i|
         if i.kind_of? Instruction
@@ -183,11 +183,11 @@ module Ragweed::Rasm
         else
           patches[i] = buf.size
         end
-      end     
-      
+      end
+
       select {|i| i.kind_of? Instruction}.each {|i| i.patch(patches)}
       buf.clear!
-      select {|i| i.kind_of? Instruction}.each {|i| 
+      select {|i| i.kind_of? Instruction}.each {|i|
         buf.straw(i.to_s)
       }
 
@@ -197,12 +197,12 @@ module Ragweed::Rasm
     # Produce an array of insns. This is pretty much broken, because
     # it doesn't pre-patch the instructions.
     def disassemble
-      select {|i| i.kind_of? Rasm::Intruction}.map {|i| i.decode}
+      select {|i| i.kind_of? Rasm::Instruction}.map {|i| i.decode}
     end
 
     def dump_disassembly
-      disassemble.each do |insn|
-        puts "#{ insn.off.to_x } #{ insn.mnem }" 
+      disassemble.each_with_index do |insn, i|
+        puts "#{ i } #{ insn.mnem }"
       end
     end
   end
@@ -256,21 +256,21 @@ module Ragweed::Rasm
         v = Immed.new(v) if v.number?
       end
       v
-    end      
+    end
 
     def src=(v); @src = coerce(v); end
     def dst=(v); @dst = coerce(v); end
 
-    # Never called directly (see subclasses below)    
+    # Never called directly (see subclasses below)
     def initialize(x=nil, y=nil)
-      @buf = Ragweed::Sbuf.new
+      @buf = Sbuf.new
       self.src = y
       self.dst = x
       @loc = nil
     end
 
     # Disassemble the instruction (mostly for testing)
-    def decode; Frasm::DistormDecoder.new.decode(self.to_s)[0]; end
+    # def decode; Frasm::DistormDecoder.new.decode(self.to_s)[0]; end
 
     # What Subprogram#assemble uses to patch instruction locations.
     # Not user-servicable
@@ -287,7 +287,7 @@ module Ragweed::Rasm
         end
       end
     end
-    
+
     # Calculate ModR/M bits for the instruction; this is
     # the source/destination operand encoding.
     def modrm(op1, op2)
@@ -320,7 +320,7 @@ module Ragweed::Rasm
         return 0xc0 + (op2.code << 3) + op1.code
       end
     end
-    
+
     def sib(indir, alt, base)
       modpart = (base+4) + (alt.code << 3)
 
@@ -340,7 +340,7 @@ module Ragweed::Rasm
       end
 
       col = indir.reg1.code
-      
+
       if indir.combined?
         row = indir.reg2.code
       else
@@ -350,7 +350,7 @@ module Ragweed::Rasm
       pp [col,row,sbase]
 
       sibpart = sbase + (row << 3) + (col)
-      
+
       return (modpart.chr) + (sibpart.chr)
     end
 
@@ -382,7 +382,7 @@ module Ragweed::Rasm
   end
 
   ## ------------------------------------------------------------------------
-  
+
   # Jump to a relative offset (pos or neg), a register, or an address
   # in memory. Can take Labels instead of values, let patch figure out
   # the rest.
@@ -393,7 +393,7 @@ module Ragweed::Rasm
     # no far yet
 
     def initialize(x=nil); super x; end
-    
+
     def to_s
       raise Insuff if not @dst
       if dst_imm? or dst_lab?
@@ -441,7 +441,7 @@ module Ragweed::Rasm
 
   # Push a register, register-addressed memory location, or immediate
   # onto the stack.
-  class Push < Instruction 
+  class Push < Instruction
     # ff r/m
     # 50+ r
     # 6a imm8
@@ -456,7 +456,7 @@ module Ragweed::Rasm
         if @dst.indir
           add(0xff)
           add(modrm(@dst, Esi.clone))
-          add(@dst.disp) 
+          add(@dst.disp)
         else
           add(0x50 + @dst.code)
         end
@@ -485,7 +485,7 @@ module Ragweed::Rasm
 
     def to_s
       raise Insuff if not @dst
-      
+
       if dst_reg?
         add(0xff)
         add(modrm(@dst, Edx.clone))
@@ -501,7 +501,7 @@ module Ragweed::Rasm
 
   # Return; provide immediate for stack adjustment if you want.
   class Ret < Instruction
-    # c3 
+    # c3
     # c2 imm16
 
     def initialize( dst=nil); super dst; end
@@ -543,7 +543,7 @@ module Ragweed::Rasm
           if @src.val < 0x100
             add(@imp8)
             add(@src.val)
-          else 
+          else
             add(@imp)
             add(@src.val)
           end
@@ -587,9 +587,10 @@ module Ragweed::Rasm
       @x = Eax.clone
     end
   end
+  Addl = Add
 
   ## ------------------------------------------------------------------------
-  
+
   # SUB
   class Sub < Arith
     def initialize(*args)
@@ -670,7 +671,7 @@ module Ragweed::Rasm
 
   # CMP is SUB + condition code
   class Cmp < Instruction
-    # 3c imm8 
+    # 3c imm8
     # 3d imm
     # 80/7 r/m8, imm8
     # 81/7 r/m, imm
@@ -725,16 +726,16 @@ module Ragweed::Rasm
 
   # Wrapper for INC and DEC, not called directly.
   class IncDec < Instruction
-    # fe/0 r/m8
-    # ff/0 r/m
-    # 40+ (reg)
-            
+      # fe/0 r/m8
+      # ff/0 r/m
+      # 40+ (reg)
+
     def initialize( dst=nil); super dst; end
 
     def to_s
       raise Insuff if not @dst
       raise(BadArg, "need a register") if not dst_reg?
-  
+
       if @dst.indir
         add(0xff)
         add(modrm(@dst, @var))
@@ -748,7 +749,7 @@ module Ragweed::Rasm
   ## ------------------------------------------------------------------------
 
   # INC memory or register
-  class Inc < IncDec 
+  class Inc < IncDec
     def initialize(*args)
       super *args
       @var = Eax.clone
@@ -759,7 +760,7 @@ module Ragweed::Rasm
   ## ------------------------------------------------------------------------
 
   # DEC memory or register
-  class Dec < IncDec 
+  class Dec < IncDec
     def initialize(*args)
       super *args
       @var = Ecx.clone
@@ -916,7 +917,7 @@ module Ragweed::Rasm
   # Wrapper for conditional jumps, see below
   class Jcc < Instruction
 
-    def m; [nil,nil]; end 
+    def m; [nil,nil]; end
     def initialize( dst)
       super dst
       @short, @near = m()
@@ -1012,9 +1013,33 @@ module Ragweed::Rasm
   class Js < Jcc;  def m; [0x78,  0x88]; end; end
   # Zero
   class Jz < Jcc;  def m; [0x74,  0x84]; end; end
-  
+
   ## ------------------------------------------------------------------------
-  
+
+  class Pushf < Instruction
+      # 9c pushfd
+
+      def initialize; end
+      def to_s
+          raise(TooMan, "too many arguments") if @src or @dst
+          add(0x9c)
+      end
+  end
+
+  ## ------------------------------------------------------------------------
+
+  class Popf < Instruction
+      # 9d popfd
+
+      def initialize; end
+      def to_s
+          raise(TooMan, "too many arguments") if @src or @dst
+          add(0x9d)
+      end
+  end
+
+  ## ------------------------------------------------------------------------
+
   # INT 3, mostly, but will do INT X
   class Int < Instruction
     ## cc int 3
