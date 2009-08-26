@@ -138,7 +138,7 @@ class Ragweed::Sbuf
   def eof?; @position >= length; end
   def clear!; @content = "" and reset; end
   def remainder(n = position); @content[n..-1] || ""; end
-  def remainder_as_buffer(t=Sbuf); t.new(:content => remainder); end
+  def remainder_as_buffer(t=Ragweed::Sbuf); t.new(:content => remainder); end
 
   def self.szl64; 8; end
   def self.szb64; 8; end

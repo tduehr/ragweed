@@ -174,7 +174,7 @@ module Ragweed::Rasm
     # labels. Produces raw instruction stream.
     def assemble
       patches = {}
-      buf = Sbuf.new
+      buf = Ragweed::Sbuf.new
 
       each do |i|
         if i.kind_of? Instruction
@@ -263,7 +263,7 @@ module Ragweed::Rasm
 
     # Never called directly (see subclasses below)
     def initialize(x=nil, y=nil)
-      @buf = Sbuf.new
+      @buf = Ragweed::Sbuf.new
       self.src = y
       self.dst = x
       @loc = nil
