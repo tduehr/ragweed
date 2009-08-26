@@ -397,10 +397,10 @@ class Ragweed::Debuggerosx
     # Extended and Top info flavors are included in case Apple re implements them
     when :extended
       warn "VM Region Extended Info not implemented by Apple. Returning RegionBasicInfo"
-      return Ragweed::Wraposx::RegionBasicInfo.get(@task, addr)
+      return Ragweed::Wraposx::RegionExtendedInfo.get(@task, addr)
     when :top
       warn "VM Region Top Info not implemented be Apple. Returning RegionBasicInfo"
-      return Ragweed::Wraposx::RegionBasicInfo.get(@task, addr)
+      return Ragweed::Wraposx::RegionTopInfo.get(@task, addr)
     else
       warn "Unknown flavor requested. Returning RegionBasicInfo."
       return Ragweed::Wraposx::RegionBasicInfo.get(@task, addr)
