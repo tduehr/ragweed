@@ -27,17 +27,17 @@ class Ragweed::Event
   # Don't return until the event is signalled. Note that you
   # can't break this with timeouts or CTR-C.
   def wait
-    Wrap32::wait_for_single_object @h
+    Ragweed::Wrap32::wait_for_single_object @h
   end
 
   # Signal the event; anyone waiting on it is now released.
   def signal
-    Wrap32::set_event(@h)
+    Ragweed::Wrap32::set_event(@h)
   end
 
   # Force the event back to unsignalled state.
   def reset
-    Wrap32::reset_event(@h)
+    Ragweed::Wrap32::reset_event(@h)
   end
 
   # A wait loop.

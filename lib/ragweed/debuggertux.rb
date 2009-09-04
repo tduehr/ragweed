@@ -13,7 +13,7 @@ module Ragweed; end
 ##     debugger and define your own on_whatever events. If you handle an event
 ##     that Debuggertux already handles, call "super", too.
 class Ragweed::Debuggertux
-  include Ragweed
+  # include Ragweed
 
   attr_reader :pid
   attr_reader :status
@@ -99,16 +99,16 @@ class Ragweed::Debuggertux
 
   ## This is crude!
   def self.find_by_regex(rx)
-	a = Dir.entries("/proc/")
-    a.delete_if do |x| x == '.' end
-    a.delete_if do |x| x == '..' end
-	a.delete_if do |x| x =~ /[a-z]/ end
-	  a.each do |x|
-		f = File.read("/proc/#{x}/cmdline")
-		if f =~ rx
-			return x
-	    end
-	  end
+    a = Dir.entries("/proc/")
+    a.delete_if do |x| x == '.'; end
+    a.delete_if do |x| x == '..'; end
+    a.delete_if do |x| x =~ /[a-z]/; end
+    a.each do |x|
+      f = File.read("/proc/#{x}/cmdline")
+      if f =~ rx
+        return x
+      end
+    end
   end
 
   def install_bps
@@ -128,24 +128,24 @@ class Ragweed::Debuggertux
   ## Attach calls install_bps so dont forget to call breakpoint_set
   ## BEFORE attach or explicitly call install_bps
   def attach(opts=@opts)
-    Wraptux::ptrace(Ragweed::Wraptux::Ptrace::ATTACH, @pid, 0, 0)
+    Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::ATTACH, @pid, 0, 0)
     @attached = true
     self.install_bps if (opts[:install] and not @installed)
   end
 
   def continue
     on_continue
-    Wraptux::ptrace(Ragweed::Wraptux::Ptrace::CONTINUE, @pid, 0, 0)
+    Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::CONTINUE, @pid, 0, 0)
   end
 
   def detach
     on_detach
-    Wraptux::ptrace(Ragweed::Wraptux::Ptrace::DETACH, @pid, 0, 0)
+    Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::DETACH, @pid, 0, 0)
   end
 
   def stepp
 	on_stepp
-    ret = Wraptux::ptrace(Ragweed::Wraptux::Ptrace::STEP, @pid, 1, 0)
+    ret = Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::STEP, @pid, 1, 0)
   end
 
   ## Adds a breakpoint to be installed
@@ -205,7 +205,7 @@ class Ragweed::Debuggertux
   ## originally stored with it. If its a different signal,
   ## then process it accordingly and move on
   def wait(opts = 0)
-    r = Wraptux::waitpid(@pid,opts)
+    r = Ragweed::Wraptux::waitpid(@pid,opts)
     status = r[1]
     wstatus = status & 0x7f
     signal = status >> 8
@@ -218,13 +218,13 @@ class Ragweed::Debuggertux
       when wstatus != 0x7f ##WIFSIGNALED
         @exited = false
         self.on_signal
-      when signal == Wraptux::Signal::SIGINT
+      when signal == Ragweed::Wraptux::Signal::SIGINT
         self.continue
-      when signal == Wraptux::Signal::SIGSEGV
+      when signal == Ragweed::Wraptux::Signal::SIGSEGV
         self.on_segv
-      when signal == Wraptux::Signal::SIGILL
+      when signal == Ragweed::Wraptux::Signal::SIGILL
         self.on_illegalinst
-      when signal == Wraptux::Signal::SIGTRAP
+      when signal == Ragweed::Wraptux::Signal::SIGTRAP
         ## Check if EIP matches a breakpoint we have set
         r = self.get_registers
         eip = r[:eip]
@@ -236,9 +236,9 @@ class Ragweed::Debuggertux
           puts "We got a SIGTRAP but not at our breakpoint... continuing"
         end
         self.continue
-      when signal == Wraptux::Signal::SIGCONT
+      when signal == Ragweed::Wraptux::Signal::SIGCONT
         self.continue
-      when signal == Wraptux::Signal::SIGSTOP
+      when signal == Ragweed::Wraptux::Signal::SIGSTOP
         self.continue
       else
         raise "Add more signal handlers (##{signal})"
@@ -255,17 +255,17 @@ class Ragweed::Debuggertux
 
   ## Gets the registers for the given process
   def get_registers
-    size = Wraptux::SIZEOFLONG * 17
+    size = Ragweed::Wraptux::SIZEOFLONG * 17
     regs = Array.new(size)
     regs = regs.to_ptr
     regs.struct!('LLLLLLLLLLLLLLLLL', :ebx,:ecx,:edx,:esi,:edi,:ebp,:eax,:xds,:xes,:xfs,:xgs,:orig_eax,:eip,:xcs,:eflags,:esp,:xss)
-    Wraptux::ptrace(Ragweed::Wraptux::Ptrace::GETREGS, @pid, 0, regs.to_i)
+    Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::GETREGS, @pid, 0, regs.to_i)
     return regs
   end
 
   ## Sets registers for the given process
   def set_registers(r)
-    Wraptux::ptrace(Ragweed::Wraptux::Ptrace::SETREGS, @pid, 0, r.to_i)
+    Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::SETREGS, @pid, 0, r.to_i)
   end
 
   ## Here we need to do something about the bp
@@ -284,14 +284,14 @@ class Ragweed::Debuggertux
       set_registers(r)
       stepp
       ## ptrace peektext returns -1 upon reinstallation of bp without calling
-	  ## waitpid() if that occurs the breakpoint cannot be reinstalled
-      Wraptux::waitpid(@pid, 0)
+      ## waitpid() if that occurs the breakpoint cannot be reinstalled
+      Ragweed::Wraptux::waitpid(@pid, 0)
       @breakpoints[eip].first.install
     end
   end
 
   def print_regs
-	regs = self.get_registers
+    regs = self.get_registers
     puts "eip %08x" % regs[:eip]
     puts "edi %08x" % regs[:esi]
     puts "edi %08x" % regs[:edi]
@@ -332,15 +332,15 @@ class Ragweed::Debuggertux
   end
 
   def on_stepp
-	#puts "single stepping"
+    #puts "single stepping"
   end
 
   def on_segv
-	print_regs
+    print_regs
     exit
   end
 
   def default_opts(opts)
-	@opts = @opts.merge(opts)
+    @opts = @opts.merge(opts)
   end
 end

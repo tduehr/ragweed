@@ -6,7 +6,7 @@ class Ragweed::Process
   include Ragweed
 
   def self.find_by_regex(name)
-    Wrap32::all_processes do |p|
+    Ragweed::Wrap32::all_processes do |p|
       if p.szExeFile =~ name
         return self.new(p.th32ProcessID)
       end
@@ -23,7 +23,7 @@ class Ragweed::Process
 
   # clone a handle from the remote process to here (to here? tf?)
   def dup_handle(h)
-    Wrap32::duplicate_handle(@h, h)
+    Ragweed::Wrap32::duplicate_handle(@h, h)
   end
 
   # look up a process by its name --- but this is in the local process,
@@ -31,7 +31,7 @@ class Ragweed::Process
   # but probably never otherwise.
   def get_proc(name)
     return Ptr.new(name) if name.kind_of? Numeric or name.kind_of? Ptr
-    ptr(Wrap32::get_proc_address(name))
+    ptr(Ragweed::Wrap32::get_proc_address(name))
   end
 
   def get_proc_remote(name)
@@ -58,14 +58,14 @@ class Ragweed::Process
   # Just need a PID to get started.
   def initialize(pid) 
     @pid = pid
-    @h = Wrap32::open_process(pid)
+    @h = Ragweed::Wrap32::open_process(pid)
     @a = arena()
   end
 
   # Return the EXE name of the process.
   def image
     buf = "\x00" * 256
-    if Wrap32::nt_query_information_process(@h, 27, buf)
+    if Ragweed::Wrap32::nt_query_information_process(@h, 27, buf)
       buf = buf.from_utf16
       buf = buf[(buf.index("\\"))..-1]
       return buf.asciiz
@@ -76,9 +76,9 @@ class Ragweed::Process
   # Return a list of all the threads in the process; relatively
   # expensive, so cache the result.
   def threads(full=false, &block)
-    return Wrap32::threads(@pid, &block) if block_given?
+    return Ragweed::Wrap32::threads(@pid, &block) if block_given?
     ret = []
-    Wrap32::threads(@pid) {|x| ((full) ? ret << x : ret << x.th32ThreadID) }
+    Ragweed::Wrap32::threads(@pid) {|x| ((full) ? ret << x : ret << x.th32ThreadID) }
     return ret
   end
 
@@ -91,26 +91,26 @@ class Ragweed::Process
 
   # Suspend a thread by tid. Technically, this doesn't need to be
   # a method; you can suspend a thread anywhere without a process handle.
-  def suspend(tid); Wrap32::open_thread(tid) {|x| Wrap32::suspend_thread(x)}; end
+  def suspend(tid); Ragweed::Wrap32::open_thread(tid) {|x| Ragweed::Wrap32::suspend_thread(x)}; end
 
   # Resume a thread by tid.
-  def resume(tid); Wrap32::open_thread(tid) {|x| Wrap32::resume_thread(x)}; end
+  def resume(tid); Ragweed::Wrap32::open_thread(tid) {|x| Ragweed::Wrap32::resume_thread(x)}; end
 
   # List the modules for the process, either yielding a struct for
   # each to a block, or returning a list.
   def modules(&block)
     if block_given?
-      Wrap32::list_modules(@pid, &block)
+      Ragweed::Wrap32::list_modules(@pid, &block)
     else
       ret = []
-      Wrap32::list_modules(@pid) {|x| ret << x}
+      Ragweed::Wrap32::list_modules(@pid) {|x| ret << x}
       return ret
     end
   end
 
   # Read/write ranges of data or fixnums to/from the process by address.
-  def read(off, sz=4096); Wrap32::read_process_memory(@h, off, sz); end
-  def write(off, data); Wrap32::write_process_memory(@h, off, data); end
+  def read(off, sz=4096); Ragweed::Wrap32::read_process_memory(@h, off, sz); end
+  def write(off, data); Ragweed::Wrap32::write_process_memory(@h, off, data); end
   def read32(off); read(off, 4).unpack("L").first; end
   def read16(off); read(off, 2).unpack("v").first; end
   def read8(off); read(off, 1)[0]; end      
@@ -130,11 +130,11 @@ class Ragweed::Process
   end
 
   # Can I write to this address in the process?
-  def writeable?(off); Wrap32::writeable? @h, off; end
+  def writeable?(off); Ragweed::Wrap32::writeable? @h, off; end
 
   # Use VirtualAllocEx to grab a block of memory in the process. This
   # is expensive, the equivalent of mmap()'ing for each allocation. 
-  def syscall_alloc(sz); ptr(Wrap32::virtual_alloc_ex(@h, sz)); end
+  def syscall_alloc(sz); ptr(Ragweed::Wrap32::virtual_alloc_ex(@h, sz)); end
 
   # Use arenas, when possible, to quickly allocate memory. The upside
   # is this is very fast. The downside is you can't free the memory
@@ -150,7 +150,7 @@ class Ragweed::Process
   # Free the return value of syscall_alloc. Do NOT use for the return
   # value of alloc.
   def free(off)
-    Wrap32::virtual_free_ex(@h, off)
+    Ragweed::Wrap32::virtual_free_ex(@h, off)
   end
 
   # Convert an address to "module+10h" notation, when possible.
@@ -199,7 +199,7 @@ class Ragweed::Process
   def list_memory(&block)
     ret = []
     i = 0
-    while (mbi = Wrap32::virtual_query_ex(@h, i))
+    while (mbi = Ragweed::Wrap32::virtual_query_ex(@h, i))
       break if (not ret.empty? and mbi.BaseAddress == 0)
       if block_given?
         yield mbi
@@ -250,8 +250,8 @@ class Ragweed::Process
   # Dump thread context, returning a struct that contains things like
   # .Eip and .Eax.
   def thread_context(tid)
-    Wrap32::open_thread(tid) do |h|
-      Wrap32::get_thread_context(h)
+    Ragweed::Wrap32::open_thread(tid) do |h|
+      Ragweed::Wrap32::get_thread_context(h)
     end
   end
 
@@ -457,7 +457,7 @@ class Ragweed::Process
   # Do something with a thread while its suspended
   def with_suspended_thread(tid)
     ret = nil
-    Wrap32::with_suspended_thread(tid) {|x| ret = yield}
+    Ragweed::Wrap32::with_suspended_thread(tid) {|x| ret = yield}
     return ret
   end
 

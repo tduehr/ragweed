@@ -77,6 +77,12 @@ class Integer
     def to_l16; [self].pack "v"; end
     def to_b16; [self].pack "n"; end
     def to_u8; [self].pack "C"; end
+
+    # sign extend
+    def sx8; ([self].pack "c").unpack("C").first; end
+    def sx16; ([self].pack "s").unpack("S").first; end
+    def sx32; ([self].pack "l").unpack("L").first; end
+
     def ffs
       i = 0
       v = self

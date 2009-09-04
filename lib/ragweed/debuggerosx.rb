@@ -346,6 +346,16 @@ class Ragweed::Debuggerosx
     Ragweed::Wraposx::task_threads(@task)
   end
 
+  # decrement our tasks suspend count
+  def resume_task
+    Ragweed::Wraposx::task_resume(@task)
+  end
+
+  # increment our tasks suspend count
+  def suspend_task
+    Ragweed::Wraposx::task_suspend(@task)
+  end
+
   # returns a Ragweed::Wraposx::ThreadContext object containing the register states
   # thread: thread to get the register state of
   def get_registers(thread=nil)
@@ -396,10 +406,8 @@ class Ragweed::Debuggerosx
 
     # Extended and Top info flavors are included in case Apple re implements them
     when :extended
-      warn "VM Region Extended Info not implemented by Apple. Returning RegionBasicInfo"
       return Ragweed::Wraposx::RegionExtendedInfo.get(@task, addr)
     when :top
-      warn "VM Region Top Info not implemented be Apple. Returning RegionBasicInfo"
       return Ragweed::Wraposx::RegionTopInfo.get(@task, addr)
     else
       warn "Unknown flavor requested. Returning RegionBasicInfo."

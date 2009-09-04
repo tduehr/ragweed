@@ -2,7 +2,7 @@ module Ragweed; end
 module Ragweed::Wraposx::ThreadInfo
   class << self
     #factory method to get a ThreadInfo variant
-    def self.get(flavor,tid)
+    def get(flavor,tid)
       found = false
       klass = self.constants.detect{|c| con = self.const_get(c); con.kind_of?(Class) && (flavor == con.const_get(:FLAVOR))}
       if klass.nil?

@@ -23,10 +23,12 @@ PROJ.ignore_file = '.gitignore'
 PROJ.authors = 'tduehr, tqbf, struct'
 PROJ.email = 'td@matasano.com'
 PROJ.description = 'General debugging tool written in Ruby for OSX/Win32/Linux'
+PROJ.summary = 'Scriptable debugger'
+PROJ.exclude << %w(old$)
 PROJ.url = 'http://github.com/tduehr/ragweed/tree/master'
 PROJ.version = Ragweed::VERSION
-# PROJ.rubyforge.name = 'ragweed'
-
+PROJ.rdoc.opts << "--inline-source"
+PROJ.rdoc.opts << "--line-numbers"
 PROJ.spec.opts << '--color'
 
 # EOF

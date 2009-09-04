@@ -21,7 +21,7 @@ module Ragweed::Wrap32
   end
 
   class << self
-    def open_process_token(h, access=Wrap32::TokenAccess::ADJUST_PRIVILEGES)
+    def open_process_token(h, access=Ragweed::Wrap32::TokenAccess::ADJUST_PRIVILEGES)
       outw = "\x00" * 4
       r = CALLS["advapi32!OpenProcessToken:LLP=L"].call(h, access, outw)
       raise WinX.new(:open_process_token) if r == 0
@@ -48,12 +48,12 @@ end
 
 class Ragweed::Wrap32::ProcessToken
   def initialize(p=nil)
-    p ||= Wrap32::open_process(Wrap32::get_current_process_id)
-    @h = Wrap32::open_process_token(p)
+    p ||= Ragweed::Wrap32::open_process(Ragweed::Wrap32::get_current_process_id)
+    @h = Ragweed::Wrap32::open_process_token(p)
   end
 
   def grant(name)
-    luid = Wrap32::lookup_privilege_value(name)
-    Wrap32::adjust_token_privileges(@h, 0, [luid, Wrap32::PrivilegeAttribute::ENABLED])
+    luid = Ragweed::Wrap32::lookup_privilege_value(name)
+    Ragweed::Wrap32::adjust_token_privileges(@h, 0, [luid, Ragweed::Wrap32::PrivilegeAttribute::ENABLED])
   end
 end

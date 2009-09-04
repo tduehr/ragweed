@@ -10,6 +10,7 @@
 # exclude patterns (uncomment them if you want to use them):
 # *.[oa]
 # *~
+**/.DS_Store
 dev_script.rb
 notes_for_call.txt
 *.new

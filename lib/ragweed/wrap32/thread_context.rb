@@ -81,15 +81,15 @@ class Ragweed::Wrap32::ThreadContext
   end
 
   def self.get(h)
-    self.new(Wrap32::get_thread_context_raw(h))
+    self.new(Ragweed::Wrap32::get_thread_context_raw(h))
   end
 
   def get(h)
-    refresh(Wrap32::get_thread_context_raw(h))
+    refresh(Ragweed::Wrap32::get_thread_context_raw(h))
   end
 
   def set(h)
-    Wrap32::set_thread_context_raw(h, self.to_s)
+    Ragweed::Wrap32::set_thread_context_raw(h, self.to_s)
   end
 
   def inspect
@@ -119,15 +119,15 @@ CONTEXT:
     ESI: #{self.esi.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.esi)}
     EBP: #{self.ebp.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.ebp)}
     ESP: #{self.esp.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.esp)}
-    EFL: #{self.eflags.to_s(2).rjust(32, "0")} #{Wrap32::EFlags.flag_dump(self.eflags)}
+    EFL: #{self.eflags.to_s(2).rjust(32, "0")} #{Ragweed::Wrap32::EFlags.flag_dump(self.eflags)}
 EOM
   end
 
   def single_step(v=true)
     if v
-      @eflags |= Wrap32::EFlags::TRAP
+      @eflags |= Ragweed::Wrap32::EFlags::TRAP
     else
-      @eflags &= ~(Wrap32::EFlags::TRAP)
+      @eflags &= ~(Ragweed::Wrap32::EFlags::TRAP)
     end
   end
 end
@@ -135,7 +135,7 @@ end
 module Ragweed::Wrap32
   class << self
     def get_thread_context_raw(h)
-      ctx = [Wrap32::ContextFlags::DEBUG,0,0,0,0,0,0,"\x00"*112,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,"\x00"*1024].pack("LLLLLLLa112LLLLLLLLLLLLLLLLa1024")
+      ctx = [Ragweed::Wrap32::ContextFlags::DEBUG,0,0,0,0,0,0,"\x00"*112,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,"\x00"*1024].pack("LLLLLLLa112LLLLLLLLLLLLLLLLa1024")
       ret = CALLS["kernel32!GetThreadContext:LP=L"].call(h, ctx)
       if ret != 0
         return ctx
@@ -194,7 +194,7 @@ module Ragweed::Wrap32
     # and then resume the thread. Useful (among many other things) to sample
     # EIP values to see what the code is doing.
     def get_thread_context(h)
-      ctx = [Wrap32::ContextFlags::DEBUG,0,0,0,0,0,0,"\x00"*112,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,"\x00"*1024].pack("LLLLLLLa112LLLLLLLLLLLLLLLLa1024")
+      ctx = [Ragweed::Wrap32::ContextFlags::DEBUG,0,0,0,0,0,0,"\x00"*112,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,"\x00"*1024].pack("LLLLLLLa112LLLLLLLLLLLLLLLLa1024")
       suspend_thread(h)
       ret = CALLS["kernel32!GetThreadContext:LP=L"].call(h, ctx)
       resume_thread(h)

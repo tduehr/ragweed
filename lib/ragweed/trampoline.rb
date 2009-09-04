@@ -57,9 +57,9 @@ class Ragweed::Trampoline
       s = @shim.assemble
       base.write(s)
 
-      th = Wrap32::create_remote_thread(@p.handle, base, argm)
-      Wrap32::wait_for_single_object(th) if @wait
-      Wrap32::close_handle(th)
+      th = Ragweed::Wrap32::create_remote_thread(@p.handle, base, argm)
+      Ragweed::Wrap32::wait_for_single_object(th) if @wait
+      Ragweed::Wrap32::close_handle(th)
       ret = @p.read32(cur)
       if ret == 0xDEADBEEF
         ret = nil
@@ -91,12 +91,12 @@ class Trevil
             "WaitForSingleObject"].
       map {|x| @p.get_proc("kernel32!#{x}").to_i}.
       pack("LLLLL")
-    state = [Wrap32::get_current_process_id, @ev1.handle, @ev2.handle].
+    state = [Ragweed::Wrap32::get_current_process_id, @ev1.handle, @ev2.handle].
       pack("LLL")
 
     data.write(swch + state)
     base.write(event_pair_stub(:debug => false).assemble)
-    Wrap32::create_remote_thread(@p.handle, base, data)
+    Ragweed::Wrap32::create_remote_thread(@p.handle, base, data)
     @ev1.wait
     @ev2
   end

@@ -248,7 +248,7 @@ module Ragweed::Rasm
     def coerce(v)
       if v
         v = v.derive
-        v = v.to_i if v.kind_of? Ptr
+        v = v.to_i if v.kind_of? Ragweed::Ptr
         if v.kind_of? Array
           v = v[0].clone
           v.indir = true
@@ -469,6 +469,27 @@ module Ragweed::Rasm
           add(@dst.val)
         end
       end
+      super
+    end
+  end
+  
+  ## ------------------------------------------------------------------------
+
+  # Push the registers onto the stack
+  #   not valid for 64bit mode
+  class Pushad < Instruction
+    def to_s
+      add(0x60)
+      super
+    end
+  end
+
+  ## ------------------------------------------------------------------------
+
+  # Pop the registers off the stack
+  class Popad < Instruction
+    def to_s
+      add(0x61)
       super
     end
   end
@@ -1019,10 +1040,11 @@ module Ragweed::Rasm
   class Pushf < Instruction
       # 9c pushfd
 
-      def initialize; end
+      # def initialize; end
       def to_s
           raise(TooMan, "too many arguments") if @src or @dst
           add(0x9c)
+          super
       end
   end
 
@@ -1031,11 +1053,21 @@ module Ragweed::Rasm
   class Popf < Instruction
       # 9d popfd
 
-      def initialize; end
+      # def initialize; end
       def to_s
           raise(TooMan, "too many arguments") if @src or @dst
           add(0x9d)
+          super
       end
+  end
+
+  ## ------------------------------------------------------------------------
+
+  class Iret < Instruction
+    def to_s
+      add(0xcf)
+      super
+    end
   end
 
   ## ------------------------------------------------------------------------

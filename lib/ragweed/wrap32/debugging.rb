@@ -63,14 +63,14 @@ class Ragweed::Wrap32::DebugEvent
     @code, @pid, @tid = str.unpack("LLL")
     str.shift 12
     case @code
-    when Wrap32::DebugCodes::CREATE_PROCESS 
+    when Ragweed::Wrap32::DebugCodes::CREATE_PROCESS 
       @file_handle, @process_handle, @thread_handle,
       @base, @offset,
       @info_size, @thread_base, @start_address,
       @image_name, @unicode = str.unpack("LLLLLLLLLH")
-    when Wrap32::DebugCodes::CREATE_THREAD 
+    when Ragweed::Wrap32::DebugCodes::CREATE_THREAD 
       @thread_handle, @thread_base, @start_address = str.unpack("LLL")
-    when Wrap32::DebugCodes::EXCEPTION 
+    when Ragweed::Wrap32::DebugCodes::EXCEPTION 
       @exception_code, @exception_flags,
       @exception_record, @exception_address, @parameter_count = str.unpack("LLLLL")
       str = str[20..-1]
@@ -81,17 +81,17 @@ class Ragweed::Wrap32::DebugEvent
           str = str[4..-1]
         rescue;end
       end
-    when Wrap32::DebugCodes::EXIT_PROCESS 
+    when Ragweed::Wrap32::DebugCodes::EXIT_PROCESS 
       @exit_code = str.unpack("L").first
-    when Wrap32::DebugCodes::EXIT_THREAD 
+    when Ragweed::Wrap32::DebugCodes::EXIT_THREAD 
       @exit_code = str.unpack("L").first
-    when Wrap32::DebugCodes::LOAD_DLL 
+    when Ragweed::Wrap32::DebugCodes::LOAD_DLL 
       @file_handle, @dll_base, @offset,
       @info_size, @image_name, @unicode = str.unpack("LLLLLH")
-    when Wrap32::DebugCodes::OUTPUT_DEBUG_STRING 
-    when Wrap32::DebugCodes::RIP 
+    when Ragweed::Wrap32::DebugCodes::OUTPUT_DEBUG_STRING 
+    when Ragweed::Wrap32::DebugCodes::RIP 
       @rip_error, @rip_type = str.unpack("LL")
-    when Wrap32::DebugCodes::UNLOAD_DLL 
+    when Ragweed::Wrap32::DebugCodes::UNLOAD_DLL 
       @dll_base = str.unpack("L").first
     else
       raise WinX.new(:wait_for_debug_event)
@@ -99,11 +99,11 @@ class Ragweed::Wrap32::DebugEvent
   end
 
   def inspect_code(c)
-    Wrap32::DebugCodes.to_key_hash[c].to_s || c.to_i
+    Ragweed::Wrap32::DebugCodes.to_key_hash[c].to_s || c.to_i
   end
   
   def inspect_exception_code(c)
-    Wrap32::ExceptionCodes.to_key_hash[c].to_s || c.to_i.to_s(16)
+    Ragweed::Wrap32::ExceptionCodes.to_key_hash[c].to_s || c.to_i.to_s(16)
   end
 
   def inspect_parameters(p)
@@ -129,7 +129,7 @@ module Ragweed::Wrap32
       buf = "\x00" * 1024
       r = CALLS["kernel32!WaitForDebugEvent:PL=L"].call(buf, ms)
       raise WinX.new(:wait_for_debug_event) if r == 0 and get_last_error != 121
-      return Wrap32::DebugEvent.new(buf) if r != 0
+      return Ragweed::Wrap32::DebugEvent.new(buf) if r != 0
       return nil
     end
 

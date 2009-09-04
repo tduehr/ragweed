@@ -150,6 +150,22 @@ module Ragweed::Wraposx
       return t.to_a("I", count.to_s(SIZEOFINT).unpack('I_').first)
     end
 
+    # Decrement the target tasks suspend count
+    # kern_return_t   task_resume
+    #                 (task_t          task);
+    def task_resume(task)
+      r = CALLC["libc!task_resume:I=I"].call(task).first
+      raise KernelCallError.new(r) if r != 0
+    end
+
+    # Increment the target tasks suspend count
+    # kern_return_t   task_suspend
+    #                 (task_t          task);
+    def task_suspend(task)
+      r = CALLC["libc!task_suspend:I=I"].call(task).first
+      raise KernelCallError.new(r) if r != 0
+    end
+
     # Sends a signal to a process
     #
     # int
@@ -237,6 +253,36 @@ module Ragweed::Wraposx
       return nil
     end
 
+    
+    # Allocates a page in the memory space of the target task.
+    #
+    # kern_return_t   vm_allocate
+    #                 (vm_task_t                          target_task,
+    #                  vm_address_t                           address,
+    #                  vm_size_t                                 size,
+    #                  boolean_t                             anywhere);
+    #
+    def vm_allocate(task, address, size, anywhere)
+      addr = int_to_intptr(address)
+      anywhere = anywhere ? 1 : 0
+      r = CALLS["libc!vm_allocate:IPII=I"].call(task,addr,size,anywhere).first
+      raise KernelCallError.new(r) if r != 0
+      addr.ptr
+    end
+    
+    # deallocates a page in the memoryspace of target task.
+    #
+    # kern_return_t   vm_deallocate
+    #                     (vm_task_t                          target_task,
+    #                      vm_address_t                           address,
+    #                      vm_size_t                                 size);
+    #
+    def vm_deallocate(task,address,size)
+      addr = int_to_intptr(address)
+      r = CALLS["libc!vm_deallocate:IPI=I"].call(task, addr, size).first
+      raise KernelCallError.new(r) if r != 0
+    end
+    
     # Resumes a suspended thread by id.
     #
     # kern_return_t   thread_resume
@@ -334,6 +380,12 @@ module Ragweed::Wraposx
       raise SystemCallError.new("sysctl", DL.last_error) if (r != 0 and DL.last_error != Errno::ENOMEM::Errno)
       return [ret,oldlenp.to_str(SIZEOFINT).unpack("I_").first]
     end
+    
+    # int
+    # nlist(const char *filename, struct nlist *nl)
+    def nlist(filename)
+      
+    end
 
     # Changes execution to file in path with *args as though called from command line.
     #
@@ -347,6 +399,17 @@ module Ragweed::Wraposx
       r = CALLS["libc!execv:SP"].call(path,argv.to_ptr).first
       raise SystemCallError.new("execv", DL.last_error) if r == -1
       return r
+    end
+    
+    def int_to_intptr(i)
+      case i
+      when Integer
+        return [i].pack("I").to_ptr
+      when DL::PtrData
+        return i
+      else
+        raise ArgumentError, "Not an Integer"
+      end
     end
   end
 end

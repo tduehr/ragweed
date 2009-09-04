@@ -35,14 +35,14 @@ class Ragweed::Debugger32
       @orig = process.read8(@addr)
       if(@orig != INT3)
         process.write8(@addr, INT3) 
-        Wrap32::flush_instruction_cache(@bp.process.handle)
+        Ragweed::Wrap32::flush_instruction_cache(@bp.process.handle)
       end
     end
 
     def uninstall
       if(@orig != INT3)
         process.write8(@addr, @orig) 
-        Wrap32::flush_instruction_cache(@bp.process.handle)
+        Ragweed::Wrap32::flush_instruction_cache(@bp.process.handle)
       end
     end
 
@@ -57,7 +57,7 @@ class Ragweed::Debugger32
   # on the image name of the process.
   #    d = Debugger.find_by_regex /notepad/i
   def self.find_by_regex(rx)
-    Wrap32::all_processes do |p|
+    Ragweed::Wrap32::all_processes do |p|
       if p.szExeFile =~ rx
         return self.new(p.th32ProcessID)
       end
@@ -69,12 +69,12 @@ class Ragweed::Debugger32
   # pass this either a PID or a Process object.
   def initialize(p)
     # grab debug privilege at least once.
-    @@token ||= Wrap32::ProcessToken.new.grant("seDebugPrivilege")
+    @@token ||= Ragweed::Wrap32::ProcessToken.new.grant("seDebugPrivilege")
 
     p = Process.new(p) if p.kind_of? Numeric
     @p = p
     @steppers = []
-    @handled = Wrap32::ContinueCodes::UNHANDLED
+    @handled = Ragweed::Wrap32::ContinueCodes::UNHANDLED
     @first = true
     @attached = false
 
@@ -107,8 +107,8 @@ class Ragweed::Debugger32
   # for an example of how to use this.
   def step(tid, callable)
     if @steppers.empty?
-      Wrap32::open_thread(tid) do |h|
-        ctx = Wrap32::ThreadContext.get(h)
+      Ragweed::Wrap32::open_thread(tid) do |h|
+        ctx = Ragweed::Wrap32::ThreadContext.get(h)
         ctx.single_step(true)
         ctx.set(h)
       end
@@ -122,8 +122,8 @@ class Ragweed::Debugger32
   def unstep(tid, callable)
     @steppers = @steppers.reject {|x| x == callable}
     if @steppers.empty?
-      Wrap32::open_thread(tid) do |h|
-        ctx = Wrap32::ThreadContext.get(h)
+      Ragweed::Wrap32::open_thread(tid) do |h|
+        ctx = Ragweed::Wrap32::ThreadContext.get(h)
         ctx.single_step(false)
         ctx.set(h)
       end
@@ -137,7 +137,7 @@ class Ragweed::Debugger32
     else
       tid = tid_or_event
     end
-    Wrap32::open_thread(tid) {|h| Wrap32::ThreadContext.get(h)}
+    Ragweed::Wrap32::open_thread(tid) {|h| Ragweed::Wrap32::ThreadContext.get(h)}
   end
 
   # set a breakpoint given an address, which can also be a string in the form
@@ -218,7 +218,7 @@ class Ragweed::Debugger32
       end)) 
 
       # put execution back where it's supposed to be...
-      Wrap32::open_thread(ev.tid) do |h|
+      Ragweed::Wrap32::open_thread(ev.tid) do |h|
         ctx = context(ev)
         ctx.eip = eip # eip was ev.exception_address
         ctx.set(h)
@@ -226,13 +226,13 @@ class Ragweed::Debugger32
     end
   
     # tell the target to stop handling this event
-    @handled = Wrap32::ContinueCodes::CONTINUE
+    @handled = Ragweed::Wrap32::ContinueCodes::CONTINUE
   end
 
   # handle a single-step event  
   def on_single_step(ev)
     ctx = context(ev)
-    Wrap32::open_thread(ev.tid) do |h|
+    Ragweed::Wrap32::open_thread(ev.tid) do |h|
       # re-enable the trap flag before our handler, which may
       # choose to disable it.
       ctx.single_step(true)
@@ -241,7 +241,7 @@ class Ragweed::Debugger32
     
     @steppers.each {|s| s.call(ev, ctx)}
         
-    @handled = Wrap32::ContinueCodes::CONTINUE
+    @handled = Ragweed::Wrap32::ContinueCodes::CONTINUE
   end
 
   # this is sort of insane but most of my programs are just
@@ -259,54 +259,54 @@ class Ragweed::Debugger32
   def wait
     self.attach() if not @attached
 
-    ev = Wrap32::wait_for_debug_event
+    ev = Ragweed::Wrap32::wait_for_debug_event
     return if not ev
     case ev.code
-    when Wrap32::DebugCodes::CREATE_PROCESS
+    when Ragweed::Wrap32::DebugCodes::CREATE_PROCESS
       try(:on_create_process, ev)
-    when Wrap32::DebugCodes::CREATE_THREAD
+    when Ragweed::Wrap32::DebugCodes::CREATE_THREAD
       try(:on_create_thread, ev)
-    when Wrap32::DebugCodes::EXIT_PROCESS
+    when Ragweed::Wrap32::DebugCodes::EXIT_PROCESS
       try(:on_exit_process, ev)
-    when Wrap32::DebugCodes::EXIT_THREAD
+    when Ragweed::Wrap32::DebugCodes::EXIT_THREAD
       try(:on_exit_thread, ev)
-    when Wrap32::DebugCodes::LOAD_DLL
+    when Ragweed::Wrap32::DebugCodes::LOAD_DLL
       try(:on_load_dll, ev)
-    when Wrap32::DebugCodes::OUTPUT_DEBUG_STRING
+    when Ragweed::Wrap32::DebugCodes::OUTPUT_DEBUG_STRING
       try(:on_output_debug_string, ev)
-    when Wrap32::DebugCodes::RIP
+    when Ragweed::Wrap32::DebugCodes::RIP
       try(:on_rip, ev)
-    when Wrap32::DebugCodes::UNLOAD_DLL
+    when Ragweed::Wrap32::DebugCodes::UNLOAD_DLL
       try(:on_unload_dll, ev)
-    when Wrap32::DebugCodes::EXCEPTION
+    when Ragweed::Wrap32::DebugCodes::EXCEPTION
       case ev.exception_code
-      when Wrap32::ExceptionCodes::ACCESS_VIOLATION
+      when Ragweed::Wrap32::ExceptionCodes::ACCESS_VIOLATION
         try(:on_access_violation, ev)
-      when Wrap32::ExceptionCodes::BREAKPOINT 
+      when Ragweed::Wrap32::ExceptionCodes::BREAKPOINT 
         try(:on_breakpoint, ev)
-      when Wrap32::ExceptionCodes::ALIGNMENT  
+      when Ragweed::Wrap32::ExceptionCodes::ALIGNMENT  
         try(:on_alignment, ev)
-      when Wrap32::ExceptionCodes::SINGLE_STEP 
+      when Ragweed::Wrap32::ExceptionCodes::SINGLE_STEP 
         try(:on_single_step, ev)
-      when Wrap32::ExceptionCodes::BOUNDS 
+      when Ragweed::Wrap32::ExceptionCodes::BOUNDS 
         try(:on_bounds, ev)
-      when Wrap32::ExceptionCodes::DIVIDE_BY_ZERO 
+      when Ragweed::Wrap32::ExceptionCodes::DIVIDE_BY_ZERO 
         try(:on_divide_by_zero, ev)
-      when Wrap32::ExceptionCodes::INT_OVERFLOW 
+      when Ragweed::Wrap32::ExceptionCodes::INT_OVERFLOW 
         try(:on_int_overflow, ev)
-      when Wrap32::ExceptionCodes::INVALID_HANDLE 
+      when Ragweed::Wrap32::ExceptionCodes::INVALID_HANDLE 
         try(:on_invalid_handle, ev)
-      when Wrap32::ExceptionCodes::PRIV_INSTRUCTION 
+      when Ragweed::Wrap32::ExceptionCodes::PRIV_INSTRUCTION 
         try(:on_priv_instruction, ev)
-      when Wrap32::ExceptionCodes::STACK_OVERFLOW 
+      when Ragweed::Wrap32::ExceptionCodes::STACK_OVERFLOW 
         try(:on_stack_overflow, ev)
-      when Wrap32::ExceptionCodes::INVALID_DISPOSITION 
+      when Ragweed::Wrap32::ExceptionCodes::INVALID_DISPOSITION 
         try(:on_invalid_disposition, ev)
       end
     end
 
-    Wrap32::continue_debug_event(ev.pid, ev.tid, @handled)
-    @handled = Wrap32::ContinueCodes::UNHANDLED
+    Ragweed::Wrap32::continue_debug_event(ev.pid, ev.tid, @handled)
+    @handled = Ragweed::Wrap32::ContinueCodes::UNHANDLED
   end
 
   # debug loop.
@@ -319,8 +319,8 @@ class Ragweed::Debugger32
   # this is called implicitly by Debugger#wait.
   # Attaches to the child process for debugging
   def attach
-    Wrap32::debug_active_process(@p.pid)
-    Wrap32::debug_set_process_kill_on_exit
+    Ragweed::Wrap32::debug_active_process(@p.pid)
+    Ragweed::Wrap32::debug_set_process_kill_on_exit
     @attached = true
     @breakpoints.each do |k, v|
       v.install
@@ -329,7 +329,7 @@ class Ragweed::Debugger32
 
   # let go of the target.
   def release
-    Wrap32::debug_active_process_stop(@p.pid)
+    Ragweed::Wrap32::debug_active_process_stop(@p.pid)
     @attached = false
     @breakpoints.each do |k, v|
       v.uninstall
