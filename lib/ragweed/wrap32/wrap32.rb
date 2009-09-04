@@ -302,9 +302,9 @@ module Ragweed::Wrap32
       h = CALLS["kernel32!CreateToolhelp32Snapshot:LL=L"].call(0x8, pid)
       if h != -1
         mi = [260+256+(8*4),0,0,0,0,0,0,0,"\x00"*256,"\x00"*260].pack("LLLLLLLLa256a260")
-        if w32("kernel32!Module32First:LP=L").call(h, mi) != 0
+        if CALLS["kernel32!Module32First:LP=L"].call(h, mi) != 0
           yield str2module_info(mi)
-          while w32("kernel32!Module32Next:LP=L").call(h, mi) != 0
+          while CALLS["kernel32!Module32Next:LP=L"].call(h, mi) != 0
             yield str2module_info(mi)
           end
         end
@@ -352,10 +352,10 @@ module Ragweed::Wrap32
       h = CALLS["kernel32!CreateToolhelp32Snapshot:LL=L"].call(0x4, pid)
       if h != -1
         mi = [(7*4),0,0,0,0,0,0].pack("LLLLLLL")
-        if w32("kernel32!Thread32First:LP=L").call(h, mi) != 0
+        if CALLS["kernel32!Thread32First:LP=L"].call(h, mi) != 0
           ti = str2thread_info(mi)
           yield str2thread_info(mi) if ti.th32OwnerProcessID == pid
-          while w32("kernel32!Thread32Next:LP=L").call(h, mi) != 0
+          while CALLS["kernel32!Thread32Next:LP=L"].call(h, mi) != 0
             ti = str2thread_info(mi)
             yield str2thread_info(mi) if ti.th32OwnerProcessID == pid
           end
