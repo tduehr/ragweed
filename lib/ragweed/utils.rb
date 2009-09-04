@@ -55,6 +55,19 @@ class String
       slice! 0..(count-1)
   end
 
+  # Sometimes string buffers passed through Win32 interfaces come with
+  # garbage after the trailing NUL; this method gets rid of that, like
+  # String#trim
+  def asciiz
+      begin
+          self[0..self.index("\x00")-1]
+      rescue
+          self
+      end
+  end
+  
+  def asciiz!; replace asciiz; end
+
   # Convert a string into hex characters
   def hexify
       l = []
