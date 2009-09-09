@@ -109,6 +109,14 @@ class Integer
 end
 
 class Module
+  def to_name_hash
+      @name_hash ||= constants.map {|k| [k.intern, const_get(k.intern)]}.to_hash
+  end
+
+  def to_key_hash
+      @key_hash ||= constants.map {|k| [const_get(k.intern), k.intern]}.to_hash
+  end
+
   def flag_dump(i)
     @bit_map ||= constants.map do |k|
       [k, const_get(k.intern).ffs]
