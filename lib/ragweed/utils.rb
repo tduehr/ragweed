@@ -1,41 +1,59 @@
+class Array
+  module ArrayExtensions
+    # Convert to hash
+    ##
+    def to_hash
+        # too clever.
+        # Hash[*self.flatten]
+
+        h = Hash.new
+        each do |k,v|
+            h[k] = v
+        end
+        h
+    end
+  end
+  include ArrayExtensions
+end
+
 # These should probably be extensions to Module since that's the location of instance_eval and friends.
 class Object
-    module ObjectExtensions
-      # Every object has a "singleton" class, which you can think
-      # of as the class (ie, 1.metaclass =~ Fixnum) --- but that you
-      # can modify and extend without fucking up the actual class.
-      def metaclass; class << self; self; end; end
-      def meta_eval(&blk) metaclass.instance_eval &blk; end
-      def meta_def(name, &blk) meta_eval { define_method name, &blk }; end
-      def try(meth, *args); send(meth, *args) if respond_to? meth; end
+  module ObjectExtensions
+    # Every object has a "singleton" class, which you can think
+    # of as the class (ie, 1.metaclass =~ Fixnum) --- but that you
+    # can modify and extend without fucking up the actual class.
+    def metaclass; class << self; self; end; end
+    def meta_eval(&blk) metaclass.instance_eval &blk; end
+    def meta_def(name, &blk) meta_eval { define_method name, &blk }; end
+    def try(meth, *args); send(meth, *args) if respond_to? meth; end
 
-      def through(meth, *args)
-          if respond_to? meth
-              send(meth, *args)
-          else
-              self
-          end
-      end
-
-      ## This is from Topher Cyll's Stupd IRB tricks
-      def mymethods
-        (self.methods - self.class.superclass.methods).sort
-      end
-      # self-evident
-      def callable?; respond_to? :call; end
-      def number?; kind_of? Numeric; end
-
-      # while X remains callable, keep calling it to get its value
-      def derive
-        # also, don't drink and derive
-        x = self
-        while x.callable?
-          x = x()
-        end
-        return x
+    def through(meth, *args)
+      if respond_to? meth
+        send(meth, *args)
+      else
+        self
       end
     end
-    include ObjectExtensions
+
+    ## This is from Topher Cyll's Stupd IRB tricks
+    def mymethods
+      (self.methods - self.class.superclass.methods).sort
+    end
+    # self-evident
+    def callable?; respond_to? :call; end
+    def number?; kind_of? Numeric; end
+
+    # while X remains callable, keep calling it to get its value
+    def derive
+      # also, don't drink and derive
+      x = self
+      while x.callable?
+        x = x()
+      end
+      return x
+    end
+  end
+  include ObjectExtensions
 end
 
 class String
@@ -51,34 +69,34 @@ class String
   def shift_u8; shift(1).to_u8; end
   
   def shift(count=1)
-      return self if count == 0
-      slice! 0..(count-1)
+    return self if count == 0
+    slice! 0..(count-1)
   end
 
   # Sometimes string buffers passed through Win32 interfaces come with
   # garbage after the trailing NUL; this method gets rid of that, like
   # String#trim
   def asciiz
-      begin
-          self[0..self.index("\x00")-1]
-      rescue
-          self
-      end
+    begin
+      self[0..self.index("\x00")-1]
+    rescue
+      self
+    end
   end
   
   def asciiz!; replace asciiz; end
 
   # Convert a string into hex characters
   def hexify
-      l = []
-      each_byte{|b| l << "%02x" % b}
-      l.join
+    l = []
+    each_byte{|b| l << "%02x" % b}
+    l.join
   end
 
   # Convert a string of raw hex characters (no %'s or anything) into binary
   def dehexify
-      (ret||="") << (me||=clone).shift(2).to_i(16).chr while not (me||=clone).empty?
-      return ret
+    (ret||="") << (me||=clone).shift(2).to_i(16).chr while not (me||=clone).empty?
+    return ret
   end
 end
 
@@ -100,7 +118,7 @@ class Integer
       i = 0
       v = self
       while((v >>= 1) != 0)
-          i += 1
+        i += 1
       end
       return i
     end
@@ -110,11 +128,11 @@ end
 
 class Module
   def to_name_hash
-      @name_hash ||= constants.map {|k| [k.intern, const_get(k.intern)]}.to_hash
+    @name_hash ||= constants.map {|k| [k.intern, const_get(k.intern)]}.to_hash
   end
 
   def to_key_hash
-      @key_hash ||= constants.map {|k| [const_get(k.intern), k.intern]}.to_hash
+    @key_hash ||= constants.map {|k| [const_get(k.intern), k.intern]}.to_hash
   end
 
   def flag_dump(i)
