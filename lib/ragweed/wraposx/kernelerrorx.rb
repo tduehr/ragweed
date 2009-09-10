@@ -59,7 +59,7 @@ module Ragweed::Wraposx::KernelReturn
   module_function
   # Much like Signals.list returns a hash of the possible kernel call return values.
   def list
-    constants.inject({}){|a, c| a.merge! c => const_get(c)}
+    @@list ||= constants.inject({}){|a, c| a.merge! c => const_get(c)}
   end
 end
 

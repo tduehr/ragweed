@@ -96,7 +96,7 @@ class Ragweed::Wrap32::ThreadContext
     body = lambda do
       FIELDS.map do |f|
         val = send(f[0])
-        "#{f[0]}=#{val.to_s(16) rescue val.to_s}"
+        "#{f[0]}=#{val.to_s(16) rescue val.to_s.hexify}"
       end.join(", ")
     end
     "#<ThreadContext #{body.call}>"
