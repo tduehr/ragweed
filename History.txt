@@ -1,3 +1,8 @@
+== 0.1.7.1 / 2009-08-03
+
+* added Rasm::Subl to avoid conflict in Bblock with Kernel#sub
+* setup for call tramolines in osx
+
 == 0.1.7 / 2009-08-03
 
 * bug fixes (Wraposx#RegionInfo should now fully work)

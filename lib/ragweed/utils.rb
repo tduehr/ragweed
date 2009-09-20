@@ -88,15 +88,12 @@ class String
 
   # Convert a string into hex characters
   def hexify
-    l = []
-    each_byte{|b| l << "%02x" % b}
-    l.join
+    self.unpack("H*").first
   end
 
   # Convert a string of raw hex characters (no %'s or anything) into binary
   def dehexify
-    (ret||="") << (me||=clone).shift(2).to_i(16).chr while not (me||=clone).empty?
-    return ret
+    [self].pack("H*")
   end
 end
 
