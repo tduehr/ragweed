@@ -22,7 +22,7 @@ module Ragweed::Rasm
 
     # Append more instructions to a previously created block;
     # see Bblock#make
-    def add(&block)
+    def append(&block)
       instance_eval(&block)
     end
 
@@ -50,6 +50,11 @@ module Ragweed::Rasm
       c = Bblock.new
       c.instance_eval(&block)
       c
+    end
+
+    # method to fix collision with Kernel#sub properly
+    def sub(*args)
+      Ragwee::Rasm::Sub.new(*args)
     end
 
     def method_missing(meth, *args)
