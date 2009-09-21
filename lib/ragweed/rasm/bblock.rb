@@ -54,7 +54,7 @@ module Ragweed::Rasm
 
     # method to fix collision with Kernel#sub properly
     def sub(*args)
-      Ragwee::Rasm::Sub.new(*args)
+      Ragweed::Rasm::Sub.new(*args)
     end
 
     def method_missing(meth, *args)

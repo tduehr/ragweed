@@ -347,7 +347,7 @@ module Ragweed::Rasm
         row = 4
       end
 
-      pp [col,row,sbase]
+      # pp [col,row,sbase]
 
       sibpart = sbase + (row << 3) + (col)
 
@@ -541,6 +541,17 @@ module Ragweed::Rasm
   end
 
   class Retn < Ret; end
+
+  ## ------------------------------------------------------------------------
+
+  # Leave
+  class Leave < Instruction
+    # c9
+    
+    def to_s
+      add(0xc9)
+    end
+  end
 
   ## ------------------------------------------------------------------------
 

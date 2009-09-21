@@ -1,7 +1,11 @@
-== 0.1.7.1 / 2009-08-03
+== 0.1.7.2 / 2009-09-21
+
+* fixed Sub and Add in Rasm correctly. added Leave instruction
+
+== 0.1.7.1 / 2009-09-20
 
 * added Rasm::Subl to avoid conflict in Bblock with Kernel#sub
-* setup for call tramolines in osx
+* setup for call trampolines in osx
 
 == 0.1.7 / 2009-08-03
 
