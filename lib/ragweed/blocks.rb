@@ -41,7 +41,7 @@ module Ragweed::Blocks
     i.<< Pop(ecx)
     i.<< Pop(ebx)
     i.<< Pop(esi)
-    i.<< Ret() # i think this is an artifact of my IRB, XXX clean up
+    i.<< Ret() # i think this is an artifact of my IRB, TODO clean up
   end
   module_function :remote_trampoline
 

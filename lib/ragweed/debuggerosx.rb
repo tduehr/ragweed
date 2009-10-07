@@ -114,7 +114,7 @@ class Ragweed::Debuggerosx
   # FIXME - need to do signal handling better (loop through threads only for breakpoints and stepping)
   # opts: option flags to waitpid(2)
   #
-  # returns and array containing the pid of the stopped or terminated child and the status of that child
+  # returns an array containing the pid of the stopped or terminated child and the status of that child
   # r[0]: pid of stopped/terminated child or 0 if Ragweed::Wraposx::Wait:NOHANG was passed and there was nothing to report
   # r[1]: staus of child or 0 if Ragweed::Wraposx::Wait:NOHANG was passed and there was nothing to report
   def wait(opts = 0)

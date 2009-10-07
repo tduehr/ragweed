@@ -56,7 +56,7 @@ module Ragweed
     when RUBY_PLATFORM =~ /linux/i
       pkgs = 'tux'
     # when RUBY_PLATFORM =~ /java/i
-      # XXX -TODO
+      # TODO - Java port using jni?
     else
       warn "Platform not supported no wrapper libraries loaded."
     end

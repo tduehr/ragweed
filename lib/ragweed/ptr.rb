@@ -1,4 +1,4 @@
-#XXX - TODO: make read/write work for other oses
+# TODO: make read/write work for other oses
 
 class Ragweed::Ptr
   # A dubious achievement. Wrap Integers in a pointer class, which,

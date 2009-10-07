@@ -381,12 +381,6 @@ module Ragweed::Wraposx
       return [ret,oldlenp.to_str(SIZEOFINT).unpack("I_").first]
     end
     
-    # int
-    # nlist(const char *filename, struct nlist *nl)
-    def nlist(filename)
-      
-    end
-
     # Changes execution to file in path with *args as though called from command line.
     #
     # int

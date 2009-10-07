@@ -27,8 +27,8 @@ The most complete set is for Win32.
 
 == INSTALL:
 
-  gem sources -a http://gems.github.com
-  sudo gem install tduehr-ragweed
+  # we're using gemcutter now. once gemcutter is a source just:
+  sudo gem install ragweed
 
 == LICENSE:
 

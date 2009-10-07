@@ -158,7 +158,7 @@ class Ragweed::Detour
     end    
   end
 
-  # A breakpoint implemented as a Detour. XXX not tested.
+  # A breakpoint implemented as a Detour. TODO not tested.
   class Dbreak < Detour
     attr_reader :ev1, :ev2 
 

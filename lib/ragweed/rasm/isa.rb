@@ -879,7 +879,7 @@ module Ragweed::Rasm
     def magic(x, y, z, r); @once, @bycl, @imm, @x = [x,y,z,r.clone]; end
   end
 
-  # XXX looks wrong
+  # TODO looks wrong
 
   # Left arith shift
   class Sal < Shift; def initialize(*args); super *args; magic 0xd1, 0xd3, 0xc1, Esp; end; end

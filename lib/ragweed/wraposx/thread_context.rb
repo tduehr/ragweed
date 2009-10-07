@@ -127,7 +127,7 @@ end
 module Ragweed::Wraposx
 
   # FIXME - constants need to be in separate sub modules
-  # XXX - move to class based implementation a la region_info
+  # TODO - move to class based implementation a la region_info
   # define i386_THREAD_STATE_COUNT   ((mach_msg_type_number_t)( sizeof (i386_thread_state_t) / sizeof (int) ))
   # i386_thread_state_t is a struct w/ 16 uint
   I386_THREAD_STATE_COUNT = 16
