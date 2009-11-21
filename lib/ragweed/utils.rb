@@ -67,6 +67,20 @@ class String
   def shift_l16; shift(2).to_l16; end
   def shift_b16; shift(2).to_b16; end
   def shift_u8; shift(1).to_u8; end
+  def to_utf16
+      Iconv.iconv("utf-16LE", "utf-8", self).first + "\x00\x00"
+  end
+  def from_utf16
+      ret = Iconv.iconv("utf-8", "utf-16le", self).first
+      if ret[-1] == 0
+          ret = ret[0..-2]
+      end
+  end
+  alias_method :to_utf8, :from_utf16
+  alias_method :to_ascii, :from_utf16
+  def from_utf16_buffer
+      self[0..index("\0\0\0")+2].from_utf16
+  end
   
   def shift(count=1)
     return self if count == 0

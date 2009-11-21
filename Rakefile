@@ -1,34 +1,28 @@
-# Look in the tasks/setup.rb file for the various options that can be
-# configured in this Rakefile. The .rake files in the tasks directory
-# are where the options are used.
 
 begin
   require 'bones'
-  Bones.setup
 rescue LoadError
-  begin
-    load 'tasks/setup.rb'
-  rescue LoadError
-    raise RuntimeError, '### please install the "bones" gem ###'
-  end
+  abort '### Please install the "bones" gem ###'
 end
 
 ensure_in_path 'lib'
 require 'ragweed'
 
-task :default => 'spec:run'
+task :default => 'test:run'
+task 'gem:release' => 'test:run'
 
-PROJ.name = 'ragweed'
-PROJ.ignore_file = '.gitignore'
-PROJ.authors = 'tduehr, tqbf, struct'
-PROJ.email = 'td@matasano.com'
-PROJ.description = 'General debugging tool written in Ruby for OSX/Win32/Linux'
-PROJ.summary = 'Scriptable debugger'
-PROJ.exclude << %w(old$)
-PROJ.url = 'http://github.com/tduehr/ragweed/tree/master'
-PROJ.version = Ragweed::VERSION
-PROJ.rdoc.opts << "--inline-source"
-PROJ.rdoc.opts << "--line-numbers"
-PROJ.spec.opts << '--color'
-
+Bones {
+  name 'ragweed'
+  ignore_file '.gitignore'
+  authors 'tduehr, tqbf, struct'
+  email 'td@matasano.com'
+  description 'General debugging tool written in Ruby for OSX/Win32/Linux'
+  summary 'Scriptable debugger'
+  exclude << %w(old$)
+  url 'http://github.com/tduehr/ragweed/tree/master'
+  version Ragweed::VERSION
+  rdoc.opts << "--inline-source"
+  rdoc.opts << "--line-numbers"
+  spec.opts << '--color'
+}
 # EOF
