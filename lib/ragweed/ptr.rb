@@ -40,7 +40,7 @@ class Ragweed::Ptr
   def method_missing(meth, *args) 
     ret = @val.send meth, *args
     if ret.kind_of? Numeric
-      ret = Ptr.new(ret)
+      ret = Ragweed::Ptr.new(ret)
       ret.p = self.p
     end
     ret

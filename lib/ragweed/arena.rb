@@ -40,7 +40,7 @@ class Ragweed::Arena
       @avail -= (sz + round)
     end
 
-    return Ptr.new(@cur + ret)
+    return Ragweed::Ptr.new(@cur + ret)
   end
 
   # Copy a buffer into the arena and return its new address.

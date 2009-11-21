@@ -16,7 +16,7 @@ class Ragweed::Process
   # Get a pointer into the remote process; pointers are just fixnums
   # with a read/write method and a to_s.
   def ptr(x)
-    ret = Ptr.new(x)
+    ret = Ragweed::Ptr.new(x)
     ret.p = self
     return ret
   end
@@ -30,7 +30,7 @@ class Ragweed::Process
   # which is broken --- a heuristic that sometimes works for w32 functions,
   # but probably never otherwise.
   def get_proc(name)
-    return Ptr.new(name) if name.kind_of? Numeric or name.kind_of? Ptr
+    return Ragweed::Ptr.new(name) if name.kind_of? Numeric or name.kind_of? Ptr
     ptr(Ragweed::Wrap32::get_proc_address(name))
   end
 
@@ -123,7 +123,7 @@ class Ragweed::Process
   def remote_call(meth, *args)
     loc = meth
     loc = get_proc(loc) if loc.kind_of? String
-    loc = Ptr.new loc
+    loc = Ragweed::Ptr.new loc
     raise "bad proc name" if loc.null?
     t = Trampoline.new(self, loc)
     t.call *args      
