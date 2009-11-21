@@ -73,7 +73,7 @@ class Ragweed::Detour
     # Hook function. Override this in subclasses to provide different
     # behavior.
     def inner_block
-      i = Rasm::Subprogram.new
+      i = Ragweed::Rasm::Subprogram.new
       i.<< Int(3)
     end
 
@@ -106,13 +106,13 @@ class Ragweed::Detour
         goto = there - here
       end
 
-      i = Rasm::Subprogram.new
-      i.<< Rasm::Jmp(goto.to_i)
+      i = Ragweed::Rasm::Subprogram.new
+      i.<< Ragweed::Rasm::Jmp(goto.to_i)
     end
 
     # Create the detours trampoline:
     def trampoline(stack)
-      i = Rasm::Subprogram.new
+      i = Ragweed::Rasm::Subprogram.new
       i.concat push_stack(stack)   # 1. Give us a new stack
       i.concat save_all            # 2. Save all the GPRs just in case
       i.concat inner_block         # 3. The hook function
@@ -124,35 +124,35 @@ class Ragweed::Detour
     # Swap in a new stack, pushing the old stack address 
     # onto the top of it.
     def push_stack(addr, sz=2048)
-      i = Rasm::Subprogram.new
-      i.<< Rasm::Push(eax)
-      i.<< Rasm::Mov(eax, addr+(sz-4))
-      i.<< Rasm::Mov([eax], esp)
-      i.<< Rasm::Pop(eax)
-      i.<< Rasm::Mov(esp, addr+(sz-4))
+      i = Ragweed::Rasm::Subprogram.new
+      i.<< Ragweed::Rasm::Push(eax)
+      i.<< Ragweed::Rasm::Mov(eax, addr+(sz-4))
+      i.<< Ragweed::Rasm::Mov([eax], esp)
+      i.<< Ragweed::Rasm::Pop(eax)
+      i.<< Ragweed::Rasm::Mov(esp, addr+(sz-4))
     end
 
     # Swap out the new stack.
     def pop_stack
-      i = Rasm::Subprogram.new
-      i.<< Rasm::Pop(esp)
-      i.<< Rasm::Add(esp, 4)
+      i = Ragweed::Rasm::Subprogram.new
+      i.<< Ragweed::Rasm::Pop(esp)
+      i.<< Ragweed::Rasm::Add(esp, 4)
     end
 
     # Just push all the registers in order
     def save_all
-      i = Rasm::Subprogram.new
+      i = Ragweed::Rasm::Subprogram.new
       [eax,ecx,edx,ebx,ebp,esi,edi].each do |r|
-        i.<< Rasm::Push(r)
+        i.<< Ragweed::Rasm::Push(r)
       end
       i
     end
 
     # Just pop all the registers
     def restore_all
-      i = Rasm::Subprogram.new
+      i = Ragweed::Rasm::Subprogram.new
       [edi,esi,ebp,ebx,edx,ecx,eax].each do |r|
-        i.<< Rasm::Pop(r)
+        i.<< Ragweed::Rasm::Pop(r)
       end
       i
     end    
@@ -191,7 +191,7 @@ class Ragweed::Detour
     end
 
     def inner_block      
-      i = Rasm::Subprogram.new      
+      i = Ragweed::Rasm::Subprogram.new      
       i.<< Push(eax)
       i.<< Xor(eax, eax)
       i.<< Or(eax, @data)

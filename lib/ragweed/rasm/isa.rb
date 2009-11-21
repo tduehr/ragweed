@@ -19,7 +19,7 @@ module Ragweed::Rasm
   ## ------------------------------------------------------------------------
 
   def method_missing(meth, *args)
-    Rasm.const_get(meth).new *args
+    Ragweed::Rasm.const_get(meth).new *args
   end
 
   ## ------------------------------------------------------------------------
@@ -197,7 +197,7 @@ module Ragweed::Rasm
     # Produce an array of insns. This is pretty much broken, because
     # it doesn't pre-patch the instructions.
     def disassemble
-      select {|i| i.kind_of? Rasm::Instruction}.map {|i| i.decode}
+      select {|i| i.kind_of? Ragweed::Rasm::Instruction}.map {|i| i.decode}
     end
 
     def dump_disassembly

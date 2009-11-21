@@ -8,7 +8,7 @@ module Ragweed::Blocks
   extend Ragweed::Rasm
 
   def remote_trampoline(argc, opts={})
-    i = Rasm::Subprogram.new
+    i = Ragweed::Rasm::Subprogram.new
 
     # drop directly to debugger
     i << Int(3) if opts[:debug]
@@ -46,7 +46,7 @@ module Ragweed::Blocks
   module_function :remote_trampoline
 
   def event_pair_stub(opts={})
-    i = Rasm::Subprogram.new
+    i = Ragweed::Rasm::Subprogram.new
 
     i << Int(3) if opts[:debug]
 
