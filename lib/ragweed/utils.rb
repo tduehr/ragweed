@@ -1,4 +1,15 @@
 require 'iconv'
+
+#do not rely on this extension to range. it'll be removed at some point.
+class Range
+  module RangeExtensions
+    def each_backwards
+      max.to_i.downto(min) {|i| yield i}
+    end
+  end
+  include RangeExtensions
+end
+
 class Array
   module ArrayExtensions
     # Convert to hash
