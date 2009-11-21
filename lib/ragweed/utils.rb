@@ -1,3 +1,4 @@
+require 'iconv'
 class Array
   module ArrayExtensions
     # Convert to hash
