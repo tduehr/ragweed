@@ -18,3 +18,4 @@ announcement.txt
 coverage
 doc
 pkg
+*.gem
