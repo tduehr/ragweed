@@ -2,7 +2,7 @@
 
 ## Simple example of attaching to a process and letting it run
 
-require 'rubygems' # Yah I know its bad
+require 'rubygems' ## You should really define a RUBYOPT=rubygems
 require 'ragweed'
 
 pid = Ragweed::Debuggertux.find_by_regex(/gcalctool/)
