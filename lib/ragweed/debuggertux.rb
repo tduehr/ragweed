@@ -33,7 +33,8 @@ class Ragweed::Debuggertux
     ## ip: insertion point
     ## callable: lambda to be called when breakpoint is hit
     ## name: name of breakpoint
-    def initialize(bp, ip, callable, name = "")
+    def initialize(bp, ip, callable, p, name = "")
+	  @bppid = p
       @@bpid ||= 0
       @bp = bp
       @function = name
@@ -47,10 +48,10 @@ class Ragweed::Debuggertux
     ## Install a breakpoint (replace instruction with int3)
     def install
       ## Replace the original instruction with an int3
-      @orig = Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::PEEK_TEXT, $ppid, @addr, 0)   ## Backup the old inst
+      @orig = Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::PEEK_TEXT, @bppid, @addr, 0)
       if @orig != -1
         new = (@orig & ~0xff) | INT3;
-        Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::POKE_TEXT, $ppid, @addr, new)
+        Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::POKE_TEXT, @bppid, @addr, new)
         @installed = true
       else
         @installed = false
@@ -61,7 +62,7 @@ class Ragweed::Debuggertux
     def uninstall
       ## Put back the original instruction
       if @orig != INT3
-        Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::POKE_TEXT, $ppid, @addr, @orig)
+        Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::POKE_TEXT, @bppid, @addr, @orig)
         @installed = false
       end
     end
@@ -77,8 +78,6 @@ class Ragweed::Debuggertux
   def initialize(pid,opts={}) ## Debuggertux Class
     if p.to_i.kind_of? Fixnum
       @pid = pid.to_i
-	  ## FIXME - globals are bad...
-      $ppid = @pid
     else
       raise "Provide a PID"
     end
@@ -161,7 +160,7 @@ class Ragweed::Debuggertux
     if not callable and block_given?
       callable = block
     end
-    @breakpoints[ip] << Breakpoint.new(self, ip, callable, name)
+    @breakpoints[ip] << Breakpoint.new(self, ip, callable, @pid, name)
   end
 
   ## remove breakpoint with id bpid at insertion point or
