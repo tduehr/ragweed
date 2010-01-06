@@ -1,17 +1,13 @@
 #!/usr/bin/env ruby
 
 require 'ragweed'
-require 'debuggertux'
-require 'pp'
-require 'irb'
-#include Ragweed
 
 filename = ARGV[0]
 pid = ARGV[1].to_i
 
 raise "hittracertux.rb FILE PID" if (ARGV.size < 2 or pid <= 0)
 
-d = Debuggertux.new(pid)
+d = Ragweed::Debuggertux.new(pid)
 d.attach
 
 File.open(filename, "r") do |fd|
@@ -26,7 +22,6 @@ end
 d.install_bps
 d.continue
 catch(:throw) { d.loop }
-
 
 # An IDC script for generating the text file this hit tracer requires
 =begin

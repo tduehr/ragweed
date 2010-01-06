@@ -75,10 +75,14 @@ class Ragweed::Debuggertux
   ## p: pid of process to be debugged
   ## opts: default options for automatically doing things (attach and install)
   def initialize(pid,opts={}) ## Debuggertux Class
-    @pid = pid
+    if p.kind_of? Fixnum
+      @pid = pid
+	  ## FIXME - globals are bad...
+      $ppid = @pid
+    else
+      raise "Provide a PID"
+    end
 
-    ## FIXME - globals are bad...
-    $ppid = @pid ## temporary work around
     @opts = opts
 
     default_opts(opts)
@@ -109,6 +113,7 @@ class Ragweed::Debuggertux
         return x
       end
     end
+	return nil
   end
 
   def install_bps
@@ -240,6 +245,8 @@ class Ragweed::Debuggertux
         self.continue
       when signal == Ragweed::Wraptux::Signal::SIGSTOP
         self.continue
+	  when signal == Ragweed::Wraptux::Signal::SIGWINCH
+		self.continue
       else
         raise "Add more signal handlers (##{signal})"
       end
@@ -248,7 +255,12 @@ class Ragweed::Debuggertux
 
   ## Return an array of thread PIDs
   def self.threads(pid)
-    a = Dir.entries("/proc/#{pid}/task/")
+	begin
+	    a = Dir.entries("/proc/#{pid}/task/")
+	rescue
+		puts "No such process (#{pid})"
+		return
+	end
     a.delete_if { |x| x == '.' }
     a.delete_if { |x| x == '..' }
   end
