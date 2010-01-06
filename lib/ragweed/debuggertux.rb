@@ -305,7 +305,7 @@ class Ragweed::Debuggertux
   def print_regs
     regs = self.get_registers
     puts "eip %08x" % regs[:eip]
-    puts "edi %08x" % regs[:esi]
+    puts "esi %08x" % regs[:esi]
     puts "edi %08x" % regs[:edi]
     puts "esp %08x" % regs[:esp]
     puts "eax %08x" % regs[:eax]
