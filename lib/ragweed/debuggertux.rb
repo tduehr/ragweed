@@ -75,8 +75,8 @@ class Ragweed::Debuggertux
   ## p: pid of process to be debugged
   ## opts: default options for automatically doing things (attach and install)
   def initialize(pid,opts={}) ## Debuggertux Class
-    if p.kind_of? Fixnum
-      @pid = pid
+    if p.to_i.kind_of? Fixnum
+      @pid = pid.to_i
 	  ## FIXME - globals are bad...
       $ppid = @pid
     else
