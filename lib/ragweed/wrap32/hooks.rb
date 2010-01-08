@@ -11,7 +11,7 @@ class Ragweed::Debugger32
 
     breakpoint_set(ip) do |ev,ctx|
       nargs = nargs.to_i
-      if nargs > 1
+      if nargs >= 1
         args = (1..nargs).map {|i| process.read32(ctx.esp + 4*i)}
       end
       retp = process.read32(ctx.esp)
