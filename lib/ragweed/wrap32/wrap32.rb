@@ -204,6 +204,11 @@ module Ragweed::Wrap32
       CALLS["kernel32!GetCurrentProcessId:=L"].call # can't realistically fail
     end
 
+    # get_processid
+    def get_process_id(h)
+      return CALLS["kernel32!GetProcessId:L=L"].call(h)
+    end
+
     # gettid
     def get_current_thread_id
       CALLS["kernel32!GetCurrentThreadId:=L"].call # can't realistically fail

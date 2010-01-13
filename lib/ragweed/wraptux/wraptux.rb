@@ -33,11 +33,7 @@ module Ragweed::Wraptux
       DL.last_error = 0
       r = CALLS["libc!ptrace:IIII=I"].call(request, pid, addr, data).first
       raise SystemCallError.new("ptrace", DL.last_error) if r == -1 and DL.last_error != 0
-
-      case request
-      when Ptrace::PEEK_TEXT, Ptrace::PEEK_DATA
-        return r
-      end
+      return r
     end
 
     def malloc(sz)

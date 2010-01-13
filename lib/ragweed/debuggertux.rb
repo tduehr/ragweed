@@ -43,15 +43,15 @@ class Ragweed::Debuggertux
       @installed = false
       @orig = 0
       @bpid = (@@bpid += 1)
-    end ## breakpoint initialize
+    end
 
     ## Install a breakpoint (replace instruction with int3)
     def install
       ## Replace the original instruction with an int3
       @orig = Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::PEEK_TEXT, @bppid, @addr, 0)
       if @orig != -1
-        new = (@orig & ~0xff) | INT3;
-        Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::POKE_TEXT, @bppid, @addr, new)
+        n = (@orig & ~0xff) | INT3;
+        Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::POKE_TEXT, @bppid, @addr, n)
         @installed = true
       else
         @installed = false
@@ -132,9 +132,16 @@ class Ragweed::Debuggertux
   ## Attach calls install_bps so dont forget to call breakpoint_set
   ## BEFORE attach or explicitly call install_bps
   def attach(opts=@opts)
-    Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::ATTACH, @pid, 0, 0)
-    @attached = true
-    self.install_bps if (opts[:install] and not @installed)
+    r = Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::ATTACH, @pid, 0, 0)
+    if r != -1
+        @attached = true
+        on_attach
+        ## Temporarily gross until I figure this one out
+        sleep(0.5)
+        self.install_bps if (opts[:install] and not @installed)
+    else
+        raise "Attach failed!"
+    end
   end
 
   def continue
@@ -319,7 +326,6 @@ class Ragweed::Debuggertux
 
   def on_illegalinst
     #puts "illegal instruction"
-    exit
   end
 
   def on_attach
@@ -347,8 +353,8 @@ class Ragweed::Debuggertux
   end
 
   def on_segv
-    print_regs
-    exit
+    #print_regs
+    #exit
   end
 
   def default_opts(opts)
