@@ -13,11 +13,7 @@ module Ragweed; end
 ##     debugger and define your own on_whatever events. If you handle an event
 ##     that Debuggertux already handles, call "super", too.
 class Ragweed::Debuggertux
-  # include Ragweed
-
-  attr_reader :pid
-  attr_reader :status
-  attr_reader :exited
+  attr_reader :pid, :status, :exited
   attr_accessor :breakpoints
 
   ## Class to handle installing/uninstalling breakpoints
