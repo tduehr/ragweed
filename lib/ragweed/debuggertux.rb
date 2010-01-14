@@ -247,6 +247,8 @@ class Ragweed::Debuggertux
           puts "We got a SIGTRAP but not at our breakpoint... continuing"
         end
         self.continue
+      when signal == Ragweed::Wraptux::Signal::SIGTERM
+        self.on_sigterm
       when signal == Ragweed::Wraptux::Signal::SIGCONT
         self.continue
       when signal == Ragweed::Wraptux::Signal::SIGSTOP
@@ -334,6 +336,10 @@ class Ragweed::Debuggertux
 
   def on_detach
     #puts "process detached"
+  end
+
+  def on_sigterm
+    #puts "process terminated"
   end
 
   def on_continue
