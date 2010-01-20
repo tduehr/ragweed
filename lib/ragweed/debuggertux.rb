@@ -269,9 +269,9 @@ class Ragweed::Debuggertux
     a.delete_if { |x| x == '..' }
   end
 
-  def procparse
+  def self.procparse(p)
       shared_objects = Hash.new
-      File.read("/proc/#{@pid}/maps").each do |line|
+      File.read("/proc/#{p}/maps").each do |line|
           if line =~ /[a-zA-Z0-9].so/ && line =~ /xp /
               lib = line.split(' ', 6)
               sa = line.split('-', 0)
