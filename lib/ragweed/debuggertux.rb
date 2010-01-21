@@ -306,7 +306,7 @@ class Ragweed::Debuggertux
   ## Here we need to do something about the bp
   ## we just hit. We have a block to execute
   def on_breakpoint
-    r = self.get_registers
+    r = get_registers
     eip = r[:eip]
     eip -= 1
 
@@ -326,7 +326,7 @@ class Ragweed::Debuggertux
   end
 
   def print_regs
-    regs = self.get_registers
+    regs = get_registers
     puts "eip %08x" % regs[:eip]
     puts "esi %08x" % regs[:esi]
     puts "edi %08x" % regs[:edi]
