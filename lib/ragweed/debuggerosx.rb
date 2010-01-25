@@ -149,13 +149,15 @@ class Ragweed::Debuggerosx
         rescue Errno::EBUSY
           # Yes this happens and it's wierd
           # Not sure it should happen
-          pp 'unable to self.continue'
-          pp self.get_registers
+          if $DEBUG
+            puts 'unable to self.continue'
+            puts self.get_registers
+          end
         retry
         end
       when signal == 0x13 #WIFCONTINUED
         try(:on_continue)
-      else #holy broken stuff batman
+      else # holy broken stuff batman
         raise "Unknown signal '#{signal}' recieved: This should not happen - ever."
       end
     end
@@ -164,31 +166,31 @@ class Ragweed::Debuggerosx
 
   # these event functions are stubs. Implementations should override these
   def on_single_step
-    pp "Single stepping #{ thread } (on_single_step)"
-    pp Ragweed::Wraposx::ThreadInfo.get(thread)
+    puts "Single stepping #{ thread } (on_single_step)"
+    puts Ragweed::Wraposx::ThreadInfo.get(thread).inspect
   end
 
   def on_sigsegv
-    pp Ragweed::Wraposx::ThreadContext.get(thread)
-    pp Ragweed::Wraposx::ThreadInfo.get(thread)
+    puts Ragweed::Wraposx::ThreadContext.get(thread).inspect
+    puts Ragweed::Wraposx::ThreadInfo.get(thread).inspect
   end
 
   def on_exit(status)
-    pp "Exited! (on_exit)"
+    puts "Exited! (on_exit)"
     @exited = true
   end
 
   def on_signal(signal)
-    pp "Exited with signal #{ signal } (on_signal)"
+    puts "Exited with signal #{ signal } (on_signal)"
     @exited = true
   end
 
   def on_stop(signal)
-    pp "#Stopped with signal #{ signal } (on_stop)"
+    puts "#Stopped with signal #{ signal } (on_stop)"
   end
 
   def on_continue
-    pp "Continued! (on_continue)"
+    puts "Continued! (on_continue)"
   end
 
   # installs all breakpoints into child process
