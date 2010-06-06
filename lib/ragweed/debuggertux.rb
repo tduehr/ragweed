@@ -102,9 +102,10 @@ class Ragweed::Debuggertux
     a.delete_if do |x| x == '.'; end
     a.delete_if do |x| x == '..'; end
     a.delete_if do |x| x =~ /[a-z]/; end
+    
     a.each do |x|
       f = File.read("/proc/#{x}/cmdline")
-      if f =~ rx
+      if f =~ rx and x.to_i != Process.pid.to_i
         return x
       end
     end
