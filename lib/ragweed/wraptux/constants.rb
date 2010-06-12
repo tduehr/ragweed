@@ -3,27 +3,51 @@ module Ragweed; end
 module Ragweed::Wraptux;end
 
 module Ragweed::Wraptux::Ptrace
-  TRACE_ME = 0
-  PEEK_TEXT = 1
-  PEEK_DATA = 2
-  PEEK_USER = 3
-  POKE_TEXT = 4
-  POKE_DATA = 5
-  POKE_USER = 6
-  CONTINUE = 7
-  KILL = 8
-  STEP = 9
-  GETREGS = 12
-  SETREGS = 13
-  ATTACH = 16
-  DETACH = 17
-  SYSCALL = 24
+    TRACE_ME = 0
+    PEEK_TEXT = 1
+    PEEK_DATA = 2
+    PEEK_USER = 3
+    POKE_TEXT = 4
+    POKE_DATA = 5
+    POKE_USER = 6
+    CONTINUE = 7
+    KILL = 8
+    STEP = 9
+    GETREGS = 12
+    SETREGS = 13
+    ATTACH = 16
+    DETACH = 17
+    SYSCALL = 24
+    SETOPTIONS = 0x4200
+    GETEVENTMSG = 0x4201
+    GETSIGINFO = 0x4202
+    SETSIGINFO = 0x4203
+end
+
+module Ragweed::Wraptux::Ptrace::SetOptions
+    TRACESYSGOOD = 0x00000001
+    TRACEFORK = 0x00000002
+    TRACEVFORK = 0x00000004
+    TRACECLONE = 0x00000008
+    TRACEEXEC = 0x00000010
+    TRACEVFORKDONE = 0x00000020
+    TRACEEXIT = 0x00000040
+    MASK = 0x0000007f
+end
+
+module Ragweed::Wraptux::Ptrace::EventCodes
+    FORK = 1
+    VFORK = 2
+    CLONE = 3
+    EXEC = 4
+    VFORK_DONE = 5
+    EXIT = 6
 end
 
 module Ragweed::Wraptux::Signal
 	SIGHUP = 1
 	SIGINT = 2
-	SIGQUIT =  3
+	SIGQUIT = 3
 	SIGILL = 4
 	SIGTRAP = 5
 	SIGABRT = 6
@@ -59,10 +83,10 @@ module Ragweed::Wraptux::Signal
 end
 
 module Ragweed::Wraptux::Wait
-  NOHANG = 1
-  UNTRACED = 2
-  EXITED = 4
-  STOPPED = 8
-  CONTINUED = 10
-  NOWWAIT = 20
+    NOHANG = 1
+    UNTRACED = 2
+    EXITED = 4
+    STOPPED = 8
+    CONTINUED = 10
+    NOWWAIT = 20
 end

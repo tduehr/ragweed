@@ -21,9 +21,8 @@ class Ragweed::Debuggertux
 
     INT3 = 0xCC ## obviously x86 specific debugger here
 
-    attr_accessor :orig
+    attr_accessor :orig, :bpid, :bppid, :function
     attr_reader :addr
-    attr_accessor :function
 
     ## bp: parent for method_missing calls
     ## ip: insertion point
@@ -71,7 +70,7 @@ class Ragweed::Debuggertux
   ## init object
   ## p: pid of process to be debugged
   ## opts: default options for automatically doing things (attach and install)
-  def initialize(pid,opts={}) ## Debuggertux Class
+  def initialize(pid, opts) ## Debuggertux Class
     if p.to_i.kind_of? Fixnum
       @pid = pid.to_i
     else
@@ -124,6 +123,11 @@ class Ragweed::Debuggertux
       v.uninstall
     end
     @installed = false
+  end
+
+  ## This has not been fully tested yet
+  def set_options(option)
+    r = Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::SETOPTIONS, @pid, 0, option)
   end
 
   ## Attach calls install_bps so dont forget to call breakpoint_set
@@ -207,6 +211,14 @@ class Ragweed::Debuggertux
     end
   end
 
+  def wexitstatus(status)
+    (((status) & 0xff00) >> 8)
+  end
+
+  def wtermsig(status)
+    ((status) & 0x7f)
+  end
+
   ## This wait must be smart, it has to wait for a signal
   ## when SIGTRAP is received we need to see if one of our
   ## breakpoints has fired. If it has then execute the block
@@ -215,9 +227,11 @@ class Ragweed::Debuggertux
   def wait(opts = 0)
     r = Ragweed::Wraptux::waitpid(@pid,opts)
     status = r[1]
-    wstatus = status & 0x7f
-    signal = status >> 8
+    wstatus = wtermsig(status)
+    signal = wexitstatus(status)
+    event_code = (status >> 16)
     found = false
+
     if r[0] != 0    ## Check the ret
       case  ## FIXME - I need better logic (use Signal module)
       when wstatus == 0 ##WIFEXITED
@@ -233,22 +247,47 @@ class Ragweed::Debuggertux
       when signal == Ragweed::Wraptux::Signal::SIGILL
         self.on_illegalinst
       when signal == Ragweed::Wraptux::Signal::SIGTRAP
-        ## Check if EIP matches a breakpoint we have set
+        self.on_sigtrap
         r = self.get_registers
         eip = r[:eip]
         eip -= 1
-        if @breakpoints.has_key?(eip)
-          found = true
-          self.on_breakpoint
-        else
-          puts "We got a SIGTRAP but not at our breakpoint... continuing"
+        case
+          when @breakpoints.has_key?(eip)
+            found = true
+            self.on_breakpoint
+            self.continue
+          when event_code == Ragweed::Wraptux::Ptrace::EventCodes::FORK
+                p = Array.new(1)
+                p = p.to_ptr
+                p.struct!('L', :pid)
+                Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::GETEVENTMSG, @pid, 0, p.to_i)
+                ## Fix up the PID in each breakpoint
+                if (1..65535) === p[:pid] && @opts[:fork] == true
+                    @breakpoints.each_pair do |k,v|
+                        v.each do |b|
+                            b.bpid = p[:pid];
+                            b.bppid = p[:pid];
+                        end
+                    end
+
+                    @pid = p[:pid]
+                    self.on_fork_child(@pid)
+                end
+            when event_code == Ragweed::Wraptux::Ptrace::EventCodes::EXEC
+            when event_code == Ragweed::Wraptux::Ptrace::EventCodes::CLONE
+            when event_code == Ragweed::Wraptux::Ptrace::EventCodes::VFORK
+            when event_code == Ragweed::Wraptux::Ptrace::EventCodes::EXIT
+                ## Not done yet
+          else
+            self.continue
         end
-        self.continue
       when signal == Ragweed::Wraptux::Signal::SIGTERM
         self.on_sigterm
       when signal == Ragweed::Wraptux::Signal::SIGCONT
         self.continue
       when signal == Ragweed::Wraptux::Signal::SIGSTOP
+        self.on_sigstop
+        Ragweed::Wraptux::kill(@pid, Ragweed::Wraptux::Signal::SIGCONT)
         self.continue
 	  when signal == Ragweed::Wraptux::Signal::SIGWINCH
 		self.continue
@@ -288,7 +327,6 @@ class Ragweed::Debuggertux
     return shared_objects
   end
 
-
   ## Gets the registers for the given process
   def get_registers
     size = Ragweed::Wraptux::SIZEOFLONG * 17
@@ -305,7 +343,10 @@ class Ragweed::Debuggertux
   end
 
   ## Here we need to do something about the bp
-  ## we just hit. We have a block to execute
+  ## we just hit. We have a block to execute.
+  ## Remember if you implement this on your own
+  ## make sure to call super, and also realize
+  ## EIP won't look correct until this runs
   def on_breakpoint
     r = get_registers
     eip = r[:eip]
@@ -326,7 +367,7 @@ class Ragweed::Debuggertux
     end
   end
 
-  def print_regs
+  def print_registers
     regs = get_registers
     puts "eip %08x" % regs[:eip]
     puts "esi %08x" % regs[:esi]
@@ -358,12 +399,16 @@ class Ragweed::Debuggertux
     #puts "process terminated"
   end
 
+  def on_sigtrap
+    #puts "sigtrap caught"
+  end
+
   def on_continue
     #puts "process continued"
   end
 
-  def on_stopped
-    #puts "process stopped"
+  def on_sigstop
+    #puts "process received sigstop"
   end
 
   def on_signal
@@ -374,8 +419,12 @@ class Ragweed::Debuggertux
     #puts "single stepping"
   end
 
+  def on_fork_child(pid)
+    #puts "child forked"
+  end
+
   def on_segv
-    #print_regs
+    #print_registers
     #exit
   end
 
