@@ -1,5 +1,5 @@
 Ragweed
-    by tduehr, struct, and tqbf
+    by tduehr, crohlf, and tqbf
     http://matasano.com/log
 
 == DESCRIPTION:
@@ -21,6 +21,8 @@ The most complete set is for Win32.
   require 'debuggerosx'
   d = Debuggerosx.new(514) # pid of process to trace
 
+  Please see the examples/ directory for more.
+
 == REQUIREMENTS:
 
 * NONE - no really, this is pure native ruby hooking system libraries. There are no other dependencies, none.
@@ -32,4 +34,4 @@ The most complete set is for Win32.
 
 == LICENSE:
 
-Copyright 2009 Matasano Security, LLC All Rights Reserved
+Copyright 2009/2010 Matasano Security, LLC All Rights Reserved

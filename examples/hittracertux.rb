@@ -7,7 +7,8 @@ pid = ARGV[1].to_i
 
 raise "hittracertux.rb FILE PID" if (ARGV.size < 2 or pid <= 0)
 
-d = Ragweed::Debuggertux.new(pid)
+opts = {}
+d = Ragweed::Debuggertux.new(pid, opts)
 d.attach
 
 File.open(filename, "r") do |fd|
