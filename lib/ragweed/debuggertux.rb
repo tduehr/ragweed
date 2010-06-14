@@ -332,7 +332,7 @@ class Ragweed::Debuggertux
     size = Ragweed::Wraptux::SIZEOFLONG * 17
     regs = Array.new(size)
     regs = regs.to_ptr
-    regs.struct!('LLLLLLLLLLLLLLLLL', :ebx,:ecx,:edx,:esi,:edi,:ebp,:eax,:xds,:xes,:xfs,:xgs,:orig_eax,:eip,:xcs,:eflags,:esp,:xss)
+    regs.struct!('LLLLLLLIIILLILLLI', :ebx,:ecx,:edx,:esi,:edi,:ebp,:eax,:xds,:xes,:xfs,:xgs,:orig_eax,:eip,:xcs,:eflags,:esp,:xss)
     Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::GETREGS, @pid, 0, regs.to_i)
     return regs
   end
