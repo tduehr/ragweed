@@ -4,7 +4,7 @@ class Ragweed::Debugger32
   # callable/block is called with ev, ctx, dir (:enter or :leave), and args Array (see examples/hook_notepad.rb)
   # default handler prints arguments
   def hook(ip, nargs, callable=nil, &block)
-    callable ||= block || lambda do |ev, ctx,dir,args|
+    callable ||= block || lambda do |ev,ctx,dir,args|
       puts "#{dir} #{ip.to_s(16) rescue ip.to_s}"
       puts args.map{|a| "%08x" % a}.join(',')
     end
