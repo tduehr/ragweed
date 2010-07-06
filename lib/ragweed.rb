@@ -49,7 +49,7 @@ module Ragweed
     pkgs = ""
     dbg = ""
     case
-    when RUBY_PLATFORM =~ /win(dows|32)/i
+    when RUBY_PLATFORM =~ /win(dows|32)|i386-mingw32/i
       pkgs = '32'
     when RUBY_PLATFORM =~ /darwin/i
       pkgs = 'osx'
