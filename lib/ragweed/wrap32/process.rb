@@ -34,11 +34,40 @@ class Ragweed::Process
     ptr(Ragweed::Wrap32::get_proc_address(name))
   end
 
+  def is_hex(s)
+    s = s.strip
+
+    #strip leading 0s and 0x prefix
+    while s[0..1] == '0x' or s[0..1] == '00'
+        s = s[2..-1]
+    end
+
+    o = s
+
+    if s.hex.to_s(16) == o
+        return true
+    end
+        return false
+  end
+
   def get_proc_remote(name)
     mod, meth = name.split "!"
     modh = remote_call "kernel32!GetModuleHandleW", mod.to_utf16
     raise "no such module #{ mod }" if not modh
-    ret = remote_call "kernel32!GetProcAddress", modh, meth
+
+    if is_hex(meth)
+        baseaddr = 0
+        modules.each do |m|
+            if m.szModule == mod
+                baseaddr = m.modBaseAddr
+                break
+            end
+        end
+
+        ret = baseaddr + meth.hex
+    else 
+        ret = remote_call "kernel32!GetProcAddress", modh, meth
+    end
     ret
   end
 

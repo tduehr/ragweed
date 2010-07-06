@@ -16,11 +16,14 @@ class Ragweed::Debugger32
       end
       retp = process.read32(ctx.esp)
       # set exit bpoint
-      breakpoint_set(retp) do |ev,ctx|
-        callable.call(ev, ctx, :leave, args)
-        breakpoint_clear(retp)
-      end.install
-      callable.call(ev, ctx, :enter, args)
+      # We can't always set a leave bp
+      if retp != 0
+        breakpoint_set(retp) do |ev,ctx|
+          callable.call(ev, ctx, :leave, args)
+          breakpoint_clear(retp)
+        end.install
+      end
+        callable.call(ev, ctx, :enter, args)
     end
   end
 end

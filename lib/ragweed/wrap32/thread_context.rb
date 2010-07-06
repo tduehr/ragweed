@@ -110,7 +110,6 @@ class Ragweed::Wrap32::ThreadContext
 -----------------------------------------------------------------------
 CONTEXT:
     EIP: #{self.eip.to_s(16).rjust(8, "0")} #{maybe_dis.call(self.eip)}
-
     EAX: #{self.eax.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.eax)}
     EBX: #{self.ebx.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.ebx)}
     ECX: #{self.ecx.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.ecx)}
