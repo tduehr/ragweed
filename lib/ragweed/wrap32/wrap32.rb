@@ -162,6 +162,13 @@ module Ragweed::Wrap32
       return val ## don't handle short reads XXX
     end
 
+    def get_mapped_filename(h, lpv, size)
+        val = "\x00" * size
+        r = CALLS["psapi!GetMappedFileName:LLPL=L"].call(h, lpv.to_i, val, size)
+        raise WinX.new(:get_mapped_filename) if r == 0
+        return val
+    end
+
     def str2memory_basic_info(mbi)
       s = OpenStruct.new
       s.BaseAddress,

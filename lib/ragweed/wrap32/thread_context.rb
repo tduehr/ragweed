@@ -104,20 +104,20 @@ class Ragweed::Wrap32::ThreadContext
 
   def dump(&block)
     maybe_hex = lambda {|a| begin; "\n" + (" " * 9) + block.call(a, 16).hexdump(true)[10..-2]; rescue; ""; end }      
-    maybe_dis = lambda {|a| begin; "\n" + block.call(a, 16).distorm.map {|i| "         " + i.mnem}.join("\n"); rescue; ""; end }
+#    maybe_dis = lambda {|a| begin; "\n" + block.call(a, 16).distorm.map {|i| "         " + i.mnem}.join("\n"); rescue; ""; end }
 
     string =<<EOM
 -----------------------------------------------------------------------
 CONTEXT:
-    EIP: #{self.eip.to_s(16).rjust(8, "0")} #{maybe_dis.call(self.eip)}
-    EAX: #{self.eax.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.eax)}
-    EBX: #{self.ebx.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.ebx)}
-    ECX: #{self.ecx.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.ecx)}
-    EDX: #{self.edx.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.edx)}
-    EDI: #{self.edi.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.edi)}
-    ESI: #{self.esi.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.esi)}
-    EBP: #{self.ebp.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.ebp)}
-    ESP: #{self.esp.to_s(16).rjust(8, "0")} #{maybe_hex.call(self.esp)}
+    EIP: #{self.eip.to_s(16).rjust(8, "0")}
+    EAX: #{self.eax.to_s(16).rjust(8, "0")}
+    EBX: #{self.ebx.to_s(16).rjust(8, "0")}
+    ECX: #{self.ecx.to_s(16).rjust(8, "0")}
+    EDX: #{self.edx.to_s(16).rjust(8, "0")}
+    EDI: #{self.edi.to_s(16).rjust(8, "0")}
+    ESI: #{self.esi.to_s(16).rjust(8, "0")}
+    EBP: #{self.ebp.to_s(16).rjust(8, "0")}
+    ESP: #{self.esp.to_s(16).rjust(8, "0")}
     EFL: #{self.eflags.to_s(2).rjust(32, "0")} #{Ragweed::Wrap32::EFlags.flag_dump(self.eflags)}
 EOM
   end

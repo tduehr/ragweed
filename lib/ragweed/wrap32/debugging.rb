@@ -85,7 +85,7 @@ class Ragweed::Wrap32::DebugEvent
       @exit_code = str.unpack("L").first
     when Ragweed::Wrap32::DebugCodes::EXIT_THREAD 
       @exit_code = str.unpack("L").first
-    when Ragweed::Wrap32::DebugCodes::LOAD_DLL 
+    when Ragweed::Wrap32::DebugCodes::LOAD_DLL
       @file_handle, @dll_base, @offset,
       @info_size, @image_name, @unicode = str.unpack("LLLLLH")
     when Ragweed::Wrap32::DebugCodes::OUTPUT_DEBUG_STRING 
