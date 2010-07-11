@@ -23,7 +23,7 @@ class Ragweed::Debugger32
       ## Its not %100 accurate, need a better solution
       eip = ctx.eip
 
-      if retp != 0 and retp > (eip & 0xffff0000)
+      if retp != 0 and retp > (eip & 0xf0000000)
         breakpoint_set(retp) do |ev,ctx|
           callable.call(ev, ctx, :leave, args)
           breakpoint_clear(retp)
