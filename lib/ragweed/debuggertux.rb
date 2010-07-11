@@ -155,8 +155,8 @@ class Ragweed::Debuggertux
     Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::DETACH, @pid, 0, 0)
   end
 
-  def stepp
-	on_stepp
+  def single_step
+	on_single_step
     ret = Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::STEP, @pid, 1, 0)
   end
 
@@ -359,7 +359,7 @@ class Ragweed::Debuggertux
       @breakpoints[eip].first.uninstall
       r[:eip] = eip
       set_registers(r)
-      stepp
+      single_step
       ## ptrace peektext returns -1 upon reinstallation of bp without calling
       ## waitpid() if that occurs the breakpoint cannot be reinstalled
       Ragweed::Wraptux::waitpid(@pid, 0)
@@ -380,52 +380,39 @@ class Ragweed::Debuggertux
   end
 
   def on_exit
-    #puts "process exited"
   end
 
   def on_illegalinst
-    #puts "illegal instruction"
   end
 
   def on_attach
-    #puts "attached to process"
   end
 
   def on_detach
-    #puts "process detached"
   end
 
   def on_sigterm
-    #puts "process terminated"
   end
 
   def on_sigtrap
-    #puts "sigtrap caught"
   end
 
   def on_continue
-    #puts "process continued"
   end
 
   def on_sigstop
-    #puts "process received sigstop"
   end
 
   def on_signal
-    #puts "process received signal"
   end
 
-  def on_stepp
-    #puts "single stepping"
+  def on_single_step
   end
 
   def on_fork_child(pid)
-    #puts "child forked"
   end
 
   def on_segv
-    #print_registers
-    #exit
   end
 
   def default_opts(opts)

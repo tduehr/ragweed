@@ -157,7 +157,7 @@ class Ragweed::Debuggerosx
         end
       when signal == 0x13 #WIFCONTINUED
         try(:on_continue)
-      else # holy broken stuff batman
+      else
         raise "Unknown signal '#{signal}' recieved: This should not happen - ever."
       end
     end
@@ -165,32 +165,28 @@ class Ragweed::Debuggerosx
   end
 
   # these event functions are stubs. Implementations should override these
-  def on_single_step
-    puts "Single stepping #{ thread } (on_single_step)"
-    puts Ragweed::Wraposx::ThreadInfo.get(thread).inspect
+  def on_attach
   end
 
-  def on_sigsegv
-    puts Ragweed::Wraposx::ThreadContext.get(thread).inspect
-    puts Ragweed::Wraposx::ThreadInfo.get(thread).inspect
+  def on_detach
+  end
+
+  def on_single_step
+    #puts Ragweed::Wraposx::ThreadInfo.get(thread).inspect
   end
 
   def on_exit(status)
-    puts "Exited! (on_exit)"
     @exited = true
   end
 
   def on_signal(signal)
-    puts "Exited with signal #{ signal } (on_signal)"
     @exited = true
   end
 
   def on_stop(signal)
-    puts "#Stopped with signal #{ signal } (on_stop)"
   end
 
   def on_continue
-    puts "Continued! (on_continue)"
   end
 
   # installs all breakpoints into child process
@@ -218,6 +214,7 @@ class Ragweed::Debuggerosx
     r = Ragweed::Wraposx::ptrace(Ragweed::Wraposx::Ptrace::ATTACH,@pid,0,0)
     # Ragweed::Wraposx::ptrace(Ragweed::Wraposx::Ptrace::CONTINUE,@pid,1,0)
     @attached = true
+    on_attach
     self.hook(opts) if (opts[:hook] and not @hooked)
     self.install_bps if (opts[:install] and not @installed)
     return r
@@ -230,6 +227,7 @@ class Ragweed::Debuggerosx
     self.uninstall_bps if @installed
     r = Ragweed::Wraposx::ptrace(Ragweed::Wraposx::Ptrace::DETACH,@pid,0,Ragweed::Wraposx::Wait::UNTRACED)
     @attached = false
+    on_detach
     self.unhook(opts) if opts[:hook] and @hooked
     return r
   end

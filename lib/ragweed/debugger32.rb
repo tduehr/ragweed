@@ -349,6 +349,22 @@ class Ragweed::Debugger32
     exit(1)
   end
 
+  ## TODO: Implement each of these
+  def on_create_process(ev)       end
+  def on_create_thread(ev)        end
+  def on_exit_thread(ev)          end
+  def on_output_debug_string(ev)  end
+  def on_rip(ev)                  end
+  def on_unload_dll(ev)           end
+  def on_alignment(ev)            end
+  def on_bounds(ev)               end
+  def on_divide_by_zero(ev)       end
+  def on_int_overflow(ev)         end
+  def on_invalid_handle(ev)       end
+  def on_priv_instruction(ev)     end
+  def on_stack_overflow(ev)       end
+  def on_invalid_disposition(ev)  end
+
   # Read through me to see all the random events you can hook in
   # a subclass. 
   # 
