@@ -1,8 +1,5 @@
 require ::File.join(::File.dirname(__FILE__),'wrap32')
 
-# I am not particularly proud of this code, which I basically debugged
-# into existence, but it does work.
-
 # Debugger class for win32
 # You can use this class in 2 ways:
 #
@@ -66,14 +63,11 @@ class Ragweed::Debugger32
 
     def call(*args); @callable.call(*args); end    
     def method_missing(meth, *args); @bp.send(meth, *args); end
-  end
+  end ## End Breakpoint class
 
   # Get a handle to the process so you can mess with it.
   def process; @p; end
   
-  # This is how you normally create a debug instance: with a regex
-  # on the image name of the process.
-  #    d = Debugger.find_by_regex /notepad/i
   def self.find_by_regex(rx)
     Ragweed::Wrap32::all_processes do |p|
       if p.szExeFile =~ rx
@@ -288,8 +282,12 @@ class Ragweed::Debugger32
     @handled = Ragweed::Wrap32::ContinueCodes::CONTINUE
   end
 
-  def on_load_dll(ev)
+  def get_dll_name(ev)
     name = Ragweed::Wrap32::get_mapped_filename(@p.handle, ev.dll_base, 256)
+  end
+
+  def on_load_dll(ev)
+    name = get_dll_name(ev)
     ## TODO - hash DLLs instead of this garbage
     name.gsub!(/\s/, '')
     name.gsub!(/\0/, '')
