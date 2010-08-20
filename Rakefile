@@ -34,8 +34,8 @@ begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
     gem.name = "ragweed"
-    gem.summary = %Q{TODO: one-line summary of your gem}
-    gem.description = %Q{TODO: longer description of your gem}
+    gem.summary = %Q{Scriptable debugger}
+    gem.description = %Q{General debugging tool written in Ruby for OSX/Win32/Linux}
     gem.email = "td@matasano.com"
     gem.homepage = "http://github.com/tduehr/ragweed"
     gem.authors = ["tduehr", "struct", "tqbf"]

@@ -1,36 +1,52 @@
-Ragweed
+== Ragweed
     by tduehr, crohlf, and tqbf
-    http://matasano.com/log
+    http://chargen.matasano.com
 
 == DESCRIPTION:
 
 * Ragweed is a set of scriptable debugging tools written mostly in native ruby.
 
 * Where required the Ruby/DL and Win32API libraries are used to interface the machine
-and OS native system calls.
+  and OS native system calls.
 
+== Supported Platforms
+
+Ragweed is supported and has been tested on the following platforms (32bit intel only):
+
+  Windows 7
+  Windows XP
+  Linux Ubuntu 10.4
+  Linux Ubuntu 9.10
+  Mac OS X 10.6
+  Mac OS X 10.5
+
+At this time only Ruby 1.8.x has been tested. We are actively investigating both 64 bit
+support for each platform and support for Ruby 1.9.x. Unfortunately, both of these things
+require significant changes to Ragweed.
+    
 == FEATURES/PROBLEMS:
 
 * This suite is currently fairly piecemeal. Each OS has it's own set of tools.
-The most complete set is for Win32.
+  The most complete set is for Win32.
 
 * Work is ongoing to complete and unify the OSX and Linux portions.
+* Struct's Nerve[http://github.com/struct/Nerve] is an example of the API we are heading toward
 
 == SYNOPSIS:
 
   require 'debuggerosx'
   d = Debuggerosx.new(514) # pid of process to trace
 
-  Please see the examples/ directory for more.
+Please see the examples directory for more. There are hit tracers for each platform.
 
 == REQUIREMENTS:
 
-* NONE - no really, this is pure native ruby hooking system libraries. There are no other dependencies, none.
+* NONE - no really, this is pure ruby hooking native system libraries. There are no other dependencies, none.
 
 == INSTALL:
 
-  # we're using gemcutter now. once gemcutter is a source just:
   sudo gem install ragweed
+  # relax with a tasty beverage, you're done
 
 == LICENSE:
 
