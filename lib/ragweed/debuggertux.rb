@@ -14,7 +14,7 @@ module Ragweed; end
 ##     that Debuggertux already handles, call "super", too.
 class Ragweed::Debuggertux
   attr_reader :pid, :status, :exited
-  attr_accessor :breakpoints
+  attr_accessor :breakpoints, :mapped_regions
 
   ## Class to handle installing/uninstalling breakpoints
   class Breakpoint
@@ -83,6 +83,8 @@ class Ragweed::Debuggertux
     @installed = false
     @attached = false
 
+    @mapped_regions = Hash.new
+
     ## Store all breakpoints in this hash
     @breakpoints = Hash.new do |h, k|
         bps = Array.new
@@ -143,6 +145,118 @@ class Ragweed::Debuggertux
     else
         raise "Attach failed!"
     end
+  end
+
+  ## This method returns a hash of mapped regions
+  ## The hash is also stored as @mapped_regions
+  ## key = Start address of region
+  ## value = Size of the region
+  def mapped
+      if @mapped_regions
+        @mapped_regions.clear
+      end
+      File.read("/proc/#{pid}/maps").each do |l|
+        s,e = l.split('-')
+        e = e.split(' ').first
+        sz = e.to_i(16) - s.to_i(16)
+        @mapped_regions.store(s.to_i(16), sz)
+      end
+  end
+
+  ## Not pretty but it works
+  def get_mapping_name(val)
+    File.read("/proc/#{pid}/maps").each do |l|
+        base = l.split('-').first
+        max = l[0,17].split('-',2)[1]
+        if base.to_i(16) <= val && val <= max.to_i(16)
+            return l.split(' ').last
+        end
+    end
+    nil
+  end
+
+  ## This method parses the proc file system and
+  ## saves a hash containing all currently mapped
+  ## shared objects. It is accessible as @shared_objects
+  def self.shared_libraries(p)
+      if @shared_objects
+        @shared_objects.clear
+      else
+        @shared_objects = Hash.new
+      end
+
+      File.read("/proc/#{p}/maps").each do |l|
+          if l =~ /[a-zA-Z0-9].so/ && l =~ /xp /
+              lib = l.split(' ', 6)
+              sa = l.split('-', 0)
+
+              if lib[5] =~ /vdso/
+                next
+              end
+
+              lib = lib[5].strip
+              lib.gsub!(/[\s\n]+/, "")
+              @shared_objects.store(sa[0], lib)
+            end
+        end
+    return @shared_objects
+  end
+
+  ## Search a specific page for a value
+  ## Should be used by most of the search_* methods
+  def search_page(base, max, val)
+    loc = Array.new
+
+    if base.kind_of? Bignum
+        ## If the page location is above what Ruby::Fixnum
+        ## can hold then it becomes a Bignum, and DL won't
+        ## convert that to 'I'. Using to_ptr is one work
+        ## around except Ruby/DL calls malloc() per to_ptr
+        ## which in this loop only leads to 'Killed...'
+        ## XXX: Need to write a work around for this
+    else
+        while base.to_i < max.to_i
+            r = Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::PEEK_TEXT, @pid, base, 0)
+
+            if r == val
+                loc.push(base)
+            end
+
+            base += 1
+        end
+    end
+
+    loc
+  end
+
+  def search_heap(val)
+    loc = Array.new
+    File.read("/proc/#{pid}/maps").each do |l|
+      if l =~ /\[heap\]/
+        s,e = l.split('-')
+        e = e.split(' ').first
+        s = s.to_i(16)
+        e = e.to_i(16)
+        sz = e - s
+        max = s + sz
+        loc = search_page(s, max, val)
+      end
+    end
+    loc
+  end
+
+  ## Search all mapped regions for a value
+  def search_process(val)
+    loc = Array.new
+    self.mapped
+    @mapped_regions.each_pair do |k,v|
+        if k == 0 or v == 0
+            next
+        end
+        max = k+v
+        loc = search_page(k, max, val)
+    end
+    loc
   end
 
   def continue
@@ -307,24 +421,6 @@ class Ragweed::Debuggertux
 	end
     a.delete_if { |x| x == '.' }
     a.delete_if { |x| x == '..' }
-  end
-
-  def self.procparse(p)
-      shared_objects = Hash.new
-      File.read("/proc/#{p}/maps").each do |line|
-          if line =~ /[a-zA-Z0-9].so/ && line =~ /xp /
-              lib = line.split(' ', 6)
-              sa = line.split('-', 0)
-
-              if lib[5] =~ /vdso/
-                next
-              end
-              lib = lib[5].strip
-              lib.gsub!(/[\s\n]+/, "")
-              shared_objects.store(sa[0], lib)
-            end
-        end
-    return shared_objects
   end
 
   ## Gets the registers for the given process
