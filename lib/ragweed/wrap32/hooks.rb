@@ -4,32 +4,37 @@ class Ragweed::Debugger32
   # callable/block is called with ev, ctx, dir (:enter or :leave), and args Array (see examples/hook_notepad.rb)
   # default handler prints arguments
   def hook(ip, nargs, callable=nil, &block)
+
     callable ||= block || lambda do |ev,ctx,dir,args|
-      #puts "#{dir} #{ip.to_s(16) rescue ip.to_s}"
-      puts args.map{|a| "%08x" % a}.join(',')
+      #puts args.map{|a| "%08x" % a}.join(',')
     end
 
     breakpoint_set(ip) do |ev,ctx|
+      esp = process.read32(ctx.esp)
+
       nargs = nargs.to_i
+
       if nargs >= 1
         args = (1..nargs).map {|i| process.read32(ctx.esp + 4*i)}
       end
-      retp = process.read32(ctx.esp)
-      ## set exit bpoint
-      ## We can't always set a leave bp but we
-      ## want to support bps for function enter/exit
-      ## so we do a little lame trick and & the page
-      ## to get an idea of where the page is mapped
-      ## Its not %100 accurate, need a better solution
-      eip = ctx.eip
 
-      if retp != 0 and retp > (eip & 0xf0000000)
-        breakpoint_set(retp) do |ev,ctx|
+      ## set exit bpoint
+      ## We cant always set a leave bp due to
+      ## calling conventions but we can avoid
+      ## a crash by setting a breakpoint on
+      ## the wrong address. So we attempt to
+      ## get an idea of where the instruction
+      ## is mapped.
+      eip = ctx.eip
+      if esp != 0 and esp > (eip & 0xf0000000)
+        breakpoint_set(esp) do |ev,ctx|
           callable.call(ev, ctx, :leave, args)
-          breakpoint_clear(retp)
+          breakpoint_clear(esp)
         end.install
       end
-        callable.call(ev, ctx, :enter, args)
+
+      ## Call the block sent to hook()
+      callable.call(ev, ctx, :enter, args)
     end
   end
 end
