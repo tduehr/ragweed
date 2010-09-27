@@ -50,7 +50,7 @@ class Ragweed::Process
 
   ## This only gets called for breakpoints in modules
   ## that have just been loaded and detected by a LOAD_DLL
-  ## event. It is called from on_load_dll()
+  ## event. It is called from on_load_dll() -> deferred_install()
   def get_deferred_proc_remote(name, handle, dll_base)
     if !name.kind_of?String
         return name
@@ -65,7 +65,7 @@ class Ragweed::Process
     modh = handle
 
     ## Location is an offset
-#    if is_hex(meth)
+    if is_hex(meth)
         baseaddr = 0
         modules.each do |m|
             if m.szModule == mod
@@ -74,11 +74,11 @@ class Ragweed::Process
         end
 
         ret = dll_base + meth.hex
-#    else
+    else
         ## Location is a symbolic name
         ## Win32 should have successfully loaded the DLL
-#        ret = remote_call "kernel32!GetProcAddress", modh, meth
-#    end
+        ret = remote_call "kernel32!GetProcAddress", modh, meth
+    end
     ret
   end
 
@@ -125,16 +125,17 @@ class Ragweed::Process
   end
 
   ## Check if breakpoint location is deferred
-  ## by looping through modules to see if its
-  ## currently loaded or not
+  ## This method expects a string 'module!function'
+  ## true is the module is not yet loaded
+  ## false is the module is loaded
   def is_breakpoint_deferred(ip)
-    if !ip.kind_of?String
-        return true
+    if !ip.kind_of? String
+        return false
     end
 
-    m, s = ip.split('!')
+    m,f = ip.split('!')
 
-    if m.nil? or s.nil?
+    if f.nil? or m.nil?
         return true
     end
 
@@ -143,7 +144,6 @@ class Ragweed::Process
             return false
         end
     end
-
     return true
   end
 
