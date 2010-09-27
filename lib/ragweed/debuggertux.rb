@@ -395,6 +395,8 @@ class Ragweed::Debuggertux
           else
             self.continue
         end
+      when signal == Ragweed::Wraptux::Signal::SIGCHLD
+        self.on_sigchild
       when signal == Ragweed::Wraptux::Signal::SIGTERM
         self.on_sigterm
       when signal == Ragweed::Wraptux::Signal::SIGCONT
@@ -485,6 +487,9 @@ class Ragweed::Debuggertux
   end
 
   def on_detach
+  end
+
+  def on_sigchild
   end
 
   def on_sigterm
