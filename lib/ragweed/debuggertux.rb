@@ -155,7 +155,7 @@ class Ragweed::Debuggertux
       if @mapped_regions
         @mapped_regions.clear
       end
-      File.read("/proc/#{pid}/maps").each do |l|
+      File.read("/proc/#{pid}/maps").each_line do |l|
         s,e = l.split('-')
         e = e.split(' ').first
         sz = e.to_i(16) - s.to_i(16)
@@ -165,7 +165,7 @@ class Ragweed::Debuggertux
 
   ## Not pretty but it works
   def get_mapping_name(val)
-    File.read("/proc/#{pid}/maps").each do |l|
+    File.read("/proc/#{pid}/maps").each_line do |l|
         base = l.split('-').first
         max = l[0,17].split('-',2)[1]
         if base.to_i(16) <= val && val <= max.to_i(16)
@@ -185,7 +185,7 @@ class Ragweed::Debuggertux
         @shared_objects = Hash.new
       end
 
-      File.read("/proc/#{p}/maps").each do |l|
+      File.read("/proc/#{p}/maps").each_line do |l|
           if l =~ /[a-zA-Z0-9].so/ && l =~ /xp /
               lib = l.split(' ', 6)
               sa = l.split('-', 0)
@@ -207,23 +207,12 @@ class Ragweed::Debuggertux
   def search_page(base, max, val)
     loc = Array.new
 
-    if base.kind_of? Bignum
-        ## If the page location is above what Ruby::Fixnum
-        ## can hold then it becomes a Bignum, and DL won't
-        ## convert that to 'I'. Using to_ptr is one work
-        ## around except Ruby/DL calls malloc() per to_ptr
-        ## which in this loop only leads to 'Killed...'
-        ## XXX: Need to write a work around for this
-    else
-        while base.to_i < max.to_i
-            r = Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::PEEK_TEXT, @pid, base, 0)
-
-            if r == val
-                loc.push(base)
-            end
-
-            base += 1
+    while base.to_i < max.to_i
+        r = Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::PEEK_TEXT, @pid, base, 0)
+        if r == val
+            loc.push(base)
         end
+        base += 1
     end
 
     loc
@@ -231,7 +220,7 @@ class Ragweed::Debuggertux
 
   def search_heap(val)
     loc = Array.new
-    File.read("/proc/#{pid}/maps").each do |l|
+    File.read("/proc/#{pid}/maps").each_line do |l|
       if l =~ /\[heap\]/
         s,e = l.split('-')
         e = e.split(' ').first
@@ -339,15 +328,16 @@ class Ragweed::Debuggertux
   ## originally stored with it. If its a different signal,
   ## then process it accordingly and move on
   def wait(opts = 0)
-    r = Ragweed::Wraptux::waitpid(@pid,opts)
-    status = r[1]
+    p = FFI::MemoryPointer.new(:int, 1)
+    r = Ragweed::Wraptux::waitpid(@pid,p,opts)
+    status = p.get_int32(0)
     wstatus = wtermsig(status)
     signal = wexitstatus(status)
     event_code = (status >> 16)
     found = false
 
-    if r[0] != 0    ## Check the ret
-      case  ## FIXME - I need better logic (use Signal module)
+    if r[0] != -1    ## Check the ret
+      case ## FIXME - I need better logic (use Signal module)
       when wstatus == 0 ##WIFEXITED
         @exited = true
         self.on_exit
@@ -371,12 +361,10 @@ class Ragweed::Debuggertux
             self.on_breakpoint
             self.continue
           when event_code == Ragweed::Wraptux::Ptrace::EventCodes::FORK
-                p = Array.new(1)
-                p = p.to_ptr
-                p.struct!('L', :pid)
+                p = FFI::MemoryPointer.new(:int, 1)
                 Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::GETEVENTMSG, @pid, 0, p.to_i)
                 ## Fix up the PID in each breakpoint
-                if (1..65535) === p[:pid] && @opts[:fork] == true
+                if (1..65535) === p.get_int32(0) && @opts[:fork] == true
                     @breakpoints.each_pair do |k,v|
                         v.each do |b|
                             b.bpid = p[:pid];
@@ -427,17 +415,14 @@ class Ragweed::Debuggertux
 
   ## Gets the registers for the given process
   def get_registers
-    size = Ragweed::Wraptux::SIZEOFLONG * 17
-    regs = Array.new(size)
-    regs = regs.to_ptr
-    regs.struct!('LLLLLLLIIILLILLLI', :ebx,:ecx,:edx,:esi,:edi,:ebp,:eax,:xds,:xes,:xfs,:xgs,:orig_eax,:eip,:xcs,:eflags,:esp,:xss)
+    regs = FFI::MemoryPointer.new(:int, PTRegs.size)
     Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::GETREGS, @pid, 0, regs.to_i)
-    return regs
+    return PTRegs.new regs
   end
 
   ## Sets registers for the given process
-  def set_registers(r)
-    Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::SETREGS, @pid, 0, r.to_i)
+  def set_registers(regs)
+    Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::SETREGS, @pid, 0, regs.to_ptr.address)
   end
 
   ## Here we need to do something about the bp
@@ -449,7 +434,6 @@ class Ragweed::Debuggertux
     r = get_registers
     eip = r[:eip]
     eip -= 1
-
     ## Call the block associated with the breakpoint
     @breakpoints[eip].call(r, self)
 
@@ -460,7 +444,8 @@ class Ragweed::Debuggertux
       single_step
       ## ptrace peektext returns -1 upon reinstallation of bp without calling
       ## waitpid() if that occurs the breakpoint cannot be reinstalled
-      Ragweed::Wraptux::waitpid(@pid, 0)
+      p = FFI::MemoryPointer.new(:int, 1)
+      Ragweed::Wraptux::waitpid(@pid,p,0)
       @breakpoints[eip].first.install
     end
   end
