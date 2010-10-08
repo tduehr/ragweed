@@ -328,9 +328,7 @@ class Ragweed::Debuggertux
   ## originally stored with it. If its a different signal,
   ## then process it accordingly and move on
   def wait(opts = 0)
-    p = FFI::MemoryPointer.new(:int, 1)
-    r = Ragweed::Wraptux::waitpid(@pid,p,opts)
-    status = p.get_int32(0)
+    r, status = Ragweed::Wraptux::waitpid(@pid, opts)
     wstatus = wtermsig(status)
     signal = wexitstatus(status)
     event_code = (status >> 16)
@@ -444,8 +442,7 @@ class Ragweed::Debuggertux
       single_step
       ## ptrace peektext returns -1 upon reinstallation of bp without calling
       ## waitpid() if that occurs the breakpoint cannot be reinstalled
-      p = FFI::MemoryPointer.new(:int, 1)
-      Ragweed::Wraptux::waitpid(@pid,p,0)
+      Ragweed::Wraptux::waitpid(@pid, 0)
       @breakpoints[eip].first.install
     end
   end
