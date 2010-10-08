@@ -23,7 +23,9 @@ Ragweed is supported and has been tested on the following platforms (32bit intel
 At this time only Ruby 1.8.x has been tested. We are actively investigating both 64 bit
 support for each platform and support for Ruby 1.9.x. Unfortunately, both of these things
 require significant changes to Ragweed.
-    
+
+* We are currently moving to FFI from ruby/dl. This will likely result in some incompatibilities if you are using the low level functions calls directly. It will also add ffi as a dependency. This move is to facilitate 1.9 and 64bit support.
+
 == FEATURES/PROBLEMS:
 
 * This suite is currently fairly piecemeal. Each OS has it's own set of tools.
