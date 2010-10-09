@@ -16,11 +16,10 @@ class Ragweed::Debugger32
   ## removal and triggers for breakpoints.
   ## no user servicable parts.
   class Breakpoint
+
     INT3 = 0xCC
-    attr_accessor :orig
-    attr_accessor :bps
-    attr_accessor :deferred
-    attr_accessor :addr
+
+    attr_accessor :orig, :deferred, :addr
 
     def initialize(process, ip, def_status, callable)
       @process = process
@@ -60,7 +59,6 @@ class Ragweed::Debugger32
     end
 
     def call(*args); @callable.call(*args); end    
-    def method_missing(meth, *args); @bp.send(meth, *args); end
   end ## End Breakpoint class
 
   ## Get a handle to the process so you can mess with it.
@@ -174,8 +172,7 @@ class Ragweed::Debugger32
     @breakpoints[ip] = bp
   end
 
-  ## clear a breakpoint given an id, or clear all breakpoints associated with
-  ## an address. You now have to pass breakpoint_clear the address to clear it
+  ## Clear a breakpoint by ip
   def breakpoint_clear(ip)
     bp = @breakpoints[ip]
 

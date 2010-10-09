@@ -1,4 +1,5 @@
 require 'ffi'
+
 module Ragweed::Wraptux
   module Libc
     extend FFI::Library
@@ -63,9 +64,8 @@ module Ragweed::Wraptux
     def ptrace req, pid, addr, data
       FFI.errno = 0
       r = Libc.ptrace req, pid, addr, data
-      raise SystemCallError.new "ptrace", FFI.errno if r == -1 && !FFI.errno.zero?
-      [r, data]
+      #raise SystemCallError.new "ptrace", FFI.errno if r == -1 and !FFI.errno.zero?
+      r
     end
   end
 end
-

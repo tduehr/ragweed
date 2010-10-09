@@ -1,5 +1,4 @@
 require ::File.join(::File.dirname(__FILE__),'wraptux')
-## Modeled after wraposx written by tduehr
 
 module Ragweed; end
 
@@ -19,30 +18,25 @@ class Ragweed::Debuggertux
   ## Class to handle installing/uninstalling breakpoints
   class Breakpoint
 
-    INT3 = 0xCC ## obviously x86 specific debugger here
+    INT3 = 0xCC
 
-    attr_accessor :orig, :bpid, :bppid, :function
+    attr_accessor :orig, :bppid, :function
     attr_reader :addr
 
-    ## bp: parent for method_missing calls
     ## ip: insertion point
     ## callable: lambda to be called when breakpoint is hit
+    ## p: process ID
     ## name: name of breakpoint
-    def initialize(bp, ip, callable, p, name = "")
+    def initialize(ip, callable, p, name = "")
 	  @bppid = p
-      @@bpid ||= 0
-      @bp = bp
       @function = name
       @addr = ip
       @callable = callable
       @installed = false
       @orig = 0
-      @bpid = (@@bpid += 1)
     end
 
-    ## Install a breakpoint (replace instruction with int3)
     def install
-      ## Replace the original instruction with an int3
       @orig = Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::PEEK_TEXT, @bppid, @addr, 0)
       if @orig != -1
         n = (@orig & ~0xff) | INT3;
@@ -53,9 +47,7 @@ class Ragweed::Debuggertux
       end
     end
 
-    ## Uninstall the breakpoint
     def uninstall
-      ## Put back the original instruction
       if @orig != INT3
         Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::POKE_TEXT, @bppid, @addr, @orig)
         @installed = false
@@ -64,8 +56,7 @@ class Ragweed::Debuggertux
 
     def installed?; @installed; end
     def call(*args); @callable.call(*args) if @callable != nil; end
-    def method_missing(meth, *args); @bp.send(meth, *args); end
-  end ## Breakpoint Class
+  end
 
   ## init object
   ## p: pid of process to be debugged
@@ -84,20 +75,10 @@ class Ragweed::Debuggertux
     @attached = false
 
     @mapped_regions = Hash.new
-
-    ## Store all breakpoints in this hash
-    @breakpoints = Hash.new do |h, k|
-        bps = Array.new
-        def bps.call(*args); each {|bp| bp.call(*args)}; end
-        def bps.install; each {|bp| bp.install}; end
-        def bps.uninstall; each {|bp| bp.uninstall}; end
-        def bps.orig; each {|bp| dp.orig}; end
-        h[k] = bps
-    end
-    @opts.each {|k, v| try(k) if v}
+    @breakpoints = Hash.new
+    @opts.each { |k, v| try(k) if v }
   end
 
-  ## This is crude!
   def self.find_by_regex(rx)
     a = Dir.entries("/proc/")
     a.delete_if do |x| x == '.'; end
@@ -139,8 +120,6 @@ class Ragweed::Debuggertux
     if r != -1
         @attached = true
         on_attach
-        ## Temporarily gross until I figure this one out
-        sleep(0.5)
         self.install_bps if (opts[:install] and not @installed)
     else
         raise "Attach failed!"
@@ -152,9 +131,8 @@ class Ragweed::Debuggertux
   ## key = Start address of region
   ## value = Size of the region
   def mapped
-      if @mapped_regions
-        @mapped_regions.clear
-      end
+      @mapped_regions.clear if @mapped_regions
+
       File.read("/proc/#{pid}/maps").each_line do |l|
         s,e = l.split('-')
         e = e.split(' ').first
@@ -163,7 +141,7 @@ class Ragweed::Debuggertux
       end
   end
 
-  ## Not pretty but it works
+  ## Return a name for a range if possible
   def get_mapping_name(val)
     File.read("/proc/#{pid}/maps").each_line do |l|
         base = l.split('-').first
@@ -175,9 +153,8 @@ class Ragweed::Debuggertux
     nil
   end
 
-  ## This method parses the proc file system and
-  ## saves a hash containing all currently mapped
-  ## shared objects. It is accessible as @shared_objects
+  ## Parse procfs and create a hash containing
+  ## a listing of each mapped shared object
   def self.shared_libraries(p)
       if @shared_objects
         @shared_objects.clear
@@ -218,6 +195,7 @@ class Ragweed::Debuggertux
     loc
   end
 
+  ## Search the heap for a value
   def search_heap(val)
     loc = Array.new
     File.read("/proc/#{pid}/maps").each_line do |l|
@@ -243,7 +221,7 @@ class Ragweed::Debuggertux
             next
         end
         max = k+v
-        loc = search_page(k, max, val)
+        loc.concat(search_page(k, max, val))
     end
     loc
   end
@@ -271,39 +249,25 @@ class Ragweed::Debuggertux
     if not callable and block_given?
       callable = block
     end
-    @breakpoints[ip] << Breakpoint.new(self, ip, callable, @pid, name)
+    @breakpoints.each_key { |k| if k == ip then return end }
+    bp = Breakpoint.new(ip, callable, @pid, name)
+    @breakpoints[ip] = bp
   end
 
-  ## remove breakpoint with id bpid at insertion point or
-  ## remove all breakpoints at insertion point if bpid not given
-  ## ip: Insertion point
-  ## bpid: id of breakpoint to be removed
-  def breakpoint_clear(ip, bpid=nil)
-    if not bpid
-      @breakpoints[ip].uninstall
-      @breakpoints[ip].delete ip
-    else
-      found = nil
-      @breakpoints[ip].each_with_index do |bp, i|
-        if bp.bpid == bpid
-          found = i
-          if bp.orig != Breakpoint::INT3
-            if @breakpoints[op][i+1]
-              @breakpoints[ip][i + 1].orig = bp.orig
-            else
-              bp.uninstall
-            end
-          end
-        end
-      end
-      raise "could not find bp ##{bpid} at ##{ip}" if not found
-      @breakpoints[ip].delete_at(found) if found
+  ## Remove a breakpoint by ip
+  def breakpoint_clear(ip)
+    bp = @breakpoints[ip]
+
+    if bp.nil?
+        return nil
     end
+
+    bp.uninstall
+    @breakpoints.delete(ip)
   end
 
-  ##loop for wait()
-  ##times: the number of wait calls to make
-  ##       if nil loop will continue indefinitely
+  ## loop for wait()
+  ## times: the number of wait calls to make
   def loop(times=nil)
     if times.kind_of? Numeric
       times.times do
@@ -365,8 +329,7 @@ class Ragweed::Debuggertux
                 if (1..65535) === p.get_int32(0) && @opts[:fork] == true
                     @breakpoints.each_pair do |k,v|
                         v.each do |b|
-                            b.bpid = p[:pid];
-                            b.bppid = p[:pid];
+                            b.bppid = p[:pid]
                         end
                     end
 
@@ -399,26 +362,23 @@ class Ragweed::Debuggertux
     end
   end
 
-  ## Return an array of thread PIDs
   def self.threads(pid)
 	begin
 	    a = Dir.entries("/proc/#{pid}/task/")
 	rescue
-		puts "No such process (#{pid})"
+		puts "No such PID: #{pid}"
 		return
 	end
     a.delete_if { |x| x == '.' }
     a.delete_if { |x| x == '..' }
   end
 
-  ## Gets the registers for the given process
   def get_registers
-    regs = FFI::MemoryPointer.new(:int, PTRegs.size)
+    regs = FFI::MemoryPointer.new(:int, Ragweed::Wraptux::PTRegs.size)
     Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::GETREGS, @pid, 0, regs.to_i)
-    return PTRegs.new regs
+    return Ragweed::Wraptux::PTRegs.new regs
   end
 
-  ## Sets registers for the given process
   def set_registers(regs)
     Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::SETREGS, @pid, 0, regs.to_ptr.address)
   end
@@ -432,18 +392,19 @@ class Ragweed::Debuggertux
     r = get_registers
     eip = r[:eip]
     eip -= 1
+
     ## Call the block associated with the breakpoint
     @breakpoints[eip].call(r, self)
 
-    if @breakpoints[eip].first.installed?
-      @breakpoints[eip].first.uninstall
+    if @breakpoints[eip].installed?
+      @breakpoints[eip].uninstall
       r[:eip] = eip
       set_registers(r)
       single_step
       ## ptrace peektext returns -1 upon reinstallation of bp without calling
       ## waitpid() if that occurs the breakpoint cannot be reinstalled
       Ragweed::Wraptux::waitpid(@pid, 0)
-      @breakpoints[eip].first.install
+      @breakpoints[eip].install
     end
   end
 
