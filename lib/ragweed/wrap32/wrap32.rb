@@ -1,7 +1,9 @@
+require 'ffi'
 %w[ostruct Win32API pp].each {|x| require x}
 
 module Ragweed;end
 module Ragweed::Wrap32
+
   NULL = 0x0
 
   module PagePerms
@@ -68,32 +70,73 @@ module Ragweed::Wrap32
     ALLOCATE_BUFFER = 256
   end
 
-  # Does 2 things:
-  # 1.  Parses a terse notation for Win32 functions: "module!function:args=return",
-  #     where "args" and "return" are in String#unpack notation.
-  #
-  # 2.  Memoizes the Win32API lookup.
-  #
-  # Returns a callable object implementing the specified call.
+  module Win
+    extend FFI::Library
 
-  CALLS = Hash.new do |h, str|
-    lib = proc = args = ret = nil
-    lib, rest = str.split "!"
-    proc, rest = rest.split ":"
-    args, ret = rest.split("=") if rest
-    ret ||= ""
-    args ||= []
-    raise "need proc" if not proc
-    h[str] = Win32API.new(lib, proc, args, ret)
+    ffi_lib 'kernel32'
+    ffi_convention :stdcall
+    attach_function 'OpenProcess', [ :long, :long, :long ], :long
+    attach_function 'OpenThread', [ :long, :long, :long ], :long
+    attach_function 'CloseHandle', [ :long ], :long
+    attach_function 'GetLastError', [ ], :long
+    attach_function 'FormatMessageA', [ :long, :pointer, :long, :long, :pointer, :long, :pointer ], :void
+    attach_function 'VirtualAllocEx', [ :long, :long, :long, :long, :long ], :long
+    attach_function 'VirtualFreeEx', [ :long, :long, :long, :long,  ], :long
+    attach_function 'WriteProcessMemory', [ :long, :long, :pointer, :long, :long ], :long
+    attach_function 'ReadProcessMemory', [ :long, :long, :pointer, :long, :long ], :long
+    attach_function 'VirtualQueryEx', [ :long, :long, :pointer, :long ], :long
+    attach_function 'VirtualProtectEx', [ :long, :long, :long, :long, :pointer ], :void
+    attach_function 'GetCurrentProcessId', [], :long
+    attach_function 'GetProcessId', [ :long ], :long
+    attach_function 'GetCurrentThreadId', [], :long
+    attach_function 'GetModuleHandleA', [ :pointer ], :long
+    attach_function 'LoadLibraryA', [ :pointer ], :long
+    attach_function 'GetProcAddress', [ :long, :pointer], :long
+    attach_function 'WaitForSingleObject', [ :long, :long ], :long
+    attach_function 'Process32First', [ :long, :pointer ], :long
+    attach_function 'Process32Next', [ :long, :pointer ], :long
+    attach_function 'Module32First', [ :long, :pointer ], :long
+    attach_function 'Module32Next', [ :long, :pointer ], :long
+    attach_function 'CreateToolhelp32Snapshot', [ :long, :long ], :long
+    attach_function 'Thread32First', [ :long, :pointer ], :long
+    attach_function 'Thread32Next', [ :long, :pointer ], :long
+    attach_function 'SuspendThread', [ :long ], :long
+    attach_function 'ResumeThread', [ :long ], :long
+    attach_function 'CreateRemoteThread', [ :long, :long, :long, :long, :long, :long, :long ], :long
+    attach_function 'Sleep', [ :long ], :long
+    attach_function 'DuplicateHandle', [ :long, :long, :long, :pointer, :long, :long, :long ], :long
+    attach_function 'CreateFileA', [ :pointer, :long, :long, :pointer, :long, :long, :pointer ], :long
+    attach_function 'OpenEventA', [ :long, :long, :pointer ], :long
+    attach_function 'CreateEventA', [ :long, :long, :long, :pointer ], :long
+    attach_function 'SetEvent', [ :long ], :long
+    attach_function 'ResetEvent', [ :long ], :long
+    attach_function 'WriteFile', [ :long, :pointer, :long, :pointer, :pointer ], :long
+    attach_function 'ReadFile', [ :long, :pointer, :long, :pointer, :pointer ], :long
+    attach_function 'DeviceIoControl', [ :long, :long, :pointer, :long, :pointer, :long, :pointer, :pointer ], :long
+    attach_function 'GetOverlappedResult', [ :long, :pointer, :pointer, :long ], :long
+    attach_function 'WaitForMultipleObjects', [ :long, :pointer, :long, :long ], :long
+
+    ffi_lib 'ntdll'
+    ffi_convention :stdcall
+    attach_function 'NtQueryInformationProcess', [ :long, :long, :pointer, :long, :pointer ], :long
+
+    ffi_lib 'msvcrt'
+    ffi_convention :stdcall
+    attach_function 'malloc', [ :long ], :long
+    attach_function 'memcpy', [ :pointer, :pointer, :long ], :long
+
+    ## XXX This shouldnt be in psapi in win7, need to clean this up
+    ## XXX Also the unicode version should be supported, this is NOT complete
+    ffi_lib 'psapi'
+    ffi_convention :stdcall
+    attach_function 'GetMappedFileNameA', [ :long, :long, :pointer, :long ], :long
   end
-
-  # --------------------------------------------------------------------------------------
 
   class << self
 
     # Get a process handle given a pid
     def open_process(pid)
-      r = CALLS["kernel32!OpenProcess:LLL=L"].call(0x1F0FFF, 0, pid)
+      r = Win.OpenProcess(0x1F0FFF, 0, pid)
       raise WinX.new(:open_process) if r == 0
       return r
     end
@@ -101,7 +144,7 @@ module Ragweed::Wrap32
     # Get a thread handle given a tid; if a block is provided, the semantics are
     # as File#open with a block.
     def open_thread(tid, &block)
-      h = CALLS["kernel32!OpenThread:LLL=L"].call(0x1F03FF, 0, tid)
+      h = Win.OpenThread(0x1F03FF, 0, tid)
       raise WinX.new(:open_thread) if h == 0
       if block_given?
         ret = yield h
@@ -114,34 +157,32 @@ module Ragweed::Wrap32
     # Close any Win32 handle. Reminder: Win32 handles are just integers, like file
     # descriptors in Posix.
     def close_handle(h)
-      raise WinX.new(:close_handle) if CALLS["kernel32!CloseHandle:L"].call(h) != 0
+    raise WinX.new(:close_handle) if Win.CloseHandle(h) == 0
     end
 
     # Get the last error code (errno) (can't fail)
     def get_last_error
-      CALLS["kernel32!GetLastError:=L"].call
+      Win.GetLastError()
     end
 
     # strerror(errno) (can't fail)
     def format_message(code=nil)
       code ||= get_last_error
-      buf = "\x00" * 4096
-      CALLS["kernel32!FormatMessageA:LPLLPLP"].
-        call(4096, NULL, code, 0x00000400, buf, 4096, NULL)
-      return buf.split("\x00")[0]
+      buf = FFI::MemoryPointer.from_string("\x00" * 4096)
+      Win.FormatMessageA(4096, nil, code, 0x00000400, buf, 4096, nil)
+      return buf.to_s.split("\x00")[0]
     end
 
     # Allocate memory in a remote process (or yourself, with handle -1)
     def virtual_alloc_ex(h, sz, addr=NULL, prot=0x40)
-      r = CALLS["kernel32!VirtualAllocEx:LLLLL=L"].
-        call(h, addr, sz, 0x1000, prot)
+      r = Win.VirtualAllocEx(h, addr, sz, 0x1000, prot)
       raise WinX.new(:virtual_alloc_ex) if r == 0
       return r
     end
 
     # Free memory in a remote process given the pointer returned from virtual_alloc_ex
     def virtual_free_ex(h, ptr, type=0x8000)
-      r = CALLS["kernel32!VirtualFreeEx:LLLL=L"].call(h, ptr.to_i, 0, type)
+      r = Win.VirtualFreeEx(h, ptr.to_i, 0, type)
       raise WinX.new(:virtual_free_ex) if r == 0
       return r
     end
@@ -149,7 +190,7 @@ module Ragweed::Wrap32
     # Write a string into the memory of a remote process given its handle and an address
     def write_process_memory(h, dst, val)
       val = val.to_s if not val.kind_of? String
-      r = CALLS["kernel32!WriteProcessMemory:LLPLL=L"].call(h, dst.to_i, val, val.size, NULL)
+      r = Win.WriteProcessMemory(h, dst.to_i, val, val.size, NULL)
       raise WinX.new(:write_process_memory) if r == 0
       return r
     end
@@ -157,14 +198,14 @@ module Ragweed::Wrap32
     # Read from a remote process given an address and length, returning a string.
     def read_process_memory(h, ptr, len)
       val = "\x00" * len
-      r = CALLS["kernel32!ReadProcessMemory:LLPLL=L"].call(h, ptr.to_i, val, len, NULL)
+      r = Win.ReadProcessMemory(h, ptr.to_i, val, len, NULL)
       raise WinX.new(:read_process_memory) if r == 0
       return val ## don't handle short reads XXX
     end
 
     def get_mapped_filename(h, lpv, size)
         val = "\x00" * size
-        r = CALLS["psapi!GetMappedFileName:LLPL=L"].call(h, lpv.to_i, val, size)
+        r = Win.GetMappedFileNameA(h, lpv.to_i, val, size)
         raise WinX.new(:get_mapped_filename) if r == 0
         return val
     end
@@ -186,7 +227,7 @@ module Ragweed::Wrap32
     # flags.
     def virtual_query_ex(h, ptr)
       mbi = [0,0,0,0,0,0,0].pack("LLLLLLL")
-      if CALLS["kernel32!VirtualQueryEx:LLPL=L"].call(h, ptr, mbi, mbi.size)
+      if Win.VirtualQueryEx(h, ptr, mbi, mbi.size)
         str2memory_basic_info(mbi)
       else
         nil
@@ -199,7 +240,7 @@ module Ragweed::Wrap32
       base = virtual_query_ex(h, addr).BaseAddress if size == 0
       base ||= addr
 
-      if CALLS["kernel32!VirtualProtectEx:LLLLP=L"].call(h, base, size, prot, old)
+      if Win.VirtualProtectEx(h, base, size, prot, old)
         old.unpack("L").first
       else
         raise WinX.new(:virtual_protect_ex)
@@ -208,31 +249,31 @@ module Ragweed::Wrap32
 
     # getpid
     def get_current_process_id
-      CALLS["kernel32!GetCurrentProcessId:=L"].call # can't realistically fail
+      Win.GetCurrentProcessId() # can't realistically fail
     end
 
     # get_processid
     def get_process_id(h)
-      return CALLS["kernel32!GetProcessId:L=L"].call(h)
+      Win.GetProcessId(h)
     end
 
     # gettid
     def get_current_thread_id
-      CALLS["kernel32!GetCurrentThreadId:=L"].call # can't realistically fail
+      Win.GetCurrentThreadId() # can't realistically fail
     end
 
     # Given a DLL name, get a handle to the DLL.
     def get_module_handle(name)
-      name = name.to_utf16
-      r = CALLS["kernel32!GetModuleHandleW:P=L"].call(name)
+      name = name
+      r = Win.GetModuleHandleA(name)
       raise WinX.new(:get_module_handle) if r == 0
       return r
     end
 
     # load a library explicitly from a dll
     def load_library(name)
-      name = name.to_utf16
-      r = CALLS["kernel32!LoadLibraryW:P=L"].call(name)
+      name = name
+      r = Win.LoadLibraryA(name)
       raise WinX.new(:load_library) if r == 0
       return r
     end
@@ -248,13 +289,13 @@ module Ragweed::Wrap32
         meth = y
       end
 
-      r = CALLS["kernel32!GetProcAddress:LP=L"].call(h, meth)
+      r = Win.GetProcAddress(h, meth)
       return r # pass error through
     end
 
     # Select(2), for a single object handle.
     def wait_for_single_object(h)
-      r = CALLS["kernel32!WaitForSingleObject:LL=L"].call(h, -1)
+      r = Win.WaitForSingleObject(h, -1)
       raise WinX.new(:wait_for_single_object) if r == -1
     end
 
@@ -277,12 +318,12 @@ module Ragweed::Wrap32
     # Use Toolhelp32 to enumerate all running processes on the box, returning
     # a struct with PIDs and executable names.
     def all_processes
-      h = CALLS["kernel32!CreateToolhelp32Snapshot:LL=L"].call(0x2, 0)
+      h = Win.CreateToolhelp32Snapshot(0x2, 0)
       if h != -1
         pi = [(9*4)+2048,0,0,0,0,0,0,0,0,"\x00"*2048].pack("LLLLLLLLLa2048")
-        if CALLS["kernel32!Process32First:LP=L"].call(h, pi) != 0
+        if Win.Process32First(h, pi) != 0
           yield str2process_info(pi)
-          while CALLS["kernel32!Process32Next:LP=L"].call(h, pi) != 0
+          while Win.Process32Next(h, pi) != 0
             yield str2process_info(pi)
           end
         end
@@ -311,12 +352,12 @@ module Ragweed::Wrap32
     # Given a pid, enumerate the modules loaded into the process, returning base
     # addresses, memory ranges, and the module name.
     def list_modules(pid=0)
-      h = CALLS["kernel32!CreateToolhelp32Snapshot:LL=L"].call(0x8, pid)
+      h = Win.CreateToolhelp32Snapshot(0x8, pid)
       if h != -1
         mi = [260+256+(8*4),0,0,0,0,0,0,0,"\x00"*256,"\x00"*260].pack("LLLLLLLLa256a260")
-        if CALLS["kernel32!Module32First:LP=L"].call(h, mi) != 0
+        if Win.Module32First(h, mi) != 0
           yield str2module_info(mi)
-          while CALLS["kernel32!Module32Next:LP=L"].call(h, mi) != 0
+          while Win.Module32Next(h, mi) != 0
             yield str2module_info(mi)
           end
         end
@@ -339,7 +380,7 @@ module Ragweed::Wrap32
     # interface is Ioctl-style; provide an ordinal and a buffer to pass results through.
     def nt_query_information_process(h, ord, buf)
       lenp = [0].pack("L")
-      if CALLS["ntdll!NtQueryInformationProcess:LLPLP=L"].call(h, ord, buf, buf.size, lenp) == 0
+      if Win.NtQueryInformationProcess(h, ord, buf, buf.size, lenp) == 0
         len = lenp.unpack("L").first
         return buf[0..(len-1)]
       end
@@ -361,13 +402,13 @@ module Ragweed::Wrap32
     # List all the threads in a process given its pid, returning a struct containing
     # tids and run state. This is relatively expensive, because it uses Toolhelp32.
     def threads(pid)
-      h = CALLS["kernel32!CreateToolhelp32Snapshot:LL=L"].call(0x4, pid)
+      h = Win.CreateToolhelp32Snapshot(0x4, pid)
       if h != -1
         mi = [(7*4),0,0,0,0,0,0].pack("LLLLLLL")
-        if CALLS["kernel32!Thread32First:LP=L"].call(h, mi) != 0
+        if Win.Thread32First(h, mi) != 0
           ti = str2thread_info(mi)
           yield str2thread_info(mi) if ti.th32OwnerProcessID == pid
-          while CALLS["kernel32!Thread32Next:LP=L"].call(h, mi) != 0
+          while Win.Thread32Next(h, mi) != 0
             ti = str2thread_info(mi)
             yield str2thread_info(mi) if ti.th32OwnerProcessID == pid
           end
@@ -379,7 +420,7 @@ module Ragweed::Wrap32
 
     # Suspend a thread given its handle.
     def suspend_thread(h)
-      r = CALLS["kernel32!SuspendThread:L=L"].call(h)
+      r = Win.SuspendThread(h)
       raise WinX.new(:suspend_thread) if r == 0
       return r
     end
@@ -387,25 +428,25 @@ module Ragweed::Wrap32
     # Resume a suspended thread, returning nonzero if the thread was suspended,
     # and 0 if it was running.
     def resume_thread(h)
-      CALLS["kernel32!ResumeThread:L=L"].call(h)
+      ResumeThread(h)
     end
 
     # Create a remote thread in the process, starting at the location
     # "start", with the threadproc argument "arg"
     def create_remote_thread(h, start, arg)
-      r = CALLS["kernel32!CreateRemoteThread:LLLLLLL=L"].call(h, NULL, 0, start.to_i, arg.to_i, 0, 0)
+      r = Win.CreateRemoteThread(h, NULL, 0, start.to_i, arg.to_i, 0, 0)
       raise WinX.new(:create_remote_thread) if r == 0
       return r
     end
 
     def sleep(ms=0)
-      CALLS["kernel32!Sleep:L=L"].call(ms)
+      Win.Sleep(ms)
     end
 
     # clone a handle out of another open process (or self, with -1)
     def duplicate_handle(ph, h)
       ret = "\x00\x00\x00\x00"
-      r = CALLS["kernel32!DuplicateHandle:LLLPLLL=L"].call(ph, h, -1, ret, 0, 0, 0x2)
+      r = Win.DuplicateHandle(ph, h, -1, ret, 0, 0, 0x2)
       raise WinX.new(:duplicate_handle) if r == 0
       ret.to_l32
     end
@@ -416,29 +457,28 @@ module Ragweed::Wrap32
       opts[:access] ||= FileAccess::GENERIC_ALL
       opts[:flags] ||= 0
 
-      r = CALLS["kernel32!CreateFile:PLLPLLP=L"].
-        call(name, opts[:access], opts[:sharing], NULL, opts[:disposition], opts[:flags], NULL)
+      r = Win.CreateFileA(name, opts[:access], opts[:sharing], NULL, opts[:disposition], opts[:flags], NULL)
       raise WinX.new(:create_file) if r == -1
       return r
     end
     
     # i haven't made this work, but named handles are kind of silly anyways
     def open_event(name)
-      r = CALLS["kernel32!OpenEvent:LLP=L"].call(0, 0, name)
+      r = Win.OpenEventA(0, 0, name)
       raise WinX.new(:open_event) if r == 0
       return r
     end
 
     # signal an event
     def set_event(h)
-      r = CALLS["kernel32!SetEvent:L=L"].call(h)
+      r = Win.SetEvent(h)
       raise WinX.new(:set_event) if r == 0
       return r
     end
 
     # force-unsignal event (waiting on the event handle also does this)
     def reset_event(h)
-      r = CALLS["kernel32!ResetEvent:L=L"].call(h)
+      r = Win.ResetEvent(h)
       raise WinX.new(:reset_event) if r == 0
       return r
     end
@@ -449,7 +489,7 @@ module Ragweed::Wrap32
       signalled = (1 if signalled) || 0
       name ||= 0
 
-      r = CALLS["kernel32!CreateEvent:LLLP=L"].call(0, auto, signalled, name);
+      r = Win.CreateEventA(0, auto, signalled, name);
       raise WinX.new(:create_event) if r == 0
       return r
     end
@@ -462,7 +502,7 @@ module Ragweed::Wrap32
       end
 
       outw = "\x00" * 4
-      r = CALLS["kernel32!WriteFile:LPLPP=L"].call(h, buf, buf.size, outw, opp)
+      r = Win.WriteFile(h, buf, buf.size, outw, opp)
       raise WinX.new(:write_file) if r == 0 and get_last_error != 997
       return buf, outw.unpack("L").first
     end
@@ -479,7 +519,7 @@ module Ragweed::Wrap32
         overlapped.target = buf if overlapped
       end
 
-      r = CALLS["kernel32!ReadFile:LPLPP=L"].call(h, buf, count, outw, opp)
+      r = Win.ReadFile(h, buf, count, outw, opp)
       raise WinX.new(:read_file) if r == 0 and get_last_error != 997
       return buf, outw.unpack("L").first
     end
@@ -487,8 +527,7 @@ module Ragweed::Wrap32
     def device_io_control(h, code, inbuf, outbuf, overlapped=NULL)
       overlapped = overlapped.to_s if overlapped
       outw = "\x00" * 4
-      r = CALLS["kernel32!DeviceIoControl:LLPLPLPP=L"].
-        call(h, code, inbuf, inbuf.size, outbuf, outbuf.size, outw, overlapped)
+      r = Win.DeviceIoControl(h, code, inbuf, inbuf.size, outbuf, outbuf.size, outw, overlapped)
       raise WinX.new(:device_io_control) if r == 0 and get_last_error != 997
       return outw.unpack("L").first
     end
@@ -496,20 +535,21 @@ module Ragweed::Wrap32
     def get_overlapped_result(h, overlapped)
       overlapped = overlapped.to_s
       outw = "\x00" * 4
-      r = CALLS["kernel32!GetOverlappedResult:LPPL=L"].call(h, overlapped, outw, 0)
+      r = Win.GetOverlappedResult(h, overlapped, outw, 0)
       raise WinX.new(:get_overlapped_result) if r == 0
       return outw.unpack("L").first
     end
 
     # just grab some local memory
+    # XXX same as FFI name ?
     def malloc(sz)
-      r = CALLS["msvcrt!malloc:L=L"].call(sz)
+      r = Win.malloc(sz)
       raise WinX.new(:malloc) if r == 0
       return r
     end
 
     def memcpy(dst, src, size)
-      CALLS["msvcrt!memcpy:PPL=L"].call(dst, src, size)
+      Win.memcpy(dst, src, size)
     end
 
     # Block wrapper for thread suspension
@@ -526,7 +566,7 @@ module Ragweed::Wrap32
 
     def wfmo(handles, ms=100)
       hp = handles.to_ptr
-      r = CALLS["kernel32!WaitForMultipleObjects:LPLL=L"].call(handles.size, hp, 0, ms)
+      r = Win.WaitForMultipleObjects(handles.size, hp, 0, ms)
       raise WinX(:wait_for_multiple_objects) if r == 0xFFFFFFFF
       if r < handles.size
         return handles[r]

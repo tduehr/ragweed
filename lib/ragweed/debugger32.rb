@@ -74,8 +74,9 @@ class Ragweed::Debugger32
   end
 
   def initialize(p)
-    ## grab debug privilege at least once.
-    @@token ||= Ragweed::Wrap32::ProcessToken.new.grant("seDebugPrivilege")
+    ## grab debug privilege at least once
+    se = FFI::MemoryPointer.from_string('seDebugPrivilege')
+    @@token ||= Ragweed::Wrap32::ProcessToken.new.grant(se)
 
     p = Process.new(p) if p.kind_of? Numeric
     @p = p
@@ -219,14 +220,18 @@ class Ragweed::Debugger32
         ctx.set(h)
       end
   
-    ## tell the target to stop handling this event
+    ## Tell the target to stop handling this event
     @handled = Ragweed::Wrap32::ContinueCodes::CONTINUE
   end
 
   ## FIX: this method should be a bit more descriptive in its naming
   def get_dll_name(ev)
     name = Ragweed::Wrap32::get_mapped_filename(@p.handle, ev.dll_base, 256)
-    return name[0, name.index(0)]
+    name.gsub!(/[\n]+/,'')
+    name.gsub!(/[^\x21-\x7e]/,'')
+    i = name.index('0')
+    i ||= name.size
+    return name[0, i]
   end
 
   def on_load_dll(ev)

@@ -1,3 +1,5 @@
+require 'ffi'
+
 module Ragweed::Wrap32
   module EFlags
     CARRY = (1<< 0)
@@ -132,10 +134,19 @@ EOM
 end
 
 module Ragweed::Wrap32
+  module Win
+    extend FFI::Library
+
+    ffi_lib 'kernel32'
+    ffi_convention :stdcall
+    attach_function 'SetThreadContext', [ :long, :pointer ], :long
+    attach_function 'GetThreadContext', [ :long, :pointer ], :long
+  end
+
   class << self
     def get_thread_context_raw(h)
       ctx = [Ragweed::Wrap32::ContextFlags::DEBUG,0,0,0,0,0,0,"\x00"*112,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,"\x00"*1024].pack("LLLLLLLa112LLLLLLLLLLLLLLLLa1024")
-      ret = CALLS["kernel32!GetThreadContext:LP=L"].call(h, ctx)
+      ret = Win.GetThreadContext(h, ctx)
       if ret != 0
         return ctx
       else
@@ -145,7 +156,7 @@ module Ragweed::Wrap32
 
     def set_thread_context_raw(h, c)
       buf = c.to_s
-      ret = CALLS["kernel32!SetThreadContext:LP=L"].call(h, buf)
+      ret = Win.SetThreadContext(h, buf)
       raise WinX.new(:set_thread_context) if ret == 0
       return ret
     end
@@ -195,7 +206,7 @@ module Ragweed::Wrap32
     def get_thread_context(h)
       ctx = [Ragweed::Wrap32::ContextFlags::DEBUG,0,0,0,0,0,0,"\x00"*112,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,"\x00"*1024].pack("LLLLLLLa112LLLLLLLLLLLLLLLLa1024")
       suspend_thread(h)
-      ret = CALLS["kernel32!GetThreadContext:LP=L"].call(h, ctx)
+      ret = Win.GetThreadContext(h, ctx)
       resume_thread(h)
       if ret != 0
         return str2context(ctx)

@@ -1,3 +1,5 @@
+require 'ffi'
+
 module Ragweed::Wrap32
   module DebugCodes
     CREATE_PROCESS = 3
@@ -123,41 +125,56 @@ class Ragweed::Wrap32::DebugEvent
   end
 end
 
+## Wrap the Win32 debugging specific APIs
 module Ragweed::Wrap32
+  module Win
+    extend FFI::Library
+
+    ffi_lib 'kernel32'
+    ffi_convention :stdcall
+
+    attach_function 'WaitForDebugEvent', [ :pointer, :long ], :long
+    attach_function 'ContinueDebugEvent', [ :ulong, :ulong, :ulong ], :long
+    attach_function 'DebugActiveProcess', [ :long ], :long
+    attach_function 'DebugSetProcessKillOnExit', [ :long ], :long
+    attach_function 'DebugActiveProcessStop', [ :long ], :long
+    attach_function 'FlushInstructionCache', [ :long, :long, :long ], :long
+  end
+
   class << self
     def wait_for_debug_event(ms=1000)
       buf = "\x00" * 1024
-      r = CALLS["kernel32!WaitForDebugEvent:PL=L"].call(buf, ms)
+      r = Win.WaitForDebugEvent(buf, ms)
       raise WinX.new(:wait_for_debug_event) if r == 0 and get_last_error != 121
       return Ragweed::Wrap32::DebugEvent.new(buf) if r != 0
       return nil
     end
 
     def continue_debug_event(pid, tid, code)
-      r = CALLS["kernel32!ContinueDebugEvent:LLL=L"].call(pid, tid, code)
+      r = Win.ContinueDebugEvent(pid, tid, code)
       raise WinX.new(:continue_debug_event) if r == 0
       return r
     end
 
     def debug_active_process(pid)
-      r = CALLS["kernel32!DebugActiveProcess:L=L"].call(pid)
+      r = Win.DebugActiveProcess(pid)
       raise WinX.new(:debug_active_process) if r == 0
       return r
     end
 
     def debug_set_process_kill_on_exit(val=0)
-      r = CALLS["kernel32!DebugSetProcessKillOnExit:L=L"].call(val)
+      r = Win.DebugSetProcessKillOnExit(val)
       raise WinX.new(:debug_set_process_kill_on_exit) if r == 0
       return r
     end
 
     def debug_active_process_stop(pid)
       # don't care about failure
-      CALLS["kernel32!DebugActiveProcessStop:L=L"].call(pid)
+      Win.DebugActiveProcessStop(pid)
     end
 
     def flush_instruction_cache(h, v1=0, v2=0)
-      CALLS["kernel32!FlushInstructionCache:LLL=L"].call(h, v1, v2)
+      Win.FlushInstructionCache(h, v1, v2)
     end
   end
 end

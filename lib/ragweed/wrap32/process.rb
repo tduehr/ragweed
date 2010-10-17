@@ -95,7 +95,8 @@ class Ragweed::Process
         raise "can not set this breakpoint: #{name}"
     end
 
-    modh = remote_call "kernel32!GetModuleHandleW", mod.to_utf16
+#    modh = remote_call "kernel32!GetModuleHandleW", mod.to_utf16
+    modh = remote_call "kernel32!GetModuleHandleA", mod
     raise "no such module #{ mod }" if not modh
 
     ## Location is an offset
