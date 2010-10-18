@@ -75,8 +75,7 @@ class Ragweed::Debugger32
 
   def initialize(p)
     ## grab debug privilege at least once
-    se = FFI::MemoryPointer.from_string('seDebugPrivilege')
-    @@token ||= Ragweed::Wrap32::ProcessToken.new.grant(se)
+    @@token ||= Ragweed::Wrap32::ProcessToken.new.grant('seDebugPrivilege')
 
     p = Process.new(p) if p.kind_of? Numeric
     @p = p

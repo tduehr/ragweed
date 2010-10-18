@@ -52,11 +52,12 @@ module Ragweed::Wrap32
     end
 
     def lookup_privilege_value(name)
-      #outw = "\x00" * 8
-      outw = FFI::MemoryPointer.new(:int, 2)
+      namep = FFI::MemoryPointer.from_string(name)
+      outw = FFI::MemoryPointer.new(:int64, 1)
+      r = Win.LookupPrivilegeValueA(nil, namep, outw)
       r = Win.LookupPrivilegeValueA(nil, name, outw)
       raise WinX.new(:lookup_privilege_value) if r == 0
-      return outw.to_s.unpack("Q").first
+      outw.read_long_long
     end
   end
 end
