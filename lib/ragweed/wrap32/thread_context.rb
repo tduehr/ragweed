@@ -133,7 +133,7 @@ module Ragweed::Wrap32
     end
 
     def set_thread_context(h, ctx)
-      ret = Win.SetThreadContext(h, ctx) #ctx.to_s
+      ret = Win.SetThreadContext(h, ctx)
       raise WinX.new(:set_thread_context) if ret == 0
       return ret
     end

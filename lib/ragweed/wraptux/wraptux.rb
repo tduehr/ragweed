@@ -35,7 +35,7 @@ module Ragweed::Wraptux
   class << self
     # pid_t wait(int *status);
     def wait
-      stat = FFI::MemoryPointer.new :int, 1
+      stat = FFI::MemoryPointer.new(:int, 1)
       FFI.errno = 0
       pid = Libc.wait stat
       raise SystemCallErro.new "wait", FFI.errno if pid == -1
@@ -51,7 +51,7 @@ module Ragweed::Wraptux
       status = p.get_int32(0)
       [r, status]
     end
-    
+
     # int kill(pid_t pid, int sig);
     def kill pid, sig
       FFI.errno = 0
