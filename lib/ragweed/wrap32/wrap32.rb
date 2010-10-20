@@ -197,6 +197,7 @@ module Ragweed::Wrap32
 
     # Read from a remote process given an address and length, returning a string.
     def read_process_memory(h, ptr, len)
+#      val = FFI::MemoryPointer.from_string("\x00" * len)
       val = "\x00" * len
       r = Win.ReadProcessMemory(h, ptr.to_i, val, len, NULL)
       raise WinX.new(:read_process_memory) if r == 0

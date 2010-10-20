@@ -98,10 +98,9 @@ class Ragweed::Debugger32
   def step(tid, callable)
     if @steppers.empty?
       Ragweed::Wrap32::open_thread(tid) do |h|
-
-        ctx = Ragweed::Wrap32::ThreadContext.get(h)
+        ctx = Ragweed::Wrap32::get_thread_context(h)
         ctx.single_step(true)
-        ctx.set(h)
+        Ragweed::Wrap32::set_thread_context(h, ctx)
       end
     end
     @steppers << callable    
@@ -114,9 +113,9 @@ class Ragweed::Debugger32
     @steppers = @steppers.reject {|x| x == callable}
     if @steppers.empty?
       Ragweed::Wrap32::open_thread(tid) do |h|
-        ctx = Ragweed::Wrap32::ThreadContext.get(h)
+        ctx = Ragweed::Wrap32::get_thread_context(h)
         ctx.single_step(false)
-        ctx.set(h)
+        Ragweed::Wrap32::set_thread_context(h, ctx)
       end
     end
   end
@@ -128,7 +127,7 @@ class Ragweed::Debugger32
     else
       tid = tid_or_event
     end
-    Ragweed::Wrap32::open_thread(tid) {|h| Ragweed::Wrap32::ThreadContext.get(h)}
+    Ragweed::Wrap32::open_thread(tid) { |h| Ragweed::Wrap32::get_thread_context(h) }
   end
 
   ## set a breakpoint given an address, which can also be a string in the form
@@ -215,8 +214,8 @@ class Ragweed::Debugger32
       ## Put execution back where it's supposed to be...
       Ragweed::Wrap32::open_thread(ev.tid) do |h|
         ctx = context(ev)
-        ctx.eip = eip ## eip was ev.exception_address
-        ctx.set(h)
+        ctx[:eip] = eip ## eip was ev.exception_address
+        Ragweed::Wrap32::set_thread_context(h, ctx)
       end
   
     ## Tell the target to stop handling this event
@@ -267,7 +266,7 @@ class Ragweed::Debugger32
       ## re-enable the trap flag before our handler,
       ## which may choose to disable it.
       ctx.single_step(true)
-      ctx.set(h)
+      Ragweed::Wrap32.set_thread_context(h, ctx)
     end
     
     @steppers.each {|s| s.call(ev, ctx)}
