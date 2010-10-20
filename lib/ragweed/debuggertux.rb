@@ -374,7 +374,8 @@ class Ragweed::Debuggertux
   end
 
   def get_registers
-    regs = FFI::MemoryPointer.new(:int, Ragweed::Wraptux::PTRegs.size)
+    regs = FFI::MemoryPointer.new(:uint8, Ragweed::Wraptux::PTRegs.size)
+    ## XXX why do we use to_i here instead of to_ptr.address
     Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::GETREGS, @pid, 0, regs.to_i)
     return Ragweed::Wraptux::PTRegs.new regs
   end
