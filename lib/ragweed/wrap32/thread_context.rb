@@ -40,6 +40,8 @@ module Ragweed::Wrap32
 end
 
 class Ragweed::Wrap32::ThreadContext < FFI::Struct
+    include Ragweed::FFIStructInclude
+
     ## This is defined in WinNt.h
     layout :context_flags, :long,
     :dr0, :long,
