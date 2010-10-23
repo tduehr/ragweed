@@ -315,7 +315,7 @@ class Ragweed::Debuggertux
       when signal == Ragweed::Wraptux::Signal::SIGTRAP
         self.on_sigtrap
         r = self.get_registers
-        eip = r[:eip]
+        eip = r.eip
         eip -= 1
         case
           when @breakpoints.has_key?(eip)
@@ -391,7 +391,7 @@ class Ragweed::Debuggertux
   ## EIP won't look correct until this runs
   def on_breakpoint
     r = get_registers
-    eip = r[:eip]
+    eip = r.eip
     eip -= 1
 
     ## Call the block associated with the breakpoint
@@ -399,7 +399,7 @@ class Ragweed::Debuggertux
 
     if @breakpoints[eip].installed?
       @breakpoints[eip].uninstall
-      r[:eip] = eip
+      r.eip = eip
       set_registers(r)
       single_step
       ## ptrace peektext returns -1 upon reinstallation of bp without calling
@@ -411,14 +411,14 @@ class Ragweed::Debuggertux
 
   def print_registers
     regs = get_registers
-    puts "eip %08x" % regs[:eip]
-    puts "esi %08x" % regs[:esi]
-    puts "edi %08x" % regs[:edi]
-    puts "esp %08x" % regs[:esp]
-    puts "eax %08x" % regs[:eax]
-    puts "ebx %08x" % regs[:ebx]
-    puts "ecx %08x" % regs[:ecx]
-    puts "edx %08x" % regs[:edx]
+    puts "eip %08x" % regs.eip
+    puts "esi %08x" % regs.esi
+    puts "edi %08x" % regs.edi
+    puts "esp %08x" % regs.esp
+    puts "eax %08x" % regs.eax
+    puts "ebx %08x" % regs.ebx
+    puts "ecx %08x" % regs.ecx
+    puts "edx %08x" % regs.edx
   end
 
   def on_exit

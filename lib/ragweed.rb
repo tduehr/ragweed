@@ -38,7 +38,6 @@ module Ragweed
     dir ||= ::File.basename(fname, '.*')
     search_me = ::File.expand_path(
         ::File.join(::File.dirname(fname), dir, '**', '*.rb'))
-
     # Don't want to load wrapper or debugger here.
     Dir.glob(search_me).sort.reject{|rb| rb =~ /(wrap|debugger|rasm[^\.])/}.each {|rb| require rb}
     # require File.dirname(File.basename(__FILE__)) + "/#{x}"d
@@ -48,6 +47,7 @@ module Ragweed
     dir ||= ::File.basename(fname, '.*')
     pkgs = ""
     dbg = ""
+
     case
     when RUBY_PLATFORM =~ /win(dows|32)|i386-mingw32/i
       pkgs = '32'
@@ -68,6 +68,32 @@ module Ragweed
   end
 end  # module Ragweed
 
+## FFI Struct Accessor Methods
+module Ragweed::FFIStructInclude
+  if RUBY_VERSION < "1.9"
+    def methods regular=true
+      super + self.offsets.map{|x| x.first.to_s}
+    end
+  else
+    def methods regular=true
+      super + self.offsets.map{|x| x.first}
+    end
+  end
+
+  def method_missing meth, *args
+    super unless self.respond_to? meth
+    if meth.to_s =~ /=$/
+      self.__send__(:[]=, meth.to_s.gsub(/=$/,'').intern, *args)
+    else
+      self.__send__(:[], meth, *args)
+    end
+  end
+
+  def respond_to? meth, include_priv=false
+    mth = meth.to_s.gsub(/=$/,'')
+    self.offsets.map{|x| x.first.to_s}.include? mth || super
+  end
+end
 
 # pkgs = %w[arena sbuf ptr process event rasm blocks detour trampoline device debugger hooks]
 # pkgs << 'wrap32' if RUBY_PLATFORM =~ /win(dows|32)/i
@@ -80,5 +106,4 @@ end  # module Ragweed
 
 Ragweed.require_os_libs_relative_to(__FILE__)
 Ragweed.require_all_libs_relative_to(__FILE__)
-
 # EOF

@@ -214,7 +214,7 @@ class Ragweed::Debugger32
       ## Put execution back where it's supposed to be...
       Ragweed::Wrap32::open_thread(ev.tid) do |h|
         ctx = context(ev)
-        ctx[:eip] = eip ## eip was ev.exception_address
+        ctx.eip = eip ## eip was ev.exception_address
         Ragweed::Wrap32::set_thread_context(h, ctx)
       end
   

@@ -13,6 +13,7 @@ module Ragweed::Wraptux
   end
   
   class PTRegs < FFI::Struct
+      include Ragweed::FFIStructInclude
       layout :ebx, :ulong,
       :ecx, :ulong,
       :edx, :ulong,

@@ -1,5 +1,7 @@
 require 'ffi'
-%w[ostruct Win32API pp].each {|x| require x}
+require 'ostruct'
+require 'Win32API'
+require 'pp'
 
 module Ragweed;end
 module Ragweed::Wrap32
