@@ -81,9 +81,9 @@ class Ragweed::Debuggertux
 
   def self.find_by_regex(rx)
     a = Dir.entries("/proc/")
-    a.delete_if do |x| x == '.'; end
-    a.delete_if do |x| x == '..'; end
-    a.delete_if do |x| x =~ /[a-z]/; end
+    a.delete_if { |x| x == '.' }
+    a.delete_if { |x| x == '..' }
+    a.delete_if { |x| x =~ /[a-z]/i }
     
     a.each do |x|
       f = File.read("/proc/#{x}/cmdline")
@@ -374,8 +374,7 @@ class Ragweed::Debuggertux
   end
 
   def get_registers
-    regs = FFI::MemoryPointer.new(:uint8, Ragweed::Wraptux::PTRegs.size)
-    ## XXX why do we use to_i here instead of to_ptr.address
+    regs = FFI::MemoryPointer.new(Ragweed::Wraptux::PTRegs, 1)
     Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::GETREGS, @pid, 0, regs.to_i)
     return Ragweed::Wraptux::PTRegs.new regs
   end

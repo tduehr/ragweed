@@ -121,7 +121,8 @@ module Ragweed::Wrap32
   class << self
     def get_thread_context(h)
       #ctx = Ragweed::Wrap32::ThreadContext.new
-      c = FFI::MemoryPointer.new(:uint8, Ragweed::Wrap32::ThreadContext.size)
+#      c = FFI::MemoryPointer.new(:uint8, Ragweed::Wrap32::ThreadContext.size)
+      c = FFI::MemoryPointer.new(Ragweed::Wrap32::ThreadContext, 1)
       ctx = Ragweed::Wrap32::ThreadContext.new c
       ctx[:context_flags] = Ragweed::Wrap32::ContextFlags::DEBUG
       #suspend_thread(h)
