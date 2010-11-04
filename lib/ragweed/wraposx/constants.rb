@@ -86,6 +86,7 @@ module Ragweed::Wraposx::Vm::Prot
   NONE = 0x0 #no rights
   ALL = 0x7 #all permissions
 end
+
 module Ragweed::Wraposx::Vm::Sm
   # share mode constants
   COW = 1
@@ -95,15 +96,6 @@ module Ragweed::Wraposx::Vm::Sm
   TRUESHARED = 5
   PRIVATE_ALIASED = 6
   SHARED_ALIASED = 7
-end
-
-# this should be moved to an include for all wrappers
-module Ragweed::Wraposx::SizeOf
-  INT = [1].pack("I_").size
-  SHORT = [1].pack("S_").size
-  LONG = [1].pack("L_").size
-  DOUBLE = [1].pack("D").size
-  FLOAT = [1].pack("F").size
 end
 
 module Ragweed::Wraposx::Dl
