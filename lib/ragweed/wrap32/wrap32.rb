@@ -75,7 +75,7 @@ module Ragweed::Wrap32
   module Win
     extend FFI::Library
 
-    ffi_lib ['kernel32', 'Advapi32']
+    ffi_lib 'kernel32', 'Advapi32'
     ffi_convention :stdcall
     attach_function 'OpenProcess', [ :long, :long, :long ], :long
     attach_function 'OpenThread', [ :long, :long, :long ], :long

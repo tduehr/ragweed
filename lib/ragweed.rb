@@ -1,3 +1,4 @@
+require 'ffi'
 
 module Ragweed
 
@@ -49,14 +50,14 @@ module Ragweed
     dbg = ""
 
     case
-    when FFI::Platform.windows?
+    when ::FFI::Platform.windows?
       pkgs = '32'
-    when FFI::Platform.mac?
+    when ::FFI::Platform.mac?
       pkgs = 'osx'
     # coming soon
-    # when FFI::Platform.bsd?
+    # when ::FFI::Platform.bsd?
     #   pkgs = "bsd"
-    when FFI::Platform.unix? && ! FFI::Platform.bsd?
+    when ::FFI::Platform.unix? && ! ::FFI::Platform.bsd?
       # FFI doesn't specifically detect linux so... we punt
       pkgs = 'tux'
     else
