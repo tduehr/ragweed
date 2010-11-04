@@ -49,14 +49,16 @@ module Ragweed
     dbg = ""
 
     case
-    when RUBY_PLATFORM =~ /win(dows|32)|i386-mingw32/i
+    when FFI::Platform.windows?
       pkgs = '32'
-    when RUBY_PLATFORM =~ /darwin/i
+    when FFI::Platform.mac?
       pkgs = 'osx'
-    when RUBY_PLATFORM =~ /linux/i
+    # coming soon
+    # when FFI::Platform.bsd?
+    #   pkgs = "bsd"
+    when FFI::Platform.unix? && ! FFI::Platform.bsd?
+      # FFI doesn't specifically detect linux so... we punt
       pkgs = 'tux'
-    # when RUBY_PLATFORM =~ /java/i
-      # TODO - Java port using jni?
     else
       warn "Platform not supported no wrapper libraries loaded."
     end
