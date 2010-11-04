@@ -224,7 +224,7 @@ class Ragweed::Debugger32
 
   ## FIX: this method should be a bit more descriptive in its naming
   def get_dll_name(ev)
-    name = Ragweed::Wrap32::get_mapped_filename(@p.handle, ev.dll_base, 256)
+    name = Ragweed::Wrap32::get_mapped_filename(@p.handle, ev.base_of_dll, 256)
     name.gsub!(/[\n]+/,'')
     name.gsub!(/[^\x21-\x7e]/,'')
     i = name.index('0')

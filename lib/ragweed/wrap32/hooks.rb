@@ -10,11 +10,11 @@ class Ragweed::Debugger32
     end
 
     breakpoint_set(ip) do |ev,ctx|
-      esp = process.read32(ctx[:esp])
+      esp = process.read32(ctx.esp)
       nargs = nargs.to_i
 
       if nargs >= 1
-        args = (1..nargs).map {|i| process.read32(ctx[:esp] + 4*i)}
+        args = (1..nargs).map {|i| process.read32(ctx.esp + 4*i)}
       end
 
       ## set exit bpoint
@@ -24,7 +24,7 @@ class Ragweed::Debugger32
       ## the wrong address. So we attempt to
       ## get an idea of where the instruction
       ## is mapped.
-      eip = ctx[:eip]
+      eip = ctx.eip
       if esp != 0 and esp > (eip & 0xf0000000)
         breakpoint_set(esp) do |ev,ctx|
           callable.call(ev, ctx, :leave, args)

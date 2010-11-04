@@ -86,24 +86,24 @@ class Ragweed::Wrap32::ThreadContext < FFI::Struct
         string =<<EOM
 -----------------------------------------------------------------------
 CONTEXT:
-    EIP: #{self[:eip].to_s(16).rjust(8, "0")}
-    EAX: #{self[:eax].to_s(16).rjust(8, "0")}
-    EBX: #{self[:ebx].to_s(16).rjust(8, "0")}
-    ECX: #{self[:ecx].to_s(16).rjust(8, "0")}
-    EDX: #{self[:edx].to_s(16).rjust(8, "0")}
-    EDI: #{self[:edi].to_s(16).rjust(8, "0")}
-    ESI: #{self[:esi].to_s(16).rjust(8, "0")}
-    EBP: #{self[:ebp].to_s(16).rjust(8, "0")}
-    ESP: #{self[:esp].to_s(16).rjust(8, "0")}
-    EFL: #{self[:eflags].to_s(2).rjust(32, "0")} #{Ragweed::Wrap32::EFlags.flag_dump(self[:eflags])}
+    EIP: #{self.eip.to_s(16).rjust(8, "0")}
+    EAX: #{self.eax.to_s(16).rjust(8, "0")}
+    EBX: #{self.ebx.to_s(16).rjust(8, "0")}
+    ECX: #{self.ecx.to_s(16).rjust(8, "0")}
+    EDX: #{self.edx.to_s(16).rjust(8, "0")}
+    EDI: #{self.edi.to_s(16).rjust(8, "0")}
+    ESI: #{self.esi.to_s(16).rjust(8, "0")}
+    EBP: #{self.ebp.to_s(16).rjust(8, "0")}
+    ESP: #{self.esp.to_s(16).rjust(8, "0")}
+    EFL: #{self.eflags.to_s(2).rjust(32, "0")} #{Ragweed::Wrap32::EFlags.flag_dump(self.eflags)}
 EOM
     end
 
     def single_step(v=true)
         if v
-          self[:eflags] |= Ragweed::Wrap32::EFlags::TRAP
+          self.eflags |= Ragweed::Wrap32::EFlags::TRAP
         else
-          self[:eflags] &= ~(Ragweed::Wrap32::EFlags::TRAP)
+          self.eflags &= ~(Ragweed::Wrap32::EFlags::TRAP)
         end
     end
 end
@@ -120,11 +120,9 @@ module Ragweed::Wrap32
 
   class << self
     def get_thread_context(h)
-      #ctx = Ragweed::Wrap32::ThreadContext.new
-#      c = FFI::MemoryPointer.new(:uint8, Ragweed::Wrap32::ThreadContext.size)
       c = FFI::MemoryPointer.new(Ragweed::Wrap32::ThreadContext, 1)
       ctx = Ragweed::Wrap32::ThreadContext.new c
-      ctx[:context_flags] = Ragweed::Wrap32::ContextFlags::DEBUG
+      ctx.context_flags = Ragweed::Wrap32::ContextFlags::DEBUG
       #suspend_thread(h)
       ret = Win.GetThreadContext(h, ctx)
       #resume_thread(h)

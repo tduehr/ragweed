@@ -39,7 +39,7 @@ module Ragweed::Wraptux
       stat = FFI::MemoryPointer.new(:int, 1)
       FFI.errno = 0
       pid = Libc.wait stat
-      raise SystemCallErro.new "wait", FFI.errno if pid == -1
+      raise SystemCallError.new "wait", FFI.errno if pid == -1
       [pid, stat.read_pointer.get_int32]
     end
     
