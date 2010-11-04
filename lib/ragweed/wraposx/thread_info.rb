@@ -30,7 +30,7 @@ module Ragweed::Wraposx::ThreadInfo
   #        integer_t       sleep_time;
   # };
   class Basic
-    include Ragweed::Wraposx::ThreadInfo::ThreadInfoMixins
+    include Ragweed::FFIStructInclude
     module Flags
       #Thread flags (flags field).
       SWAPPED = 0x1 #/* thread is swapped out */
@@ -75,7 +75,7 @@ EOM
   #        int        depress_priority;
   # };
   class SchedTimeshare
-    include Ragweed::Wraposx::ThreadInfo::ThreadInfoMixins
+    include Ragweed::FFIStructInclude
     layout :max_priority, :int,
            :base_priority, :int,
            :cur_priority, :int,
@@ -105,7 +105,7 @@ EOM
   #        int      depress_priority;
   # };
   class SchedRr
-    include Ragweed::Wraposx::ThreadInfo::ThreadInfoMixins
+    include Ragweed::FFIStructInclude
     layout :max_priority, :int,
            :base_priority, :int,
            :quantum, :int,

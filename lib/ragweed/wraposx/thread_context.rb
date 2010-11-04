@@ -28,30 +28,18 @@ module Ragweed::Wraposx::ThreadContext
   X86_EXCEPTION_STATE   = 9
   X86_DEBUG_STATE       = 12
   THREAD_STATE_NONE     = 13
-  
+
   # depricated request names
   I386_THREAD_STATE     = X86_THREAD_STATE32
   I386_FLOAT_STATE      = X86_FLOAT_STATE32
   I386_EXCEPTION_STATE  = X86_EXCEPTION_STATE32
-  
-  class << self
-    #factory method to get a ThreadContext variant
-    def self.get(flavor,tid)
-      found = false
-      klass = self.constants.detect{|c| con = self.const_get(c); con.kind_of?(Class) && (flavor == con.const_get(:FLAVOR))}
-      if klass.nil?
-        raise Ragwed::Wraposx::KErrno::INVALID_ARGUMENT
-      else
-        klass.get(tid)
-      end
-    end
-  end
-  
+
   # struct x86_state_hdr {
   #         int     flavor;
   #         int     count;
   # };
   class X86StateHdr < FFI::Struct
+    include Ragweed::FFIStructInclude
     layout :flavor, :int,
            :count, :int
   end
@@ -76,6 +64,7 @@ module Ragweed::Wraposx::ThreadContext
   #     unsigned int        gs;
   # };
   class State32 < FFI::Struct
+    include Ragweed::FFIStructInclude
     FLAVOR = 1
     layout :eax, :uint,
            :ebx, :uint,
@@ -175,6 +164,7 @@ EOM
   #         __uint64_t      gs;
   # };
   class State64 < FFI::Struct
+    include Ragweed::FFIStructInclude
     FLAVOR = 4  
     layout :rax, :uint64,
            :rbx, :uint64,
@@ -255,11 +245,13 @@ EOM
   end
 
   class UnionThreadState < FFI::Union
+    include Ragweed::FFIStructInclude
     layout :ts32, Ragweed::Wraposx::ThreadContext::State32,
            :ts64, Ragweed::Wraposx::ThreadContext::State64
   end
 
   class State < FFI::Struct
+    include Ragweed::FFIStructInclude
     FLAVOR = 7
     layout :tsh, Ragweed::Wraposx::ThreadContext::X86StateHdr,
            :uts, Ragweed::Wraposx::ThreadContext::UnionThreadState
@@ -277,6 +269,7 @@ EOM
   #         unsigned int    dr7;
   # };
   class Debug32 < FFI::Struct
+    include Ragweed::FFIStructInclude
     FLAVOR = 10
     layout :dr0, :uint,
            :dr1, :uint,
@@ -318,6 +311,7 @@ EOM
   #         __uint64_t      dr7;
   # };
   class Debug64 < FFI::Struct
+    include Ragweed::FFIStructInclude
     FLAVOR = 11
     layout :dr0, :uint64,
            :dr1, :uint64,
@@ -348,11 +342,13 @@ EOM
   end
 
   class UnionDebugState < FFI::Union
+    include Ragweed::FFIStructInclude
     layout :ds32, Ragweed::Wraposx::ThreadContext::Debug32,
            :ds64, Ragweed::Wraposx::ThreadContext::Debug64
   end
 
   class Debug < FFI:Struct
+    include Ragweed::FFIStructInclude
     FLAVOR = 12
     layout :dsh, Ragweed::Wraposx::ThreadContext::X86StateHdr,
            :uds, Ragweed::Wraposx::ThreadContext::UnionDebugState
@@ -365,6 +361,7 @@ EOM
   #     unsigned int        faultvaddr;
   # };
   class Exception32 < FFI::Struct
+    include Ragweed::FFIStructInclude
     FLAVOR = 3
     layout :trapno, :uint,
            :err, :uint,
@@ -391,6 +388,7 @@ EOM
   #     __uint64_t          faultvaddr;
   # };
   class Exception64 < FFI::Struct
+    include Ragweed::FFIStructInclude
     FLAVOR = 6
     layout :trapno, :uint,
            :err, :uint,
@@ -411,11 +409,13 @@ EOM
   end
 
   class UnionExceptionState < FFI::Union
+    include Ragweed::FFIStructInclude
     layout :es32, Ragweed::Wraposx::ThreadContext::Exception32,
            :es64, Ragweed::Wraposx::ThreadContext::Exception64
   end
 
   class Exception < FFI::Struct
+    include Ragweed::FFIStructInclude
     FLAVOR = 9
     layout :esh, Ragweed::Wraposx::ThreadContext::X86StateHdr,
            :ues, Ragweed::Wraposx::ThreadContext::UnionExceptionState
@@ -457,6 +457,7 @@ EOM
   #         int                     fpu_reserved1;
   # };
   class Float32 < FFI::Struct
+    include Ragweed::FFIStructInclude
     FLAVOR = 2
     layout :fpu_reserved, [:int, 2],
            :fpu_fcw, Ragweed::Wraposx::FpControl,
@@ -551,6 +552,7 @@ EOM
   #         int                     fpu_reserved1;
   # };
   class Float64
+    include Ragweed::FFIStructInclude
     FLAVOR = 5
     layout :fpu_reserved, [:int, 2],
            :fpu_fcw, Ragweed::Wraposx::FpControl,
@@ -609,11 +611,13 @@ EOM
   end
 
   class UnionFloatState < FFI::Union
+    include Ragweed::FFIStructInclude
     layout :fs32, Ragweed::Wraposx::ThreadContext::Float32,
            :fs64, Ragweed::Wraposx::ThreadContext::Float64
   end
 
   class Float < FFI::Struct
+    include Ragweed::FFIStructInclude
     FLAVOR = 8
     layout :fsh, Ragweed::Wraposx::ThreadContext::X86StateHdr,
            :ufs, Ragweed::Wraposx::ThreadContext::UnionFloatState
