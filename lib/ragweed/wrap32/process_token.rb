@@ -23,13 +23,13 @@ module Ragweed::Wrap32
   module Win
     extend FFI::Library
 
-    ffi_lib 'kernel32'
+    ffi_lib ['kernel32','Advapi32']
     ffi_convention :stdcall
     attach_function 'OpenProcess', [ :long, :long, :long ], :long
     attach_function 'OpenProcessToken', [:long, :long, :pointer ], :long
 
-    ffi_lib 'advapi32'
-    ffi_convention :stdcall
+    # ffi_lib 'advapi32'
+    # ffi_convention :stdcall
     attach_function 'AdjustTokenPrivileges', [ :long, :long, :pointer, :long, :pointer, :pointer ], :long
     attach_function 'LookupPrivilegeValueA', [ :pointer, :pointer, :pointer ] ,:long
   end
