@@ -249,7 +249,7 @@ class Ragweed::Debugger32
                 bp.deferred = false
             end
 
-            new_addr = bp.deferred_install(ev.file_handle, ev.dll_base)
+            new_addr = bp.deferred_install(ev.file_handle, ev.base_of_dll)
 
             if !new_addr.nil?
                 @breakpoints[new_addr] = bp.dup

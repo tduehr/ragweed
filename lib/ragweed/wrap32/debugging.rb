@@ -58,7 +58,7 @@ end
 class Ragweed::Wrap32::LoadDLLDebugInfo < FFI::Struct
     include Ragweed::FFIStructInclude
     layout :file_handle, :ulong,
-    :base_of_dll, :pointer,
+    :base_of_dll, :ulong,
     :debug_info_file_offset, :ulong,
     :debug_info_size, :ulong,
     :image_name, :pointer,
