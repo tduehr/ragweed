@@ -144,7 +144,8 @@ class Ragweed::Process
         if d.szModule.to_s.match(/#{m}/)
             return false
         end
-    end
+      end
+
     return true
   end
 

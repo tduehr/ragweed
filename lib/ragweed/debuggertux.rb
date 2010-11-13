@@ -20,7 +20,7 @@ class Ragweed::Debuggertux
 
     INT3 = 0xCC
 
-    attr_accessor :orig, :bppid, :function
+    attr_accessor :orig, :bppid, :function, :installed
     attr_reader :addr
 
     ## ip: insertion point
@@ -33,6 +33,7 @@ class Ragweed::Debuggertux
       @addr = ip
       @callable = callable
       @installed = false
+      @exited = false
       @orig = 0
     end
 
@@ -49,7 +50,7 @@ class Ragweed::Debuggertux
 
     def uninstall
       if @orig != INT3
-        Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::POKE_TEXT, @bppid, @addr, @orig)
+        a = Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::POKE_TEXT, @bppid, @addr, @orig)
         @installed = false
       end
     end
@@ -156,6 +157,9 @@ class Ragweed::Debuggertux
   ## Parse procfs and create a hash containing
   ## a listing of each mapped shared object
   def self.shared_libraries(p)
+
+      raise "pid is 0" if p.to_i == 0
+
       if @shared_objects
         @shared_objects.clear
       else
@@ -257,13 +261,8 @@ class Ragweed::Debuggertux
   ## Remove a breakpoint by ip
   def breakpoint_clear(ip)
     bp = @breakpoints[ip]
-
-    if bp.nil?
-        return nil
-    end
-
+    return nil if bp.nil?
     bp.uninstall
-    @breakpoints.delete(ip)
   end
 
   ## loop for wait()
@@ -396,17 +395,26 @@ class Ragweed::Debuggertux
     ## Call the block associated with the breakpoint
     @breakpoints[eip].call(r, self)
 
-    if @breakpoints[eip].installed?
-      @breakpoints[eip].uninstall
-      r.eip = eip
-      set_registers(r)
-      single_step
-      ## ptrace peektext returns -1 upon reinstallation of bp without calling
-      ## waitpid() if that occurs the breakpoint cannot be reinstalled
-      Ragweed::Wraptux::waitpid(@pid, 0)
-      @breakpoints[eip].install
+    ## The block may have called breakpoint_clear
+    del = true if !@breakpoints[eip].installed?
+
+    ## Uninstall and single step the bp
+    @breakpoints[eip].uninstall
+    r.eip = eip
+    set_registers(r)
+    single_step
+
+    ## ptrace peektext returns -1 upon reinstallation of bp without calling
+    ## waitpid() if that occurs the breakpoint cannot be reinstalled
+    Ragweed::Wraptux::waitpid(@pid, 0)
+
+    if del == true
+        ## The breakpoint block may have called breakpoint_clear
+        @breakpoints.delete(eip)
+    else
+        @breakpoints[eip].install
     end
-  end
+end
 
   def print_registers
     regs = get_registers
