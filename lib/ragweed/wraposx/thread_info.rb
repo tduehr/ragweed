@@ -29,7 +29,7 @@ module Ragweed::Wraposx::ThreadInfo
   #        integer_t    suspend_count;
   #        integer_t       sleep_time;
   # };
-  class Basic
+  class Basic < FFI::Struct
     include Ragweed::FFIStructInclude
     module Flags
       #Thread flags (flags field).
@@ -41,7 +41,7 @@ module Ragweed::Wraposx::ThreadInfo
     layout :user_time, Ragweed::Wraposx::TimeValue,
            :system_time, Ragweed::Wraposx::TimeValue,
            :cpu_usage, :int,
-           :policy, :policy_t,
+           :policy, Ragweed::Wraposx::Libc.find_type(:policy_t),
            :run_state, :int,
            :flags, :int,
            :suspend_count, :int,
@@ -74,7 +74,7 @@ EOM
   #        boolean_t         depressed;
   #        int        depress_priority;
   # };
-  class SchedTimeshare
+  class SchedTimeshare < FFI::Struct
     include Ragweed::FFIStructInclude
     layout :max_priority, :int,
            :base_priority, :int,
@@ -104,12 +104,12 @@ EOM
   #        boolean_t       depressed;
   #        int      depress_priority;
   # };
-  class SchedRr
+  class SchedRr < FFI::Struct
     include Ragweed::FFIStructInclude
     layout :max_priority, :int,
            :base_priority, :int,
            :quantum, :int,
-           :depressed, :boolean_t,
+           :depressed, Ragweed::Wraposx::Libc.find_type(:boolean_t),
            :depress_priority, :int
 
     def dump(&block)
