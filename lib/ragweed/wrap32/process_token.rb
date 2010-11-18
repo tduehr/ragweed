@@ -20,28 +20,44 @@ module Ragweed::Wrap32
     USED_FOR_ACCESS = 0x80000000
   end
 
+  module Win
+    extend FFI::Library
+
+    ffi_lib 'kernel32','Advapi32'
+    ffi_convention :stdcall
+    attach_function 'OpenProcess', [ :long, :long, :long ], :long
+    attach_function 'OpenProcessToken', [:long, :long, :pointer ], :long
+
+    # ffi_lib 'advapi32'
+    # ffi_convention :stdcall
+    attach_function 'AdjustTokenPrivileges', [ :long, :long, :pointer, :long, :pointer, :pointer ], :long
+    attach_function 'LookupPrivilegeValueA', [ :pointer, :pointer, :pointer ] ,:long
+  end
+
   class << self
+
     def open_process_token(h, access=Ragweed::Wrap32::TokenAccess::ADJUST_PRIVILEGES)
       outw = "\x00" * 4
-      r = CALLS["advapi32!OpenProcessToken:LLP=L"].call(h, access, outw)
+      r = Win.OpenProcessToken(h, access, outw)
       raise WinX.new(:open_process_token) if r == 0
       return outw.unpack("L").first
     end
 
     def adjust_token_privileges(t, disable, *args)
-      buf = [args.size].pack("L") + (args.map {|tup| tup.pack("QL") }.join(""))
+      buf = FFI::MemoryPointer.from_string( [args.size].pack("L") + (args.map {|tup| tup.pack("QL") }.join("")) )
 
-      r = CALLS["advapi32!AdjustTokenPrivileges:LLPLPP=L"].
-        call(t, disable, buf, buf.size, NULL, NULL)
+      r = Win.AdjustTokenPrivileges(t, disable, buf, buf.size, nil, nil)
 
       raise WinX.new(:adjust_token_privileges) if r == 0
     end
 
     def lookup_privilege_value(name)
-      outw = "\x00" * 8
-      r = CALLS["advapi32!LookupPrivilegeValueA:PPP=L"].call(NULL, name, outw)
+      namep = FFI::MemoryPointer.from_string(name)
+      outw = FFI::MemoryPointer.new(:int64, 1)
+      r = Win.LookupPrivilegeValueA(nil, namep, outw)
+      r = Win.LookupPrivilegeValueA(nil, name, outw)
       raise WinX.new(:lookup_privilege_value) if r == 0
-      return outw.unpack("Q").first
+      outw.read_long_long
     end
   end
 end

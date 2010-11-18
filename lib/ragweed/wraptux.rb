@@ -1,9 +1,9 @@
 # Dir[File.expand_path("#{File.dirname(__FILE__)}/wraptux/*.rb")].each do |file|
 #   require file
 # end
+
 module Ragweed; end
 module Ragweed::Wraptux
-
   # :stopdoc:
   VERSION = '0.1.7.3'
   LIBPATH = ::File.expand_path(::File.dirname(__FILE__)) + ::File::SEPARATOR
@@ -47,8 +47,7 @@ module Ragweed::Wraptux
     dir ||= ::File.basename(fname, '.*')
     search_me = ::File.expand_path(
         ::File.join(::File.dirname(fname), dir, '**', '*.rb'))
-    
-    Dir.glob(search_me).sort.each {|rb| require rb}
+    Dir.glob(search_me).sort.each {|rb| require rb }
     # require File.dirname(File.basename(__FILE__)) + "/#{x}"
 
   end

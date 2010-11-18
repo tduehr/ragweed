@@ -16,11 +16,10 @@ class Ragweed::Debugger32
   ## removal and triggers for breakpoints.
   ## no user servicable parts.
   class Breakpoint
+
     INT3 = 0xCC
-    attr_accessor :orig
-    attr_accessor :bps
-    attr_accessor :deferred
-    attr_accessor :addr
+
+    attr_accessor :orig, :deferred, :addr
 
     def initialize(process, ip, def_status, callable)
       @process = process
@@ -60,7 +59,6 @@ class Ragweed::Debugger32
     end
 
     def call(*args); @callable.call(*args); end    
-    def method_missing(meth, *args); @bp.send(meth, *args); end
   end ## End Breakpoint class
 
   ## Get a handle to the process so you can mess with it.
@@ -76,8 +74,8 @@ class Ragweed::Debugger32
   end
 
   def initialize(p)
-    ## grab debug privilege at least once.
-    @@token ||= Ragweed::Wrap32::ProcessToken.new.grant("seDebugPrivilege")
+    ## grab debug privilege at least once
+    @@token ||= Ragweed::Wrap32::ProcessToken.new.grant('seDebugPrivilege')
 
     p = Process.new(p) if p.kind_of? Numeric
     @p = p
@@ -100,10 +98,9 @@ class Ragweed::Debugger32
   def step(tid, callable)
     if @steppers.empty?
       Ragweed::Wrap32::open_thread(tid) do |h|
-
-        ctx = Ragweed::Wrap32::ThreadContext.get(h)
+        ctx = Ragweed::Wrap32::get_thread_context(h)
         ctx.single_step(true)
-        ctx.set(h)
+        Ragweed::Wrap32::set_thread_context(h, ctx)
       end
     end
     @steppers << callable    
@@ -116,9 +113,9 @@ class Ragweed::Debugger32
     @steppers = @steppers.reject {|x| x == callable}
     if @steppers.empty?
       Ragweed::Wrap32::open_thread(tid) do |h|
-        ctx = Ragweed::Wrap32::ThreadContext.get(h)
+        ctx = Ragweed::Wrap32::get_thread_context(h)
         ctx.single_step(false)
-        ctx.set(h)
+        Ragweed::Wrap32::set_thread_context(h, ctx)
       end
     end
   end
@@ -130,7 +127,7 @@ class Ragweed::Debugger32
     else
       tid = tid_or_event
     end
-    Ragweed::Wrap32::open_thread(tid) {|h| Ragweed::Wrap32::ThreadContext.get(h)}
+    Ragweed::Wrap32::open_thread(tid) { |h| Ragweed::Wrap32::get_thread_context(h) }
   end
 
   ## set a breakpoint given an address, which can also be a string in the form
@@ -174,8 +171,7 @@ class Ragweed::Debugger32
     @breakpoints[ip] = bp
   end
 
-  ## clear a breakpoint given an id, or clear all breakpoints associated with
-  ## an address. You now have to pass breakpoint_clear the address to clear it
+  ## Clear a breakpoint by ip
   def breakpoint_clear(ip)
     bp = @breakpoints[ip]
 
@@ -219,17 +215,21 @@ class Ragweed::Debugger32
       Ragweed::Wrap32::open_thread(ev.tid) do |h|
         ctx = context(ev)
         ctx.eip = eip ## eip was ev.exception_address
-        ctx.set(h)
+        Ragweed::Wrap32::set_thread_context(h, ctx)
       end
   
-    ## tell the target to stop handling this event
+    ## Tell the target to stop handling this event
     @handled = Ragweed::Wrap32::ContinueCodes::CONTINUE
   end
 
   ## FIX: this method should be a bit more descriptive in its naming
   def get_dll_name(ev)
-    name = Ragweed::Wrap32::get_mapped_filename(@p.handle, ev.dll_base, 256)
-    return name[0, name.index(0)]
+    name = Ragweed::Wrap32::get_mapped_filename(@p.handle, ev.base_of_dll, 256)
+    name.gsub!(/[\n]+/,'')
+    name.gsub!(/[^\x21-\x7e]/,'')
+    i = name.index('0')
+    i ||= name.size
+    return name[0, i]
   end
 
   def on_load_dll(ev)
@@ -249,7 +249,7 @@ class Ragweed::Debugger32
                 bp.deferred = false
             end
 
-            new_addr = bp.deferred_install(ev.file_handle, ev.dll_base)
+            new_addr = bp.deferred_install(ev.file_handle, ev.base_of_dll)
 
             if !new_addr.nil?
                 @breakpoints[new_addr] = bp.dup
@@ -266,7 +266,7 @@ class Ragweed::Debugger32
       ## re-enable the trap flag before our handler,
       ## which may choose to disable it.
       ctx.single_step(true)
-      ctx.set(h)
+      Ragweed::Wrap32.set_thread_context(h, ctx)
     end
     
     @steppers.each {|s| s.call(ev, ctx)}

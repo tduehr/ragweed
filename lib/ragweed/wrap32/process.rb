@@ -51,7 +51,7 @@ class Ragweed::Process
   ## This only gets called for breakpoints in modules
   ## that have just been loaded and detected by a LOAD_DLL
   ## event. It is called from on_load_dll() -> deferred_install()
-  def get_deferred_proc_remote(name, handle, dll_base)
+  def get_deferred_proc_remote(name, handle, base_of_dll)
     if !name.kind_of?String
         return name
     end
@@ -73,7 +73,7 @@ class Ragweed::Process
             end
         end
 
-        ret = dll_base + meth.hex
+        ret = base_of_dll + meth.hex
     else
         ## Location is a symbolic name
         ## Win32 should have successfully loaded the DLL
@@ -95,7 +95,8 @@ class Ragweed::Process
         raise "can not set this breakpoint: #{name}"
     end
 
-    modh = remote_call "kernel32!GetModuleHandleW", mod.to_utf16
+#    modh = remote_call "kernel32!GetModuleHandleW", mod.to_utf16
+    modh = remote_call "kernel32!GetModuleHandleA", mod
     raise "no such module #{ mod }" if not modh
 
     ## Location is an offset
@@ -143,7 +144,8 @@ class Ragweed::Process
         if d.szModule.to_s.match(/#{m}/)
             return false
         end
-    end
+      end
+
     return true
   end
 

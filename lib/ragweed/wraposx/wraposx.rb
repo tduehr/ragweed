@@ -1,55 +1,72 @@
-require 'dl'
+require 'ffi'
 
 module Ragweed; end
 module Ragweed::Wraposx
-  
-  # These hashes are the magic glue of the ragweed system calls.
-  # This one holds the library references from Ruby/DL.
-  LIBS = Hash.new do |h, str|
-    if not str =~ /^[\.\/].*/
-      str = "/usr/lib/" + str
+
+  module Libc
+    extend FFI::Library
+    ffi_lib FFI::Library::LIBC
+    typedef :int, :kern_return_t
+
+    typedef :ulong_long, :memory_object_offset_t
+    typedef :uint, :vm_inherit_t
+    typedef :uint, :natural_t
+    typedef :natural_t, :mach_msg_type_number_t
+    typedef :natural_t, :mach_port_name_t
+    typedef :mach_port_name_t, :mach_port_t
+    typedef :mach_port_t, :vm_map_t
+    typedef :mach_port_t, :task_t
+    typedef :mach_port_t, :thread_act_t
+    typedef :int, :vm_region_flavor_t
+    typedef :int, :vm_prot_t
+    typedef :int, :vm_behavior_t
+    typedef :int, :policy_t
+    typedef :int, :boolean_t
+    typedef :int, :thread_state_flavor_t
+    case FFI::Platform::LONG_SIZE
+    when 64
+      # ifdef __LP64__
+      typedef :uintptr_t, :vm_size_t
+      typedef :uintptr_t, :vm_offset_t
+    when 32
+      # else   /* __LP64__ */
+      typedef :natural_t, :vm_size_t
+      typedef :natural_t, :vm_offset_t
+    else
+      raise "Unsupported Platform"
     end
-    if not str =~ /.*\.dylib$/
-      str = str + ".dylib"
-    end
-    h[str] = DL.dlopen(str)
+    
+    typedef :vm_offset_t, :vm_address_t
+    
+    attach_function :getpid, [], :pid_t
+    attach_function :ptrace, [:int, :pid_t, :ulong, :int], :int
+    attach_function :wait, [:pointer], :pid_t
+    attach_function :waitpid, [:pid_t, :pointer, :int], :pid_t
+    attach_function :mach_task_self, [], :mach_port_t
+    attach_function :task_for_pid, [:mach_port_name_t, :int, :pointer], :kern_return_t
+    attach_function :task_threads, [:task_t, :pointer, :pointer], :kern_return_t
+    attach_function :kill, [:pid_t, :int], :int
+    attach_function :vm_read_overwrite, [:vm_map_t, :vm_address_t, :vm_size_t, :vm_address_t, :pointer], :kern_return_t
+    attach_function :vm_write, [:vm_map_t, :vm_address_t, :vm_offset_t, :mach_msg_type_number_t], :kern_return_t
+    attach_function :vm_protect, [:vm_map_t, :vm_address_t, :vm_size_t, :boolean_t, :vm_prot_t], :kern_return_t
+    attach_function :vm_allocate, [:vm_map_t, :pointer, :vm_size_t, :int], :kern_return_t
+    attach_function :vm_deallocate, [:vm_map_t, :vm_address_t, :vm_size_t], :kern_return_t
+    attach_function :thread_resume, [:thread_act_t], :kern_return_t
+    attach_function :thread_suspend, [:thread_act_t], :kern_return_t
+    attach_function :task_suspend, [:int], :kern_return_t
+    attach_function :task_resume, [:int], :kern_return_t
+    attach_function :sysctl, [:pointer, :int, :pointer, :pointer, :pointer, :int], :int
+    attach_function :execv, [:string, :pointer], :int
   end
-
-  # This hash holds the function references from Ruby/DL.
-  # It also auto populates LIBS.
-  # CALLS["<library>!<function>:<argument types>=<return type>"]
-  # Hash.new is a beautiful thing.
-  CALLS = Hash.new do |h, str|
-    lib = proc = args = ret = nil
-    lib, rest = str.split "!"
-    proc, rest = rest.split ":"
-    args, ret = rest.split("=") if rest
-    ret ||= "0"
-    raise "need proc" if not proc
-    h[str] = LIBS[lib][proc, ret + args]
-  end
-
-  NULL = DL::PtrData.new(0)
-
-  SIZEOFINT = DL.sizeof('I')
-  SIZEOFLONG = DL.sizeof('L')
 
   class << self
-
-    # time_t
-    # time(time_t *tloc);
-    #
-    # see also time(3)
-    def time
-      CALLS["libc!time:=I"].call.first
-    end
 
     # pid_t
     # getpid(void);
     #
     # see also getpid(2)
     def getpid
-      CALLS["libc!getpid:=I"].call.first
+      Libc.getpid
     end
 
     # Apple's ptrace is fairly gimped. The memory read and write functionality has been
@@ -62,13 +79,48 @@ module Ragweed::Wraposx
     #
     # see also ptrace(2)
     def ptrace(request, pid, addr, data)
-      DL.last_error = 0
-      r = CALLS["libc!ptrace:IIII=I"].call(request, pid, addr, data).first
-      raise SystemCallError.new("ptrace", DL.last_error) if r == -1 and DL.last_error != 0
-      return r
+      FFI.errno = 0
+      r = Libc.ptrace(request, pid, addr, data)
+      raise SystemCallError.new("ptrace", FFI.errno) if r == -1 and FFI.errno != 0
+      [r, data]
     end
 
-    # Oringially coded for use in debuggerosx but I've switched to waitpid for 
+    # ptrace(PT_TRACE_ME, ...)
+    def pt_trace_me pid
+      ptrace(Ragweed::Wraposx::Ptrace::TRACE_ME, pid, nil, nil).first
+    end
+
+    # ptrace(PT_DENY_ATTACH, ... )
+    def pt_deny_attach pid
+      ptrace(Ragweed::Wraposx::Ptrace::DENY_ATTACH, pid, nil, nil).first
+    end
+
+    # ptrace(PT_CONTINUE, pid, addr, signal)
+    def pt_continue pid, addr = 1, sig = 0
+      ptrace(Ragweed::Wraposx::Ptrace::CONTINUE, pid, addr, sig).first
+    end
+
+    # ptrace(PT_STEP, pid, addr, signal)
+    def pt_step pid, addr = 1, sig = 0
+      ptrace(Ragweed::Wraposx::Ptrace::STEP, pid, addr, sig).first
+    end
+
+    # ptrace(PT_KILL, ... )
+    def pt_kill pid
+      ptrace(Ragweed::Wraposx::Ptrace::KILL, pid, nil, nil).first
+    end
+
+    # ptrace(PT_ATTACH, ... )
+    def pt_attach pid
+      ptrace(Ragweed::Wraposx::Ptrace::ATTACH, pid, nil, nil).first
+    end
+
+    # ptrace(PT_DETACH, ... )
+    def pt_detach pid
+      ptrace(Ragweed::Wraposx::Ptrace::DETACH, pid, nil, nil).first
+    end
+
+    # Originally coded for use in debuggerosx but I've switched to waitpid for 
     # usability and debugging purposes.
     #
     # Returns status of child when child recieves a signal.
@@ -78,10 +130,11 @@ module Ragweed::Wraposx
     #
     # see also wait(2)
     def wait
-      status = ("\x00"*SIZEOFINT).to_ptr
-      r = CALLS["libc!wait:=I"].call(status).first
-      raise SystemCallError.new("wait", DL.last_error) if r== -1
-      return status.to_s(SIZEOFINT).unpack('i_').first
+      stat = FFI::MemoryPointer.new :int, 1
+      FFI.errno = 0
+      pid = Libc.wait stat
+      raise SystemCallError.new "wait", FFI.errno if pid == -1
+      [pid, stat.read_int]
     end
 
     # The wait used in debuggerosx.
@@ -95,13 +148,12 @@ module Ragweed::Wraposx
     # waitpid(pid_t pid, int *stat_loc, int options);
     #
     # see also wait(2)
-    def waitpid(pid, opt=1)
-      pstatus = ("\x00"*SIZEOFINT).to_ptr
-      r = CALLS["libc!waitpid:IPI=I"].call(pid, pstatus, opt).first
-      raise SystemCallError.new("waitpid", DL.last_error) if r== -1
-      
-      # maybe I should return a Hash?
-      return [r, pstatus.to_s(SIZEOFINT).unpack('i_').first]
+    def waitpid pid, opts = 0
+      stat = FFI::MemoryPointer.new :int, 1
+      FFI.errno = 0
+      r = Libc.waitpid(pid, stat, opts)
+      raise SystemCallError.new "waitpid", FFI.errno if r == -1
+      [r, stat.read_int]
     end
 
     # From docs at http://web.mit.edu/darwin/src/modules/xnu/osfmk/man/mach_task_self.html
@@ -112,9 +164,9 @@ module Ragweed::Wraposx
     #
     # There is no man page for this call.
     def mach_task_self
-      CALLS["libc!mach_task_self:=I"].call().first
+      Libc.mach_task_self
     end
-
+    
     # Requires sudo to use as of 10.5 or 10.4.11(ish)
     # Returns the task id for a process.
     #
@@ -125,12 +177,12 @@ module Ragweed::Wraposx
     #
     # There is no man page for this call.
     def task_for_pid(pid, target=nil)
-      target ||= mach_task_self 
-      port = ("\x00"*SIZEOFINT).to_ptr
-      r = CALLS["libc!task_for_pid:IIP=I"].call(target, pid, port).first
+      target ||= mach_task_self
+      port = FFI::MemoryPointer.new :int, 1
+      r = Libc.task_for_pid(target, pid, port)
       raise KernelCallError.new(:task_for_pid, r) if r != 0
-      return port.to_s(SIZEOFINT).unpack('i_').first
-    end
+      port.read_int
+    end  
 
     # Returns an Array of thread IDs for the given task
     #
@@ -139,30 +191,29 @@ module Ragweed::Wraposx
     #                 thread_act_port_array_t            thread_list,
     #                 mach_msg_type_number_t*           thread_count);
     #
-    #There is no man page for this funtion.
+    #There is no man page for this funtion.    
     def task_threads(port)
-      threads = ("\x00"*SIZEOFINT).to_ptr
-      #threads = 0
-      count = ("\x00"*SIZEOFINT).to_ptr
-      r = CALLS["libc!task_threads:IPP=I"].call(port, threads, count).first
-      t = DL::PtrData.new(threads.to_s(SIZEOFINT).unpack('i_').first)
+      threads = FFI::MemoryPointer.new :int, 1
+      count = FFI::MemoryPointer.new :int, 1
+      r = Libc.task_threads(port, threads, count)
       raise KernelCallError.new(:task_threads, r) if r != 0
-      return t.to_a("I", count.to_s(SIZEOFINT).unpack('I_').first)
+      threads.read_array_of_int(count.read_int)
     end
 
     # Decrement the target tasks suspend count
     # kern_return_t   task_resume
     #                 (task_t          task);
     def task_resume(task)
-      r = CALLC["libc!task_resume:I=I"].call(task).first
+      r = Libc.task_resume(task)
       raise KernelCallError.new(r) if r != 0
+      r
     end
 
     # Increment the target tasks suspend count
     # kern_return_t   task_suspend
     #                 (task_t          task);
     def task_suspend(task)
-      r = CALLC["libc!task_suspend:I=I"].call(task).first
+      r = Libc.task_suspend(task)
       raise KernelCallError.new(r) if r != 0
     end
 
@@ -173,28 +224,9 @@ module Ragweed::Wraposx
     #
     # See kill(2)
     def kill(pid, sig)
-      DL.last_error = 0
-      r = CALLS["libc!kill:II=I"].call(pid,sig).first
-      raise SystemCallError.new("kill",DL.last_error) if r != 0            
-    end
-
-    # function to marshal 32bit integers into DL::PtrData objects
-    # necessary due to Ruby/DL not properly dealing with 31 and 32 bit integers
-    def dl_bignum_to_ulong(x)
-      if x.class == Fixnum
-        return DL::PtrData.new(x)
-      else
-        # shut up
-        c = x / 4
-        e = x - (c * 4)
-        v = DL::PtrData.new 0
-        v += c
-        v += c
-        v += c
-        v += c
-        v += e
-        return v
-      end
+      FFI::errno = 0
+      r = Libc.kill(pid, sig)
+      raise SystemCallError.new "kill", FFI::errno if r != 0
     end
 
     # Reads sz bytes from task's address space starting at addr.
@@ -208,10 +240,9 @@ module Ragweed::Wraposx
     #
     # There is no man page for this function.
     def vm_read(task, addr, sz=256)
-      addr = dl_bignum_to_ulong(addr)
-      buf = ("\x00" * sz).to_ptr
-      len = (sz.to_l32).to_ptr
-      r = CALLS["libc!vm_read_overwrite:IPIPP=I"].call(task, addr, sz, buf, len).first
+      buf = FFI::MemoryPointer.new(sz)
+      len = FFI::MemoryPointer(sz.to_l32)
+      r = Libc.vm_read_overwrite(task, addr, sz, buf, len)
       raise KernelCallError.new(:vm_read, r) if r != 0
       return buf.to_str(len.to_str(4).to_l32)
     end
@@ -227,9 +258,8 @@ module Ragweed::Wraposx
     #
     # There is no man page for this function.
     def vm_write(task, addr, val)
-      addr = dl_bignum_to_ulong(addr)
-      val = val.to_ptr
-      r = CALLS["libc!vm_write:IPPI=I"].call(task, addr, val, val.size).first
+      val = FFI::MemoryPointer.new
+      r = Libc.vm_write(task, addr, val, val.size)
       raise KernelCallError.new(:vm_write, r) if r != 0
       return nil
     end
@@ -246,14 +276,12 @@ module Ragweed::Wraposx
     #
     # There is no man page for this function.
     def vm_protect(task, addr, size, setmax, prot)
-      addr = dl_bignum_to_ulong(addr)
       setmax = setmax ? 1 : 0
-      r = CALLS["libc!vm_protect:IPIII=I"].call(task,addr,size,setmax,prot).first
+      r = Libc.vm_protect(task, addr, size, setmax, prot)
       raise KernelCallError.new(:vm_protect, r) if r != 0
       return nil
     end
 
-    
     # Allocates a page in the memory space of the target task.
     #
     # kern_return_t   vm_allocate
@@ -263,13 +291,14 @@ module Ragweed::Wraposx
     #                  boolean_t                             anywhere);
     #
     def vm_allocate(task, address, size, anywhere)
-      addr = int_to_intptr(address)
+      addr = FFI::MemoryPointer.new :int, 1
+      addr.write_int(address)
       anywhere = anywhere ? 1 : 0
-      r = CALLS["libc!vm_allocate:IPII=I"].call(task,addr,size,anywhere).first
+      r = Libc.vm_allocate(task, addr, size, anywhere)
       raise KernelCallError.new(r) if r != 0
-      addr.ptr
+      addr.address
     end
-    
+
     # deallocates a page in the memoryspace of target task.
     #
     # kern_return_t   vm_deallocate
@@ -277,12 +306,13 @@ module Ragweed::Wraposx
     #                      vm_address_t                           address,
     #                      vm_size_t                                 size);
     #
-    def vm_deallocate(task,address,size)
-      addr = int_to_intptr(address)
-      r = CALLS["libc!vm_deallocate:IPI=I"].call(task, addr, size).first
+    def vm_deallocate(task, address, size)
+      addr = FFI::MemoryPointer.new :int, 1
+      addr.write_int(address)
+      r = Libc.vm_deallocate(task, addr, size)
       raise KernelCallError.new(r) if r != 0
     end
-    
+
     # Resumes a suspended thread by id.
     #
     # kern_return_t   thread_resume
@@ -290,7 +320,7 @@ module Ragweed::Wraposx
     #
     # There is no man page for this function.
     def thread_resume(thread)
-      r = CALLS["libc!thread_resume:I=I"].call(thread).first
+      r = Libc.thread_resume(thread)
       raise KernelCallError.new(:thread_resume, r) if r != 0
     end
 
@@ -301,133 +331,26 @@ module Ragweed::Wraposx
     #
     # There is no man page for this function.
     def thread_suspend(thread)
-      r = CALLS["libc!thread_suspend:I=I"].call(thread).first
+      r = Libc.thread_suspend(thread)
       raise KernelCallError.new(:thread_suspend, r) if r != 0
     end
 
-    # Suspends a task by id.
-    #
-    # kern_return_t   task_suspend
-    #                (task_t          task);
-    #
-    # There is no man page for this function.
-    def task_suspend(task)
-      r = CALLS["libc!task_suspend:I=I"].call(task).first
-      raise KernelCallError.new(:task_suspend, r) if r != 0
-    end
-
-    # Resumes a suspended task by id.
-    #
-    # kern_return_t   task_resume
-    #                (task_t         task);
-    #
-    # There is no man page for this function.
-    def task_resume(task)
-      r = CALLS["libc!task_resume:I=I"].call(task).first
-      raise KernelCallError.new(:task_resume, r) if r != 0            
-    end
-
-    # Used to query kernel state.
-    # Returns output buffer on successful call or required buffer size on ENOMEM.
-    #
-    # mib: and array of integers decribing the MIB
-    # newb: the buffer to replace the old information (only used on some commands so it defaults to empty)
-    # oldlenp: output buffer size
-    #
-    # int
-    #     sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp, size_t newlen);
-    #
-    # this function doesn't really match the Ruby Way(tm)
-    #
-    # see sysctl(8)
-    def sysctl(mib,oldlen=0,newb="")
-      DL.last_error = 0
-      mibp = mib.pack("I_"*mib.size).to_ptr
-      oldlenp = [oldlen].pack("I_").to_ptr
-      namelen = mib.size
-      oldp = (oldlen > 0 ? "\x00"*oldlen : NULL)
-      newp = (newb.empty? ? NULL : newb.to_ptr)
-      newlen = newb.size
-      r = CALLS["libc!sysctl:PIPPPI=I"].call(mibp, namelen, oldp, oldlenp, newp, newlen).first
-      return oldlenp.to_str(SIZEOFINT).unpack("I_").first if (r == -1 and DL.last_error == Errno::ENOMEM::Errno)
-      raise SystemCallError.new("sysctl", DL.last_error) if r != 0
-      return oldp.to_str(oldlenp.to_str(SIZEOFINT).unpack("I_").first)
-    end
-
-    # Used to query kernel state.
-    # Returns output buffer on successful call and required buffer size as an Array.
-    #
-    # mib: and array of integers decribing the MIB
-    # newb: the buffer to replace the old information (only used on some commands so it defaults to empty)
-    # oldlenp: output buffer size
-    #
-    # int
-    #     sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp, size_t newlen);
-    #
-    # this function doesn't really match the Ruby Way(tm)
-    #
-    # see sysctl(8)
-    def sysctl_raw(mib,oldlen=0,newb="")
-      DL.last_error = 0
-      mibp = mib.pack('I_'*mib.size).to_ptr
-      oldlenp = [oldlen].pack("I_").to_ptr
-      namelen = mib.size
-      oldp = (oldlen > 0 ? ("\x00"*oldlen).to_ptr : NULL)
-      newp = (newb.empty? ? NULL : newb.to_ptr)
-      newlen = newb.size
-      r = CALLS["libc!sysctl:PIPPPI=I"].call(mibp, namelen, oldp, oldlenp, newp, newlen).first
-      ret = (DL.last_error == Errno::ENOMEM::Errno ? NULL : oldp)
-      raise SystemCallError.new("sysctl", DL.last_error) if (r != 0 and DL.last_error != Errno::ENOMEM::Errno)
-      return [ret,oldlenp.to_str(SIZEOFINT).unpack("I_").first]
-    end
-    
     # Changes execution to file in path with *args as though called from command line.
     #
     # int
     # execv(const char *path, char *const argv[]);
-    def execv(path,*args)
-      DL.last_error = 0
-      argv = ""
-      args.flatten.each { |arg| argv = "#{ argv }#{arg.to_ptr.ref.to_s(SIZEOFINT)}" }
-      argv += ("\x00"*SIZEOFINT)
-      r = CALLS["libc!execv:SP"].call(path,argv.to_ptr).first
-      raise SystemCallError.new("execv", DL.last_error) if r == -1
-      return r
-    end
-    
-    def int_to_intptr(i)
-      case i
-      when Integer
-        return [i].pack("I").to_ptr
-      when DL::PtrData
-        return i
-      else
-        raise ArgumentError, "Not an Integer"
+    def execv(path, *args)
+      FFI.errno = 0
+      args.flatten!
+      argv = FFI::MemoryPointer.new(:pointer, args.size + 1)
+      args.each_with_index do |arg, i|
+        argv[i].put_pointer(0, FFI::MemoryPointer.from_string(arg.to_s))
       end
+      argv[args.size].put_pointer(0, nil)
+
+      r = Libc.execv(path, argv)
+      # if this ever returns, there's been an error
+      raise SystemCallError(:execv, FFI.errno)
     end
   end
 end
-
-# if __FILE__ == $0
-#     include Ragweed
-#     require 'pp'
-#     require 'constants'
-#     addr = data = 0
-#     pid = 1319
-#     int = "\x00" * 4
-#     port = 0
-#     Wraposx::ptrace(Wraposx::Ptrace::ATTACH,pid,0,0)
-#     #  status = Wraposx::waitpid(pid,0)
-#     #  Wraposx::ptrace(Wraposx::Ptrace::CONTINUE,pid,1,0)
-#     mts = Wraposx::mach_task_self
-#     port = Wraposx::task_for_pid(mts,pid)
-#     port2 = Wraposx::task_for_pid(mts,pid)
-#     threads = Wraposx::task_threads(port)
-#     state = Wraposx::thread_get_state(threads.first)
-#     pp port
-#     pp port2
-#     pp threads
-#     pp state
-#     #  Wraposx::thread_set_state(threads.first,state)
-#     Wraposx::ptrace(Wraposx::Ptrace::DETACH,pid,0,0)
-# end
