@@ -32,6 +32,11 @@ require significant changes to Ragweed.
   The most complete set is for Win32.
 
 * Work is ongoing to complete and unify the OSX and Linux portions.
+
+* The FFI move is mostly complete. There may be a few changes to some structures to come, but everything should mostly match the C APIs.
+
+* The move to FFI should give us free support for jRuby. This is, however, untested at this time.
+
 * Struct's Nerve[http://github.com/struct/Nerve] is an example of the API we are heading toward
 
 == SYNOPSIS:
@@ -43,7 +48,7 @@ Please see the examples directory for more. There are hit tracers for each platf
 
 == REQUIREMENTS:
 
-* NONE - no really, this is pure ruby hooking native system libraries. There are no other dependencies, none.
+* FFI - This was required to get around the limitations of Ruby/DL. If you're using Ragweed from jRuby, this should be free.
 
 == INSTALL:
 
