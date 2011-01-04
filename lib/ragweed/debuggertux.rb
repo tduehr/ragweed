@@ -12,7 +12,7 @@ module Ragweed; end
 ##     debugger and define your own on_whatever events. If you handle an event
 ##     that Debuggertux already handles, call "super", too.
 class Ragweed::Debuggertux
-  attr_reader :pid, :status, :exited
+  attr_reader :pid, :status, :exited, :signal
   attr_accessor :breakpoints, :mapped_regions
 
   ## Class to handle installing/uninstalling breakpoints
@@ -324,25 +324,26 @@ class Ragweed::Debuggertux
       case ## FIXME - I need better logic (use Signal module)
       when wstatus == 0 ##WIFEXITED
         @exited = true
-        self.on_exit
+        try(:on_exit)
       when wstatus != 0x7f ##WIFSIGNALED
         @exited = false
-        self.on_signal
+        try(:on_signal)
       when signal == Ragweed::Wraptux::Signal::SIGINT
+        try(:on_sigint)
         self.continue
       when signal == Ragweed::Wraptux::Signal::SIGSEGV
-        self.on_segv
+        try(:on_segv)
       when signal == Ragweed::Wraptux::Signal::SIGILL
-        self.on_illegal_instruction
+        try(:on_illegal_instruction)
       when signal == Ragweed::Wraptux::Signal::SIGTRAP
-        self.on_sigtrap
+        try(:on_sigtrap)
         r = self.get_registers
         eip = r.eip
         eip -= 1
         case
           when @breakpoints.has_key?(eip)
             found = true
-            self.on_breakpoint
+            try(:on_breakpoint)
             self.continue
           when event_code == Ragweed::Wraptux::Ptrace::EventCodes::FORK
                 p = FFI::MemoryPointer.new(:int, 1)
@@ -356,7 +357,7 @@ class Ragweed::Debuggertux
                     end
 
                     @pid = p[:pid]
-                    self.on_fork_child(@pid)
+                    try(:on_fork_child, @pid)
                 end
             when event_code == Ragweed::Wraptux::Ptrace::EventCodes::EXEC
             when event_code == Ragweed::Wraptux::Ptrace::EventCodes::CLONE
@@ -367,13 +368,14 @@ class Ragweed::Debuggertux
             self.continue
         end
       when signal == Ragweed::Wraptux::Signal::SIGCHLD
-        self.on_sigchild
+        try(:on_sigchild)
       when signal == Ragweed::Wraptux::Signal::SIGTERM
-        self.on_sigterm
+        try(:on_sigterm)
       when signal == Ragweed::Wraptux::Signal::SIGCONT
+        try(:on_continue)
         self.continue
       when signal == Ragweed::Wraptux::Signal::SIGSTOP
-        self.on_sigstop
+        try(:on_sigstop)
         Ragweed::Wraptux::kill(@pid, Ragweed::Wraptux::Signal::SIGCONT)
         self.continue
 	  when signal == Ragweed::Wraptux::Signal::SIGWINCH
@@ -437,7 +439,21 @@ class Ragweed::Debuggertux
     else
         @breakpoints[eip].install
     end
-end
+  end
+
+  def on_attach; end
+  def on_single_step; end
+  def on_continue; end
+  def on_exit; end
+  def on_signal; end
+  def on_sigint; end
+  def on_segv; end
+  def on_illegal_instruction; end
+  def on_sigtrap; end
+  def on_fork_child(pid); end
+  def on_sigchild; end
+  def on_sigterm; end
+  def on_sigstop; end
 
   def print_registers
     regs = get_registers
@@ -449,45 +465,6 @@ end
     puts "ebx %08x" % regs.ebx
     puts "ecx %08x" % regs.ecx
     puts "edx %08x" % regs.edx
-  end
-
-  def on_exit
-  end
-
-  def on_illegal_instruction
-  end
-
-  def on_attach
-  end
-
-  def on_detach
-  end
-
-  def on_sigchild
-  end
-
-  def on_sigterm
-  end
-
-  def on_sigtrap
-  end
-
-  def on_continue
-  end
-
-  def on_sigstop
-  end
-
-  def on_signal
-  end
-
-  def on_single_step
-  end
-
-  def on_fork_child(pid)
-  end
-
-  def on_segv
   end
 
   def default_opts(opts)

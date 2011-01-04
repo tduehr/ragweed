@@ -12,6 +12,11 @@ require ::File.join(::File.dirname(__FILE__),'wrap32')
 class Ragweed::Debugger32
   include Ragweed
 
+  ## This will preserve the last event seen, but as read only
+  ## useful if you want to pass around the ragweed object after
+  ## an event has occured (post-mortem crash analysis)
+  attr_reader :event
+
   ## Breakpoint class. Handles the actual setting,
   ## removal and triggers for breakpoints.
   ## no user servicable parts.
@@ -306,7 +311,7 @@ class Ragweed::Debugger32
   def wait
     self.attach() if not @attached
 
-    ev = Ragweed::Wrap32::wait_for_debug_event
+    event = ev = Ragweed::Wrap32::wait_for_debug_event
     return if not ev
     case ev.code
     when Ragweed::Wrap32::DebugCodes::CREATE_PROCESS
