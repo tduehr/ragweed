@@ -347,7 +347,7 @@ EOM
            :ds64, Ragweed::Wraposx::ThreadContext::Debug64
   end
 
-  class Debug < FFI:Struct
+  class Debug < FFI::Struct
     include Ragweed::FFIStructInclude
     FLAVOR = 12
     layout :dsh, Ragweed::Wraposx::ThreadContext::X86StateHdr,
@@ -551,7 +551,7 @@ EOM
   #         char                    fpu_rsrv4[6*16];        /* reserved */
   #         int                     fpu_reserved1;
   # };
-  class Float64
+  class Float64 < FFI::Struct
     include Ragweed::FFIStructInclude
     FLAVOR = 5
     layout :fpu_reserved, [:int, 2],

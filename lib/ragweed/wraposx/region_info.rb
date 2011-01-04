@@ -32,7 +32,7 @@ module Ragweed::Wraposx::Vm
 
   # Memory region info base class.
   #
-  class RegionInfo < FFI:Struct
+  class RegionInfo < FFI::Struct
     include Ragweed::FFIStructInclude
     attr_accessor :region_size
     attr_accessor :base_address
@@ -40,13 +40,13 @@ module Ragweed::Wraposx::Vm
 
   class RegionBasicInfo < RegionInfo
 
-    layout :protection, :vm_prot_t,
-           :max_protection, :vm_prot_t,
-           :inheritance, :vm_inherit_t,
-           :shared, :boolean_t,
-           :reserved, :boolean_t,
+    layout :protection, Ragweed::Wraposx::Libc.find_type(:vm_prot_t),
+           :max_protection, Ragweed::Wraposx::Libc.find_type(:vm_prot_t),
+           :inheritance, Ragweed::Wraposx::Libc.find_type(:vm_inherit_t),
+           :shared, Ragweed::Wraposx::Libc.find_type(:boolean_t),
+           :reserved, Ragweed::Wraposx::Libc.find_type(:boolean_t),
            :offset, :uint32,
-           :behavior, :vm_behavior_t,
+           :behavior, Ragweed::Wraposx::Libc.find_type(:vm_behavior_t),
            :user_wired_count, :ushort
 
 
@@ -74,13 +74,13 @@ EOM
 
   class RegionBasicInfo64 < RegionInfo
 
-    layout :protection, :vm_prot_t,
-           :max_protection, :vm_prot_t,
-           :inheritance, :vm_inherit_t,
-           :shared, :boolean_t,
-           :reserved, :boolean_t,
-           :offset, :memory_object_offset_t,
-           :behavior, :vm_behavior_t,
+    layout :protection, Ragweed::Wraposx::Libc.find_type(:vm_prot_t),
+           :max_protection, Ragweed::Wraposx::Libc.find_type(:vm_prot_t),
+           :inheritance, Ragweed::Wraposx::Libc.find_type(:vm_inherit_t),
+           :shared, Ragweed::Wraposx::Libc.find_type(:boolean_t),
+           :reserved, Ragweed::Wraposx::Libc.find_type(:boolean_t),
+           :offset, Ragweed::Wraposx::Libc.find_type(:memory_object_offset_t),
+           :behavior, Ragweed::Wraposx::Libc.find_type(:vm_behavior_t),
            :user_wired_count, :ushort
 
     def dump(&block)
@@ -118,7 +118,7 @@ EOM
   #         unsigned char           share_mode;
   # };
   class RegionExtendedInfo < RegionInfo
-    layout :protection, :vm_prot_t,
+    layout :protection, Ragweed::Wraposx::Libc.find_type(:vm_prot_t),
            :user_tag, :uint,
            :pages_resident, :uint,
            :pages_shared_now_private, :uint,
@@ -192,7 +192,7 @@ EOM
   #define VM_REGION_TOP_INFO_COUNT ((mach_msg_type_number_t) (sizeof(vm_region_top_info_data_t)/sizeof(int)))
   FLAVORS = { REGION_BASIC_INFO => {:size => 30, :count => 8, :class => RegionBasicInfo},
       REGION_BASIC_INFO_64 => {:size => 30, :count => 9, :class => RegionBasicInfo64},
-      REGION_EXTENDED_INFO => {:size => 32, :count => 8, :class => RegionExtentedInfo},
+      REGION_EXTENDED_INFO => {:size => 32, :count => 8, :class => RegionExtendedInfo},
       REGION_TOP_INFO => {:size => 17,:count => 5, :class => RegionTopInfo}
   }
 end
@@ -259,10 +259,10 @@ module Ragweed::Wraposx
       # OSX does this as well, so we need to do it ourselves
       flavor = Vm::REGION_BASIC_INFO_64 if flavor == Vm::REGION_BASIC_INFO
       info = FFI::MemoryPointer.new(:uint8, Vm::FLAVORS[flavor][:size])
-      count = FFI::MemoryPointer.new(:mach_msg_type_number_t, 1).write_uint(Vm::FLAVORS[flavor][:count])
-      address = FFI::MemoryPointer.new(:vm_address_t, 1).write_ulong(addr)
-      sz = FFI::MemoryPointer.new(:vm_size_t, 1)
-      objn = FFI::MemoryPointer.new(:mach_port_t, 1)
+      count = FFI::MemoryPointer.new(Libc.find_type(:mach_msg_type_number_t), 1).write_uint(Vm::FLAVORS[flavor][:count])
+      address = FFI::MemoryPointer.new(Libc.find_type(:vm_address_t), 1).write_ulong(addr)
+      sz = FFI::MemoryPointer.new(Libc.find_type(:vm_size_t), 1)
+      objn = FFI::MemoryPointer.new(Libc.find_type(:mach_port_t), 1)
       
       r = Libc.vm_region_64(task, address, sz, flavor, info, count, objn)
       raise KernelCallError.new(:vm_region_64, r) if r != 0

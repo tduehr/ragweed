@@ -15,11 +15,14 @@ module Ragweed::Wraposx
     typedef :natural_t, :mach_port_name_t
     typedef :mach_port_name_t, :mach_port_t
     typedef :mach_port_t, :vm_map_t
+    typedef :mach_port_t, :task_t
+    typedef :mach_port_t, :thread_act_t
     typedef :int, :vm_region_flavor_t
     typedef :int, :vm_prot_t
     typedef :int, :vm_behavior_t
     typedef :int, :policy_t
     typedef :int, :boolean_t
+    typedef :int, :thread_state_flavor_t
     case FFI::Platform::LONG_SIZE
     when 64
       # ifdef __LP64__

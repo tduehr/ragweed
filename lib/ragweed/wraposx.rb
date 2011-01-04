@@ -54,6 +54,7 @@ module Ragweed::Wraposx
   end
 end  # module Ragweed::Wraposx
 
+require 'ragweed/wraposx/wraposx'
 Ragweed::Wraposx.require_all_libs_relative_to(__FILE__)
 
 # EOF
