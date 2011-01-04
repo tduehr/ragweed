@@ -288,13 +288,17 @@ class Ragweed::Debugger32
   def on_output_debug_string(ev)  end
   def on_rip(ev)                  end
   def on_unload_dll(ev)           end
+  def on_guard_page(ev)           end
   def on_alignment(ev)            end
   def on_bounds(ev)               end
   def on_divide_by_zero(ev)       end
   def on_int_overflow(ev)         end
   def on_invalid_handle(ev)       end
+  def on_illegal_instruction(ev)  end
   def on_priv_instruction(ev)     end
   def on_stack_overflow(ev)       end
+  def on_heap_corruption(ev)      end
+  def on_buffer_overrun(ev)       end
   def on_invalid_disposition(ev)  end
 
   ## Read through me to see all the random events
@@ -325,6 +329,8 @@ class Ragweed::Debugger32
       case ev.exception_code
       when Ragweed::Wrap32::ExceptionCodes::ACCESS_VIOLATION
         try(:on_access_violation, ev)
+      when Ragweed::Wrap32::ExceptionCodes::GUARD_PAGE
+        try(:on_guard_page, ev)
       when Ragweed::Wrap32::ExceptionCodes::BREAKPOINT 
         try(:on_breakpoint, ev)
       when Ragweed::Wrap32::ExceptionCodes::ALIGNMENT  
@@ -339,10 +345,16 @@ class Ragweed::Debugger32
         try(:on_int_overflow, ev)
       when Ragweed::Wrap32::ExceptionCodes::INVALID_HANDLE 
         try(:on_invalid_handle, ev)
-      when Ragweed::Wrap32::ExceptionCodes::PRIV_INSTRUCTION 
+      when Ragweed::Wrap32::ExceptionCodes::ILLEGAL_INSTRUCTION
+        try(:on_illegal_instruction, ev)
+      when Ragweed::Wrap32::ExceptionCodes::PRIV_INSTRUCTION
         try(:on_priv_instruction, ev)
       when Ragweed::Wrap32::ExceptionCodes::STACK_OVERFLOW 
         try(:on_stack_overflow, ev)
+      when Ragweed::Wrap32::ExceptionCodes::HEAP_CORRUPTION
+        try(:on_heap_corruption, ev)
+      when Ragweed::Wrap32::ExceptionCodes::BUFFER_OVERRUN
+        try(:on_buffer_overrun, ev)
       when Ragweed::Wrap32::ExceptionCodes::INVALID_DISPOSITION 
         try(:on_invalid_disposition, ev)
       end

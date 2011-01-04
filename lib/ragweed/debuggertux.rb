@@ -154,6 +154,29 @@ class Ragweed::Debuggertux
     nil
   end
 
+  ## Return a range via mapping name
+  def get_mapping_by_name(name)
+    File.read("/proc/#{pid}/maps").each_line do |l|
+        n = l.split(' ').last
+        if n == name
+            base = l.split('-').first
+            max = l[0,17].split('-',2)[1]
+            return [base, max]
+        end
+    end
+    nil
+  end
+
+  ## Helper method for retrieving stack range
+  def get_stack_range
+    return get_mapping_by_name("[stack]")
+  end
+
+  ## Helper method for retrieving heap range
+  def get_heap_range
+    return get_mapping_by_name("[heap]")
+  end
+
   ## Parse procfs and create a hash containing
   ## a listing of each mapped shared object
   def self.shared_libraries(p)
@@ -310,7 +333,7 @@ class Ragweed::Debuggertux
       when signal == Ragweed::Wraptux::Signal::SIGSEGV
         self.on_segv
       when signal == Ragweed::Wraptux::Signal::SIGILL
-        self.on_illegalinst
+        self.on_illegal_instruction
       when signal == Ragweed::Wraptux::Signal::SIGTRAP
         self.on_sigtrap
         r = self.get_registers
@@ -431,7 +454,7 @@ end
   def on_exit
   end
 
-  def on_illegalinst
+  def on_illegal_instruction
   end
 
   def on_attach
