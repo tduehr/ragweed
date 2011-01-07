@@ -169,12 +169,14 @@ class Ragweed::Debuggertux
 
   ## Helper method for retrieving stack range
   def get_stack_range
-    return get_mapping_by_name("[stack]")
+    l = get_mapping_by_name("[stack]")
+    return [0,0] if l == nil; else return l
   end
 
   ## Helper method for retrieving heap range
   def get_heap_range
-    return get_mapping_by_name("[heap]")
+    l = get_mapping_by_name("[heap]")
+    return [0,0] if l == nil; else return l
   end
 
   ## Parse procfs and create a hash containing
@@ -335,6 +337,9 @@ class Ragweed::Debuggertux
         try(:on_segv)
       when signal == Ragweed::Wraptux::Signal::SIGILL
         try(:on_illegal_instruction)
+      when signal == Ragweed::Wraptux::Signal::SIGIOT
+        try(:on_iot_trap)
+        self.continue
       when signal == Ragweed::Wraptux::Signal::SIGTRAP
         try(:on_sigtrap)
         r = self.get_registers
@@ -441,19 +446,20 @@ class Ragweed::Debuggertux
     end
   end
 
-  def on_attach; end
-  def on_single_step; end
-  def on_continue; end
-  def on_exit; end
-  def on_signal; end
-  def on_sigint; end
-  def on_segv; end
-  def on_illegal_instruction; end
-  def on_sigtrap; end
-  def on_fork_child(pid); end
-  def on_sigchild; end
-  def on_sigterm; end
-  def on_sigstop; end
+  def on_attach()              end
+  def on_single_step()         end
+  def on_continue()            end
+  def on_exit()                end
+  def on_signal()              end
+  def on_sigint()              end
+  def on_segv()                end
+  def on_illegal_instruction() end
+  def on_sigtrap()             end
+  def on_fork_child(pid)       end
+  def on_sigchild()            end
+  def on_sigterm()             end
+  def on_sigstop()             end
+  def on_iot_trap()            end
 
   def print_registers
     regs = get_registers
