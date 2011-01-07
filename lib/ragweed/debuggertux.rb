@@ -169,14 +169,12 @@ class Ragweed::Debuggertux
 
   ## Helper method for retrieving stack range
   def get_stack_range
-    l = get_mapping_by_name("[stack]")
-    return [0,0] if l == nil; else return l
+    return get_mapping_by_name("[stack]")
   end
 
   ## Helper method for retrieving heap range
   def get_heap_range
-    l = get_mapping_by_name("[heap]")
-    return [0,0] if l == nil; else return l
+    return get_mapping_by_name("[heap]")
   end
 
   ## Parse procfs and create a hash containing
