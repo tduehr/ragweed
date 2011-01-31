@@ -23,13 +23,20 @@ Ragweed is supported and has been tested on the following platforms (32bit intel
 At this time only Ruby 1.8.x has been tested. We are actively investigating both 64 bit
 support for each platform and support for Ruby 1.9.x. Unfortunately, both of these things
 require significant changes to Ragweed.
-    
+
+* We are currently moving to FFI from ruby/dl. This will likely result in some incompatibilities if you are using the low level functions calls directly. It will also add ffi as a dependency. This move is to facilitate 1.9 and 64bit support.
+
 == FEATURES/PROBLEMS:
 
 * This suite is currently fairly piecemeal. Each OS has it's own set of tools.
   The most complete set is for Win32.
 
 * Work is ongoing to complete and unify the OSX and Linux portions.
+
+* The FFI move is mostly complete. There may be a few changes to some structures to come, but everything should mostly match the C APIs.
+
+* The move to FFI should give us free support for jRuby. This is, however, untested at this time.
+
 * Struct's Nerve[http://github.com/struct/Nerve] is an example of the API we are heading toward
 
 == SYNOPSIS:
@@ -41,7 +48,7 @@ Please see the examples directory for more. There are hit tracers for each platf
 
 == REQUIREMENTS:
 
-* NONE - no really, this is pure ruby hooking native system libraries. There are no other dependencies, none.
+* FFI - This was required to get around the limitations of Ruby/DL. If you're using Ragweed from jRuby, this should be free.
 
 == INSTALL:
 
