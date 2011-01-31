@@ -48,7 +48,7 @@ module Ragweed::Wraptux
       p = FFI::MemoryPointer.new(:int, 1)
       FFI.errno = 0
       r = Libc.waitpid(pid,p,opts)
-      raise SystemCallErro.new "waitpid", FFI.errno if r == -1
+      raise SystemCallError.new "waitpid", FFI.errno if r == -1
       status = p.get_int32(0)
       [r, status]
     end

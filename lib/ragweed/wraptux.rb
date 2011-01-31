@@ -49,7 +49,6 @@ module Ragweed::Wraptux
         ::File.join(::File.dirname(fname), dir, '**', '*.rb'))
     Dir.glob(search_me).sort.each {|rb| require rb }
     # require File.dirname(File.basename(__FILE__)) + "/#{x}"
-
   end
 end  # module Ragweed::Wraptux
 
