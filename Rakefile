@@ -40,7 +40,8 @@ begin
     gem.homepage = "http://github.com/tduehr/ragweed"
     gem.authors = ["tduehr", "struct", "tqbf"]
     gem.rdoc_options = ["--inline-source", "--line-numbers", "--main", "README.rdoc"]
-    gem.add_dependency "ffi", ">= 0"
+    gem.platform = "java"  if Gem::Platform.local.os == "java"
+    gem.add_dependency "ffi", "~> 1.0" if Gem::Platform.local.os != "java"
     # gem.exclude = [%w(old)]
     # gem.add_development_dependency "thoughtbot-shoulda", ">= 0"
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
