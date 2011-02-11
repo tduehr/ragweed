@@ -316,7 +316,7 @@ class Ragweed::Debuggertux
   def wait(opts = 0)
     r, status = Ragweed::Wraptux::waitpid(@pid, opts)
     wstatus = wtermsig(status)
-    signal = wexitstatus(status)
+    @signal = wexitstatus(status)
     event_code = (status >> 16)
     found = false
 
@@ -328,17 +328,17 @@ class Ragweed::Debuggertux
       when wstatus != 0x7f ##WIFSIGNALED
         @exited = false
         try(:on_signal)
-      when signal == Ragweed::Wraptux::Signal::SIGINT
+      when @signal == Ragweed::Wraptux::Signal::SIGINT
         try(:on_sigint)
         self.continue
-      when signal == Ragweed::Wraptux::Signal::SIGSEGV
+      when @signal == Ragweed::Wraptux::Signal::SIGSEGV
         try(:on_segv)
-      when signal == Ragweed::Wraptux::Signal::SIGILL
+      when @signal == Ragweed::Wraptux::Signal::SIGILL
         try(:on_illegal_instruction)
-      when signal == Ragweed::Wraptux::Signal::SIGIOT
+      when @signal == Ragweed::Wraptux::Signal::SIGIOT
         try(:on_iot_trap)
         self.continue
-      when signal == Ragweed::Wraptux::Signal::SIGTRAP
+      when @signal == Ragweed::Wraptux::Signal::SIGTRAP
         try(:on_sigtrap)
         r = self.get_registers
         eip = r.eip
@@ -370,21 +370,21 @@ class Ragweed::Debuggertux
           else
             self.continue
         end
-      when signal == Ragweed::Wraptux::Signal::SIGCHLD
+      when @signal == Ragweed::Wraptux::Signal::SIGCHLD
         try(:on_sigchild)
-      when signal == Ragweed::Wraptux::Signal::SIGTERM
+      when @signal == Ragweed::Wraptux::Signal::SIGTERM
         try(:on_sigterm)
-      when signal == Ragweed::Wraptux::Signal::SIGCONT
+      when @signal == Ragweed::Wraptux::Signal::SIGCONT
         try(:on_continue)
         self.continue
-      when signal == Ragweed::Wraptux::Signal::SIGSTOP
+      when @signal == Ragweed::Wraptux::Signal::SIGSTOP
         try(:on_sigstop)
         Ragweed::Wraptux::kill(@pid, Ragweed::Wraptux::Signal::SIGCONT)
         self.continue
-	  when signal == Ragweed::Wraptux::Signal::SIGWINCH
-		self.continue
+      when @signal == Ragweed::Wraptux::Signal::SIGWINCH
+        self.continue
       else
-        raise "Add more signal handlers (##{signal})"
+        raise "Add more signal handlers (##{@signal})"
       end
     end
   end
