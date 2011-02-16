@@ -255,6 +255,80 @@ EOM
     FLAVOR = 7
     layout :tsh, Ragweed::Wraposx::ThreadContext::X86StateHdr,
            :uts, Ragweed::Wraposx::ThreadContext::UnionThreadState
+
+    # We have rubified this FFI structure by creating a bunch of proxy
+    # methods that are normally only accessible via self.v.x.y which is
+    # a lot to type. You can still use that method however these instance
+    # variables should allow for considerably clearer code
+    if RUBY_VERSION < "1.9"
+      def methods regular=true
+        ret = super + self.members.map{|x| [x.to_s, x.to_s + "="]}
+        ret += self[:tsh].members.map{|x| [x.to_s, x.to_s + "="]}
+        ret + case self[:tsh][:flavor]
+        when Ragweed::Wraposx::ThreadContext::X86_THREAD_STATE32
+          self[:uts].ts32.members.map{|x| [x.to_s, x.to_s + "="]}
+        when Ragweed::Wraposx::ThreadContext::X86_THREAD_STATE64
+          self[:uts].ts64.members.map{|x| [x.to_s, x.to_s + "="]}
+        else
+          []
+        end
+        ret.flatten
+      end
+    else
+      def methods regular=true
+        ret = super + self.members.map{|x| [x, (x.to_s + "=").intern]}
+        ret += self[:tsh].members.map{|x| [x, (x.to_s + "=").intern]}
+        ret + case self[:tsh][:flavor]
+        when Ragweed::Wraposx::ThreadContext::X86_THREAD_STATE32
+          self[:uts].ts32.members.map{|x| [x, (x.to_s + "=").intern]}
+        when Ragweed::Wraposx::ThreadContext::X86_THREAD_STATE64
+          self[:uts].ts64.members.map{|x| [x, (x.to_s + "=").intern]}
+        else
+          []
+        end
+        ret.flatten
+      end
+    end
+
+    def method_missing meth, *args
+      super unless self.respond_to? meth
+      if meth.to_s =~ /=$/
+        mth = meth.to_s.gsub(/=$/,'').intern
+        if self.members.include? mth
+          # don't proxy
+          self.__send__(:[]=, mth, *args)
+        elsif self[:tsh].members.include? meth
+          self[:tsh].__send__(:[]=, mth, *args)
+        else
+          case self[:tsh][:flavor]
+          when Ragweed::Wraposx::ThreadContext::X86_THREAD_STATE32
+            self[:uts].ts32.__send__(:[]=, mth, *args)
+          when Ragweed::Wraposx::ThreadContext::X86_THREAD_STATE64
+            self[:uts].ts64.__send__(:[]=, mth, *args)
+          end
+        end
+      else
+        if self.members.include? meth
+          # don't proxy
+          self.__send__(:[], meth, *args)
+        elsif self[:tsh].members.include? meth
+          self[:tsh].__send__(:[], meth, *args)
+        else
+          case self[:tsh][:flavor]
+          when Ragweed::Wraposx::ThreadContext::X86_THREAD_STATE32
+            self[:uts].ts32.__send__(:[], meth, *args)
+          when Ragweed::Wraposx::ThreadContext::X86_THREAD_STATE64
+            self[:uts].ts64.__send__(:[], meth, *args)
+          end
+        end
+      end
+    end
+
+    def respond_to? meth, include_priv=false
+      mth = meth.to_s.gsub(/=$/,'') # may not be needed anymore
+      self.methods.include? mth || super
+    end
+
   end
 
   # _STRUCT_X86_DEBUG_STATE32
