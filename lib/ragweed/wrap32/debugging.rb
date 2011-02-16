@@ -136,83 +136,142 @@ class Ragweed::Wrap32::DebugEventU < FFI::Union
 end
 
 class Ragweed::Wrap32::DebugEvent < FFI::Struct
-    include Ragweed::FFIStructInclude
+  include Ragweed::FFIStructInclude
 
-    layout :code, :ulong,
-    :pid, :ulong,
-    :tid, :ulong,
-    :u, Ragweed::Wrap32::DebugEventU
+  layout :DebugEventCode, :ulong,
+  :ProcessId, :ulong,
+  :ThreadId, :ulong,
+  :u, Ragweed::Wrap32::DebugEventU
 
-    ## We have rubified this FFI structure by creating a bunch of instance
-    ## variables that are normally only accessible via self.u.x.y which is
-    ## a lot to type. You can still use that method however these instance
-    ## variables should allow for considerably clearer code
-    attr_accessor :base_of_dll, :base_of_image, :debug_info_file_offset, :debug_info_size, :exception_address, :exception_code,
-                  :exception_flags, :exception_record, :exit_code, :file_handle, :image_name, :number_of_parameters, :parameters,
-                  :process_handle, :rip_error, :rip_type, :start_address, :thread_local_base, :thread_handle, :thread_local_base,
-                  :unicode
-
-  def initialize(buf)
-    super buf
-
-    case self.code
-    when Ragweed::Wrap32::DebugCodes::CREATE_PROCESS 
-      @file_handle = self.u.create_process_debug_info.file_handle
-      @process_handle = self.u.create_process_debug_info.process_handle
-      @thread_handle = self.u.create_process_debug_info.thread_handle
-      @base_of_image = self.u.create_process_debug_info.base_of_image
-      @debug_info_file_offset = self.u.create_process_debug_info.debug_info_file_offset
-      @debug_info_size = self.u.create_process_debug_info.debug_info_size
-      @thread_local_base = self.u.create_process_debug_info.thread_local_base
-      @start_address = self.u.create_process_debug_info.start_address
-      @image_name = self.u.create_process_debug_info.image_name
-      @unicode = self.u.create_process_debug_info.unicode
-
-    when Ragweed::Wrap32::DebugCodes::CREATE_THREAD 
-      @thread_handle = self.u.create_thread_debug_info.thread_handle
-      @thread_local_base = self.u.create_thread_debug_info.thread_local_base
-      @start_address = self.u.create_thread_debug_info.start_address
-
-    when Ragweed::Wrap32::DebugCodes::EXCEPTION
-      @exception_code = self.u.exception_debug_info.exception_record.exception_code
-      @exception_flags = self.u.exception_debug_info.exception_record.exception_flags
-      @exception_record = self.u.exception_debug_info.exception_record.exception_record
-      @exception_address = self.u.exception_debug_info.exception_record.exception_address
-      @number_of_parameters = self.u.exception_debug_info.exception_record.number_of_parameters
-
-      @parameters = []
-
-      self.number_of_parameters.times do |i|
-            @parameters << self.u.exception_debug_info.exception_record.exception_information[i]
+  # backwards compatability
+  def code; self[:DebugEventCode]; end
+  def code=(cd); self[:DebugEventCode] = cd; end
+  def pid; self[:ProcessId]; end
+  def pid=(pd); self[:ProcessId]= pd; end
+  def tid; self[:ThreadId]; end
+  def tid=(td); self[:ThreadId] = td; end
+  
+  # We have rubified this FFI structure by creating a bunch of proxy
+  # methods that are normally only accessible via self.u.x.y which is
+  # a lot to type. You can still use that method however these instance
+  # variables should allow for considerably clearer code
+  if RUBY_VERSION < "1.9"
+    def methods regular=true
+      ret = super + self.members.map{|x| [x.to_s, x.to_s + "="]}
+      ret + case self[:DebugEventCode]
+      when Ragweed::Wrap32::DebugCodes::CREATE_PROCESS
+        self[:u].create_process_debug_info.members.map{|x| [x.to_s, x.to_s + "="]}
+      when Ragweed::Wrap32::DebugCodes::CREATE_THREAD
+        self[:u].create_thread_debug_info.members.map{|x| [x.to_s, x.to_s + "="]}
+      when Ragweed::Wrap32::DebugCodes::EXIT_PROCESS
+        self[:u].exit_process_debug_info.members.map{|x| [x.to_s, x.to_s + "="]}
+      when Ragweed::Wrap32::DebugCodes::EXIT_THREAD
+        self[:u].exit_thread_debug_info.members.map{|x| [x.to_s, x.to_s + "="]}
+      when Ragweed::Wrap32::DebugCodes::LOAD_DLL
+        self[:u].load_dll_debug_info.members.map{|x| [x.to_s, x.to_s + "="]}
+      when Ragweed::Wrap32::DebugCodes::OUTPUT_DEBUG_STRING
+        self[:u].output_debug_string_info.members.map{|x| [x.to_s, x.to_s + "="]}
+      when Ragweed::Wrap32::DebugCodes::RIP
+        self[:u].rip_info.members.map{|x| [x.to_s, x.to_s + "="]}
+      when Ragweed::Wrap32::DebugCodes::UNLOAD_DLL
+        self[:u].unload_dll_debug_info.members.map{|x| [x.to_s, x.to_s + "="]}
+      when Ragweed::Wrap32::DebugCodes::EXCEPTION
+        self[:u].exception_debug_info.members.map{|x| [x.to_s, x.to_s + "="]}
+      else
+        []
       end
-
-    when Ragweed::Wrap32::DebugCodes::EXIT_PROCESS 
-        @exit_code = self.u.exit_process_debug_info.exit_code
-
-    when Ragweed::Wrap32::DebugCodes::EXIT_THREAD 
-        @exit_code = self.u.exit_thread_debug_info.exit_code
-
-    when Ragweed::Wrap32::DebugCodes::LOAD_DLL
-        @file_handle = self.u.load_dll_debug_info.file_handle
-        @base_of_dll = self.u.load_dll_debug_info.base_of_dll
-        @debug_info_file_offset = self.u.load_dll_debug_info.debug_info_file_offset
-        @debug_info_size = self.u.load_dll_debug_info.debug_info_size
-        @image_name = self.u.load_dll_debug_info.image_name
-        @unicode = self.u.load_dll_debug_info.unicode
-
-    when Ragweed::Wrap32::DebugCodes::OUTPUT_DEBUG_STRING 
-        ## 
-
-    when Ragweed::Wrap32::DebugCodes::RIP 
-        @rip_error = self.u.rip_info.rip_error
-        @rip_type = self.u.rip_info.rip_type
-
-    when Ragweed::Wrap32::DebugCodes::UNLOAD_DLL 
-        @base_of_dll = self.u.unload_dll_debug_info.base_of_dll
-
-    else
-      raise WinX.new(:wait_for_debug_event)
+      ret.flatten
     end
+  else
+    def methods regular=true
+      ret = super + self.members.map{|x| [x, (x.to_s + "=").intern]}
+      ret + case self[:DebugEventCode]
+      when Ragweed::Wrap32::DebugCodes::CREATE_PROCESS
+        self[:u].create_process_debug_info.members.map{[x, (x.to_s + "=").intern]}
+      when Ragweed::Wrap32::DebugCodes::CREATE_THREAD
+        self[:u].create_thread_debug_info.members.map{[x, (x.to_s + "=").intern]}
+      when Ragweed::Wrap32::DebugCodes::EXIT_PROCESS
+        self[:u].exit_process_debug_info.members.map{[x, (x.to_s + "=").intern]}
+      when Ragweed::Wrap32::DebugCodes::EXIT_THREAD
+        self[:u].exit_thread_debug_info.members.map{[x, (x.to_s + "=").intern]}
+      when Ragweed::Wrap32::DebugCodes::LOAD_DLL
+        self[:u].load_dll_debug_info.members.map{[x, (x.to_s + "=").intern]}
+      when Ragweed::Wrap32::DebugCodes::OUTPUT_DEBUG_STRING
+        self[:u].output_debug_string_info.members.map{[x, (x.to_s + "=").intern]}
+      when Ragweed::Wrap32::DebugCodes::RIP
+        self[:u].rip_info.members.map{[x, (x.to_s + "=").intern]}
+      when Ragweed::Wrap32::DebugCodes::UNLOAD_DLL
+        self[:u].unload_dll_debug_info.members.map{[x, (x.to_s + "=").intern]}
+      when Ragweed::Wrap32::DebugCodes::EXCEPTION
+        self[:u].exception_debug_info.members.map{[x, (x.to_s + "=").intern]}
+      else
+        []
+      end
+      ret.flatten
+    end
+  end
+
+  def method_missing meth, *args
+    super unless self.respond_to? meth
+    if meth.to_s =~ /=$/
+      mth = meth.to_s.gsub(/=$/,'').intern
+      if self.members.include? mth
+        # don't proxy
+        self.__send__(:[]=, mth, *args)
+      else
+        case self[:DebugEventCode]
+        when Ragweed::Wrap32::DebugCodes::CREATE_PROCESS
+          self[:u].create_process_debug_info.__send__(:[]=, mth, *args)
+        when Ragweed::Wrap32::DebugCodes::CREATE_THREAD
+          self[:u].create_thread_debug_info.__send__(:[]=, mth, *args)
+        when Ragweed::Wrap32::DebugCodes::EXIT_PROCESS
+          self[:u].exit_process_debug_info.__send__(:[]=, mth, *args)
+        when Ragweed::Wrap32::DebugCodes::EXIT_THREAD
+          self[:u].exit_thread_debug_info.__send__(:[]=, mth, *args)
+        when Ragweed::Wrap32::DebugCodes::LOAD_DLL
+          self[:u].load_dll_debug_info.__send__(:[]=, mth, *args)
+        when Ragweed::Wrap32::DebugCodes::OUTPUT_DEBUG_STRING
+          self[:u].output_debug_string_info.__send__(:[]=, mth, *args)
+        when Ragweed::Wrap32::DebugCodes::RIP
+          self[:u].rip_info.__send__(:[]=, mth, *args)
+        when Ragweed::Wrap32::DebugCodes::UNLOAD_DLL
+          self[:u].unload_dll_debug_info.__send__(:[]=, mth, *args)
+        when Ragweed::Wrap32::DebugCodes::EXCEPTION
+          self[:u].exception_debug_info.__send__(:[]=, mth, *args)
+        end
+      end
+    else
+      if self.members.include? meth
+        # don't proxy
+        self.__send__(:[], meth, *args)
+      else
+        case self[:DebugEventCode]
+        when Ragweed::Wrap32::DebugCodes::CREATE_PROCESS
+          self[:u].create_process_debug_info.__send__(:[], meth, *args)
+        when Ragweed::Wrap32::DebugCodes::CREATE_THREAD
+          self[:u].create_thread_debug_info.__send__(:[], meth, *args)
+        when Ragweed::Wrap32::DebugCodes::EXIT_PROCESS
+          self[:u].exit_process_debug_info.__send__(:[], meth, *args)
+        when Ragweed::Wrap32::DebugCodes::EXIT_THREAD
+          self[:u].exit_thread_debug_info.__send__(:[], meth, *args)
+        when Ragweed::Wrap32::DebugCodes::LOAD_DLL
+          self[:u].load_dll_debug_info.__send__(:[], meth, *args)
+        when Ragweed::Wrap32::DebugCodes::OUTPUT_DEBUG_STRING
+          self[:u].output_debug_string_info.__send__(:[], meth, *args)
+        when Ragweed::Wrap32::DebugCodes::RIP
+          self[:u].rip_info.__send__(:[], meth, *args)
+        when Ragweed::Wrap32::DebugCodes::UNLOAD_DLL
+          self[:u].unload_dll_debug_info.__send__(:[], meth, *args)
+        when Ragweed::Wrap32::DebugCodes::EXCEPTION
+          self[:u].exception_debug_info.__send__(:[], meth, *args)
+        end
+      end
+    end
+  end
+
+  def respond_to? meth, include_priv=false
+    mth = meth.to_s.gsub(/=$/,'')
+    self.methods.include? mth || super
   end
 
   def inspect_code(c)
