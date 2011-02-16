@@ -258,8 +258,8 @@ EOM
 
     # We have rubified this FFI structure by creating a bunch of proxy
     # methods that are normally only accessible via self.v.x.y which is
-    # a lot to type. You can still use that method however these instance
-    # variables should allow for considerably clearer code
+    # a lot to type. You can still use that method however these proxy
+    # methods should allow for considerably clearer code
     if RUBY_VERSION < "1.9"
       def methods regular=true
         ret = super + self.members.map{|x| [x.to_s, x.to_s + "="]}
@@ -426,6 +426,79 @@ EOM
     FLAVOR = 12
     layout :dsh, Ragweed::Wraposx::ThreadContext::X86StateHdr,
            :uds, Ragweed::Wraposx::ThreadContext::UnionDebugState
+
+    # We have rubified this FFI structure by creating a bunch of proxy
+    # methods that are normally only accessible via self.v.x.y which is
+    # a lot to type. You can still use that method however these proxy
+    # methods should allow for considerably clearer code
+    if RUBY_VERSION < "1.9"
+      def methods regular=true
+        ret = super + self.members.map{|x| [x.to_s, x.to_s + "="]}
+        ret += self[:dsh].members.map{|x| [x.to_s, x.to_s + "="]}
+        ret + case self[:dsh][:flavor]
+        when Ragweed::Wraposx::ThreadContext::X86_DEBUG_STATE32
+          self[:uds].ds32.members.map{|x| [x.to_s, x.to_s + "="]}
+        when Ragweed::Wraposx::ThreadContext::X86_DEBUG_STATE64
+          self[:uds].ds64.members.map{|x| [x.to_s, x.to_s + "="]}
+        else
+          []
+        end
+        ret.flatten
+      end
+    else
+      def methods regular=true
+        ret = super + self.members.map{|x| [x, (x.to_s + "=").intern]}
+        ret += self[:dsh].members.map{|x| [x, (x.to_s + "=").intern]}
+        ret + case self[:dsh][:flavor]
+        when Ragweed::Wraposx::ThreadContext::X86_DEBUG_STATE32
+          self[:uds].ds32.members.map{|x| [x, (x.to_s + "=").intern]}
+        when Ragweed::Wraposx::ThreadContext::X86_DEBUG_STATE64
+          self[:uds].ds64.members.map{|x| [x, (x.to_s + "=").intern]}
+        else
+          []
+        end
+        ret.flatten
+      end
+    end
+
+    def method_missing meth, *args
+      super unless self.respond_to? meth
+      if meth.to_s =~ /=$/
+        mth = meth.to_s.gsub(/=$/,'').intern
+        if self.members.include? mth
+          # don't proxy
+          self.__send__(:[]=, mth, *args)
+        elsif self[:dsh].members.include? meth
+          self[:dsh].__send__(:[]=, mth, *args)
+        else
+          case self[:dsh][:flavor]
+          when Ragweed::Wraposx::ThreadContext::X86_DEBUG_STATE32
+            self[:uds].ds32.__send__(:[]=, mth, *args)
+          when Ragweed::Wraposx::ThreadContext::X86_DEBUG_STATE64
+            self[:uds].ds64.__send__(:[]=, mth, *args)
+          end
+        end
+      else
+        if self.members.include? meth
+          # don't proxy
+          self.__send__(:[], meth, *args)
+        elsif self[:dsh].members.include? meth
+          self[:dsh].__send__(:[], meth, *args)
+        else
+          case self[:dsh][:flavor]
+          when Ragweed::Wraposx::ThreadContext::X86_DEBUG_STATE32
+            self[:uds].ds32.__send__(:[], meth, *args)
+          when Ragweed::Wraposx::ThreadContext::X86_DEBUG_STATE64
+            self[:uds].ds64.__send__(:[], meth, *args)
+          end
+        end
+      end
+    end
+
+    def respond_to? meth, include_priv=false
+      mth = meth.to_s.gsub(/=$/,'') # may not be needed anymore
+      self.methods.include? mth || super
+    end
   end
 
   # _STRUCT_X86_EXCEPTION_STATE32
