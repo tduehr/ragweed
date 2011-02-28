@@ -117,6 +117,8 @@ module Ragweed::Wrap32
     attach_function 'DeviceIoControl', [ :long, :long, :pointer, :long, :pointer, :long, :pointer, :pointer ], :long
     attach_function 'GetOverlappedResult', [ :long, :pointer, :pointer, :long ], :long
     attach_function 'WaitForMultipleObjects', [ :long, :pointer, :long, :long ], :long
+    attach_function 'CreateProcessA', [ :pointer, :pointer, :pointer, :pointer, :long, :long, :pointer, :pointer, :pointer, :pointer ], :long
+    attach_function 'CreateProcessW', [ :pointer, :pointer, :pointer, :pointer, :long, :long, :pointer, :pointer, :pointer, :pointer ], :long
 
     ffi_lib 'ntdll'
     ffi_convention :stdcall
