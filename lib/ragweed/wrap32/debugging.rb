@@ -158,7 +158,7 @@ class Ragweed::Wrap32::DebugEvent < FFI::Struct
   if RUBY_VERSION < "1.9"
     def methods regular=true
       ret = super + self.members.map{|x| [x.to_s, x.to_s + "="]}
-      ret + case self[:DebugEventCode]
+      ret += case self[:DebugEventCode]
       when Ragweed::Wrap32::DebugCodes::CREATE_PROCESS
         self[:u].create_process_debug_info.members.map{|x| [x.to_s, x.to_s + "="]}
       when Ragweed::Wrap32::DebugCodes::CREATE_THREAD
@@ -176,7 +176,7 @@ class Ragweed::Wrap32::DebugEvent < FFI::Struct
       when Ragweed::Wrap32::DebugCodes::UNLOAD_DLL
         self[:u].unload_dll_debug_info.members.map{|x| [x.to_s, x.to_s + "="]}
       when Ragweed::Wrap32::DebugCodes::EXCEPTION
-        self[:u].exception_debug_info.members.map{|x| [x.to_s, x.to_s + "="]}
+        self[:u].exception_debug_info.members.map{|x| [x.to_s, x.to_s + "="]} + self[:u].exception_debug_info.exception_record.members.map{|x| [x.to_s, x.to_s + "="]}
       else
         []
       end
@@ -185,7 +185,7 @@ class Ragweed::Wrap32::DebugEvent < FFI::Struct
   else
     def methods regular=true
       ret = super + self.members.map{|x| [x, (x.to_s + "=").intern]}
-      ret + case self[:DebugEventCode]
+      ret += case self[:DebugEventCode]
       when Ragweed::Wrap32::DebugCodes::CREATE_PROCESS
         self[:u].create_process_debug_info.members.map{[x, (x.to_s + "=").intern]}
       when Ragweed::Wrap32::DebugCodes::CREATE_THREAD
@@ -203,7 +203,7 @@ class Ragweed::Wrap32::DebugEvent < FFI::Struct
       when Ragweed::Wrap32::DebugCodes::UNLOAD_DLL
         self[:u].unload_dll_debug_info.members.map{[x, (x.to_s + "=").intern]}
       when Ragweed::Wrap32::DebugCodes::EXCEPTION
-        self[:u].exception_debug_info.members.map{[x, (x.to_s + "=").intern]}
+        self[:u].exception_debug_info.members.map{[x, (x.to_s + "=").intern]} + self[:u].exception_debug_info.exception_record.members.map{[x, (x.to_s + "=").intern]}
       else
         []
       end
@@ -237,7 +237,12 @@ class Ragweed::Wrap32::DebugEvent < FFI::Struct
         when Ragweed::Wrap32::DebugCodes::UNLOAD_DLL
           self[:u].unload_dll_debug_info.__send__(:[]=, mth, *args)
         when Ragweed::Wrap32::DebugCodes::EXCEPTION
-          self[:u].exception_debug_info.__send__(:[]=, mth, *args)
+          case mth
+          when :exception_record, :first_chance
+            self[:u].exception_debug_info.__send__(:[]=, mth, *args)
+          else # it's in the exception_record -- gross, I know but...
+            self[:u].exception_debug_info.exception_record.__send__(meth, *args)
+          end
         end
       end
     else
@@ -263,15 +268,20 @@ class Ragweed::Wrap32::DebugEvent < FFI::Struct
         when Ragweed::Wrap32::DebugCodes::UNLOAD_DLL
           self[:u].unload_dll_debug_info.__send__(:[], meth, *args)
         when Ragweed::Wrap32::DebugCodes::EXCEPTION
-          self[:u].exception_debug_info.__send__(:[], meth, *args)
+          case meth
+          when :exception_record, :first_chance
+            self[:u].exception_debug_info.__send__(:[], meth, *args)
+          else # it's in the exception_record -- gross, I know but...
+            self[:u].exception_debug_info.exception_record.__send__(meth, *args)
+          end
         end
       end
     end
   end
 
   def respond_to? meth, include_priv=false
-    mth = meth.to_s.gsub(/=$/,'')
-    self.methods.include? mth || super
+    # mth = meth.to_s.gsub(/=$/,'')
+    !((self.methods & [meth, meth.to_s]).empty?) || super
   end
 
   def inspect_code(c)

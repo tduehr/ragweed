@@ -75,11 +75,11 @@ end  # module Ragweed
 module Ragweed::FFIStructInclude
   if RUBY_VERSION < "1.9"
     def methods regular=true
-      super + self.offsets.map{|x| x.first.to_s}
+      (super + self.members.map{|x| [x.to_s, x.to_s+"="]}).flatten
     end
   else
     def methods regular=true
-      super + self.offsets.map{|x| x.first}
+      (super + self.members.map{|x| [x, (x.to_s+"=").intern]}).flatten
     end
   end
 
@@ -93,8 +93,8 @@ module Ragweed::FFIStructInclude
   end
 
   def respond_to? meth, include_priv=false
-    mth = meth.to_s.gsub(/=$/,'')
-    self.offsets.map{|x| x.first.to_s}.include? mth || super
+    # mth = meth.to_s.gsub(/=$/,'')
+    !((self.methods & [meth, meth.to_s]).empty?) || super
   end
 end
 
