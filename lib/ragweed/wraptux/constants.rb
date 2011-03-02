@@ -90,3 +90,9 @@ module Ragweed::Wraptux::Wait
     CONTINUED = 10
     NOWWAIT = 20
 end
+
+module Ragweed::Wraptux::PagePermissions
+    PROT_READ  = 0x1
+    PROT_WRITE = 0x2
+    PROT_EXEC  = 0x4
+end
