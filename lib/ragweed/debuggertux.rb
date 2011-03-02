@@ -13,7 +13,7 @@ module Ragweed; end
 ##     that Debuggertux already handles, call "super", too.
 class Ragweed::Debuggertux
   attr_reader :pid, :status, :exited, :signal
-  attr_accessor :breakpoints, :mapped_regions
+  attr_accessor :breakpoints, :mapped_regions, :process
 
   ## Class to handle installing/uninstalling breakpoints
   class Breakpoint
@@ -78,6 +78,8 @@ class Ragweed::Debuggertux
     @mapped_regions = Hash.new
     @breakpoints = Hash.new
     @opts.each { |k, v| try(k) if v }
+
+    @process = Ragweed::Process.new(@pid)
   end
 
   def self.find_by_regex(rx)
@@ -462,6 +464,7 @@ class Ragweed::Debuggertux
   def print_registers
     regs = get_registers
     puts "eip %08x" % regs.eip
+    puts "ebp %08x" % regs.ebp
     puts "esi %08x" % regs.esi
     puts "edi %08x" % regs.edi
     puts "esp %08x" % regs.esp
