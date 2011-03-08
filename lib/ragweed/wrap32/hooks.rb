@@ -25,7 +25,7 @@ class Ragweed::Debugger32
       ## get an idea of where the instruction
       ## is mapped.
       eip = ctx.eip
-      if esp != 0 and esp > (eip & 0xf0000000)
+      if esp != 0 #and esp > (eip & 0xf0000000)
         breakpoint_set(esp) do |ev,ctx|
           callable.call(ev, ctx, :leave, args)
           breakpoint_clear(esp)

@@ -13,6 +13,10 @@ module Ragweed::Wrap32
     UNLOAD_DLL = 7
   end
 
+  module PagePermissions
+    PAGE_EXECUTE_READWRITE = 0x40
+  end
+
   module ExceptionCodes
     ACCESS_VIOLATION = 0xC0000005
     GUARD_PAGE = 0x80000001

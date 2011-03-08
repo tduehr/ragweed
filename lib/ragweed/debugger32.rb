@@ -305,6 +305,7 @@ class Ragweed::Debugger32
   def on_heap_corruption(ev)      end
   def on_buffer_overrun(ev)       end
   def on_invalid_disposition(ev)  end
+  def on_attach()                 end
 
   ## Read through me to see all the random events
   ## you can hook in a subclass.
@@ -382,6 +383,7 @@ class Ragweed::Debugger32
     Ragweed::Wrap32::debug_active_process(@p.pid)
     Ragweed::Wrap32::debug_set_process_kill_on_exit
     @attached = true
+    try(:on_attach)
     @breakpoints.each_pair do |k, bp|
       bp.install
     end
