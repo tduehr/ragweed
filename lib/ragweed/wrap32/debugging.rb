@@ -164,23 +164,23 @@ class Ragweed::Wrap32::DebugEvent < FFI::Struct
       ret = super + self.members.map{|x| [x.to_s, x.to_s + "="]}
       ret += case self[:DebugEventCode]
       when Ragweed::Wrap32::DebugCodes::CREATE_PROCESS
-        self[:u].create_process_debug_info.members.map{|x| [x.to_s, x.to_s + "="]}
+        self[:u][:create_process_debug_info].members.map{|x| [x.to_s, x.to_s + "="]}
       when Ragweed::Wrap32::DebugCodes::CREATE_THREAD
-        self[:u].create_thread_debug_info.members.map{|x| [x.to_s, x.to_s + "="]}
+        self[:u][:create_thread_debug_info].members.map{|x| [x.to_s, x.to_s + "="]}
       when Ragweed::Wrap32::DebugCodes::EXIT_PROCESS
-        self[:u].exit_process_debug_info.members.map{|x| [x.to_s, x.to_s + "="]}
+        self[:u][:exit_process_debug_info].members.map{|x| [x.to_s, x.to_s + "="]}
       when Ragweed::Wrap32::DebugCodes::EXIT_THREAD
-        self[:u].exit_thread_debug_info.members.map{|x| [x.to_s, x.to_s + "="]}
+        self[:u][:exit_thread_debug_info].members.map{|x| [x.to_s, x.to_s + "="]}
       when Ragweed::Wrap32::DebugCodes::LOAD_DLL
-        self[:u].load_dll_debug_info.members.map{|x| [x.to_s, x.to_s + "="]}
+        self[:u][:load_dll_debug_info].members.map{|x| [x.to_s, x.to_s + "="]}
       when Ragweed::Wrap32::DebugCodes::OUTPUT_DEBUG_STRING
-        self[:u].output_debug_string_info.members.map{|x| [x.to_s, x.to_s + "="]}
+        self[:u][:output_debug_string_info].members.map{|x| [x.to_s, x.to_s + "="]}
       when Ragweed::Wrap32::DebugCodes::RIP
-        self[:u].rip_info.members.map{|x| [x.to_s, x.to_s + "="]}
+        self[:u][:rip_info].members.map{|x| [x.to_s, x.to_s + "="]}
       when Ragweed::Wrap32::DebugCodes::UNLOAD_DLL
-        self[:u].unload_dll_debug_info.members.map{|x| [x.to_s, x.to_s + "="]}
+        self[:u][:unload_dll_debug_info].members.map{|x| [x.to_s, x.to_s + "="]}
       when Ragweed::Wrap32::DebugCodes::EXCEPTION
-        self[:u].exception_debug_info.members.map{|x| [x.to_s, x.to_s + "="]} + self[:u].exception_debug_info.exception_record.members.map{|x| [x.to_s, x.to_s + "="]}
+        self[:u][:exception_debug_info].members.map{|x| [x.to_s, x.to_s + "="]} + self[:u][:exception_debug_info][:exception_record].members.map{|x| [x.to_s, x.to_s + "="]}
       else
         []
       end
@@ -191,23 +191,23 @@ class Ragweed::Wrap32::DebugEvent < FFI::Struct
       ret = super + self.members.map{|x| [x, (x.to_s + "=").intern]}
       ret += case self[:DebugEventCode]
       when Ragweed::Wrap32::DebugCodes::CREATE_PROCESS
-        self[:u].create_process_debug_info.members.map{|x| [x, (x.to_s + "=").intern]}
+        self[:u][:create_process_debug_info].members.map{|x| [x, (x.to_s + "=").intern]}
       when Ragweed::Wrap32::DebugCodes::CREATE_THREAD
-        self[:u].create_thread_debug_info.members.map{|x| [x, (x.to_s + "=").intern]}
+        self[:u][:create_thread_debug_info].members.map{|x| [x, (x.to_s + "=").intern]}
       when Ragweed::Wrap32::DebugCodes::EXIT_PROCESS
-        self[:u].exit_process_debug_info.members.map{|x| [x, (x.to_s + "=").intern]}
+        self[:u][:exit_process_debug_info].members.map{|x| [x, (x.to_s + "=").intern]}
       when Ragweed::Wrap32::DebugCodes::EXIT_THREAD
-        self[:u].exit_thread_debug_info.members.map{|x| [x, (x.to_s + "=").intern]}
+        self[:u][:exit_thread_debug_info].members.map{|x| [x, (x.to_s + "=").intern]}
       when Ragweed::Wrap32::DebugCodes::LOAD_DLL
-        self[:u].load_dll_debug_info.members.map{|x| [x, (x.to_s + "=").intern]}
+        self[:u][:load_dll_debug_info].members.map{|x| [x, (x.to_s + "=").intern]}
       when Ragweed::Wrap32::DebugCodes::OUTPUT_DEBUG_STRING
-        self[:u].output_debug_string_info.members.map{|x| [x, (x.to_s + "=").intern]}
+        self[:u][:output_debug_string_info].members.map{|x| [x, (x.to_s + "=").intern]}
       when Ragweed::Wrap32::DebugCodes::RIP
-        self[:u].rip_info.members.map{|x| [x, (x.to_s + "=").intern]}
+        self[:u][:rip_info].members.map{|x| [x, (x.to_s + "=").intern]}
       when Ragweed::Wrap32::DebugCodes::UNLOAD_DLL
-        self[:u].unload_dll_debug_info.members.map{|x| [x, (x.to_s + "=").intern]}
+        self[:u][:unload_dll_debug_info].members.map{|x| [x, (x.to_s + "=").intern]}
       when Ragweed::Wrap32::DebugCodes::EXCEPTION
-        self[:u].exception_debug_info.members.map{|x| [x, (x.to_s + "=").intern]} + self[:u].exception_debug_info.exception_record.members.map{|x| [x, (x.to_s + "=").intern]}
+        self[:u][:exception_debug_info].members.map{|x| [x, (x.to_s + "=").intern]} + self[:u][:exception_debug_info][:exception_record].members.map{|x| [x, (x.to_s + "=").intern]}
       else
         []
       end
@@ -225,27 +225,27 @@ class Ragweed::Wrap32::DebugEvent < FFI::Struct
       else
         case self[:DebugEventCode]
         when Ragweed::Wrap32::DebugCodes::CREATE_PROCESS
-          self[:u].create_process_debug_info.__send__(:[]=, mth, *args)
+          self[:u][:create_process_debug_info].__send__(:[]=, mth, *args)
         when Ragweed::Wrap32::DebugCodes::CREATE_THREAD
-          self[:u].create_thread_debug_info.__send__(:[]=, mth, *args)
+          self[:u][:create_thread_debug_info].__send__(:[]=, mth, *args)
         when Ragweed::Wrap32::DebugCodes::EXIT_PROCESS
-          self[:u].exit_process_debug_info.__send__(:[]=, mth, *args)
+          self[:u][:exit_process_debug_info].__send__(:[]=, mth, *args)
         when Ragweed::Wrap32::DebugCodes::EXIT_THREAD
-          self[:u].exit_thread_debug_info.__send__(:[]=, mth, *args)
+          self[:u][:exit_thread_debug_info].__send__(:[]=, mth, *args)
         when Ragweed::Wrap32::DebugCodes::LOAD_DLL
-          self[:u].load_dll_debug_info.__send__(:[]=, mth, *args)
+          self[:u][:load_dll_debug_info].__send__(:[]=, mth, *args)
         when Ragweed::Wrap32::DebugCodes::OUTPUT_DEBUG_STRING
-          self[:u].output_debug_string_info.__send__(:[]=, mth, *args)
+          self[:u][:output_debug_string_info].__send__(:[]=, mth, *args)
         when Ragweed::Wrap32::DebugCodes::RIP
-          self[:u].rip_info.__send__(:[]=, mth, *args)
+          self[:u][:rip_info].__send__(:[]=, mth, *args)
         when Ragweed::Wrap32::DebugCodes::UNLOAD_DLL
-          self[:u].unload_dll_debug_info.__send__(:[]=, mth, *args)
+          self[:u][:unload_dll_debug_info].__send__(:[]=, mth, *args)
         when Ragweed::Wrap32::DebugCodes::EXCEPTION
           case mth
           when :exception_record, :first_chance
-            self[:u].exception_debug_info.__send__(:[]=, mth, *args)
+            self[:u][:exception_debug_info].__send__(:[]=, mth, *args)
           else # it's in the exception_record -- gross, I know but...
-            self[:u].exception_debug_info.exception_record.__send__(meth, *args)
+            self[:u][:exception_debug_info][:exception_record].__send__(meth, *args)
           end
         end
       end
@@ -256,27 +256,27 @@ class Ragweed::Wrap32::DebugEvent < FFI::Struct
       else
         case self[:DebugEventCode]
         when Ragweed::Wrap32::DebugCodes::CREATE_PROCESS
-          self[:u].create_process_debug_info.__send__(:[], meth, *args)
+          self[:u][:create_process_debug_info].__send__(:[], meth, *args)
         when Ragweed::Wrap32::DebugCodes::CREATE_THREAD
-          self[:u].create_thread_debug_info.__send__(:[], meth, *args)
+          self[:u][:create_thread_debug_info].__send__(:[], meth, *args)
         when Ragweed::Wrap32::DebugCodes::EXIT_PROCESS
-          self[:u].exit_process_debug_info.__send__(:[], meth, *args)
+          self[:u][:exit_process_debug_info].__send__(:[], meth, *args)
         when Ragweed::Wrap32::DebugCodes::EXIT_THREAD
-          self[:u].exit_thread_debug_info.__send__(:[], meth, *args)
+          self[:u][:exit_thread_debug_info].__send__(:[], meth, *args)
         when Ragweed::Wrap32::DebugCodes::LOAD_DLL
-          self[:u].load_dll_debug_info.__send__(:[], meth, *args)
+          self[:u][:load_dll_debug_info].__send__(:[], meth, *args)
         when Ragweed::Wrap32::DebugCodes::OUTPUT_DEBUG_STRING
-          self[:u].output_debug_string_info.__send__(:[], meth, *args)
+          self[:u][:output_debug_string_info].__send__(:[], meth, *args)
         when Ragweed::Wrap32::DebugCodes::RIP
-          self[:u].rip_info.__send__(:[], meth, *args)
+          self[:u][:rip_info].__send__(:[], meth, *args)
         when Ragweed::Wrap32::DebugCodes::UNLOAD_DLL
-          self[:u].unload_dll_debug_info.__send__(:[], meth, *args)
+          self[:u][:unload_dll_debug_info].__send__(:[], meth, *args)
         when Ragweed::Wrap32::DebugCodes::EXCEPTION
           case meth
           when :exception_record, :first_chance
-            self[:u].exception_debug_info.__send__(:[], meth, *args)
+            self[:u][:exception_debug_info].__send__(:[], meth, *args)
           else # it's in the exception_record -- gross, I know but...
-            self[:u].exception_debug_info.exception_record.__send__(meth, *args)
+            self[:u][:exception_debug_info][:exception_record].__send__(meth, *args)
           end
         end
       end
