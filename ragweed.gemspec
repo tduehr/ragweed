@@ -27,7 +27,6 @@ Gem::Specification.new do |s|
     "examples/hook_notepad.rb",
     "examples/snicker.rb",
     "examples/tux-example.rb",
-    "lib/.DS_Store",
     "lib/ragweed.rb",
     "lib/ragweed/arena.rb",
     "lib/ragweed/blocks.rb",
