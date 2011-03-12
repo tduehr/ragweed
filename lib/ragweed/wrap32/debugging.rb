@@ -51,6 +51,34 @@ module Ragweed::Wrap32
   end
 end
 
+class Ragweed::Wrap32::StartupInfo < FFI::Struct
+    layout :cb, :ulong,
+    :reserved, :pointer,
+    :desktop, :pointer,
+    :title, :pointer,
+    :x, :ulong,
+    :y, :ulong,
+    :xsize, :ulong,
+    :ysize, :ulong,
+    :xcountchars, :ulong,
+    :ycountchars, :ulong,
+    :fillattr, :ulong,
+    :flags, :ulong,
+    :show_window, :short,
+    :breserved, :uint16,
+    :preserved, :uint8,
+    :std_input, :ulong,
+    :std_output, :ulong,
+    :std_error, :ulong
+end
+
+class Ragweed::Wrap32::ProcessInfo < FFI::Struct
+  layout :process_handle, :pointer,
+  :thread_handle, :pointer,
+  :pid, :ulong,
+  :thread_id, :ulong
+end
+
 class Ragweed::Wrap32::RipInfo < FFI::Struct
     include Ragweed::FFIStructInclude
     layout :error, :ulong,
