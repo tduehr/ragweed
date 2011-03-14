@@ -415,6 +415,32 @@ class Ragweed::Debuggerosx
     end
   end
 
+  # XXX watch this space for an object to hold this information
+  def get_mapping_by_name name
+    ret = []
+    IO.popen("vmmap -interleaved #{@pid}") do |pipe|
+      pipe.each_line do |line|
+        next if pipe.lineno < 5
+        break if line == "==== Legend\n"
+        if line =~ name
+          line.gsub /[[:xdigit:]]+-[[:xdigit:]]+/ do |range|
+            base, max = range.split("-").map{|x| x.to_i(16)}
+            ret << [base, max]
+          end
+        end
+      end
+    end
+    ret
+  end
+  
+  def get_stack_ranges
+    get_mapping_by_name "Stack"
+  end
+  
+  def get_heap_ranges
+    get_mapping_by_name "MALLOC_"
+  end
+
   private
 
   # sets instance automagic options to sane(ish) defaults when not given
