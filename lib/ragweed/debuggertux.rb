@@ -83,18 +83,15 @@ class Ragweed::Debuggertux
   end
 
   def self.find_by_regex(rx)
-    a = Dir.entries("/proc/")
-    a.delete_if { |x| x == '.' }
-    a.delete_if { |x| x == '..' }
-    a.delete_if { |x| x =~ /[a-z]/i }
-    
-    a.each do |x|
-      f = File.read("/proc/#{x}/cmdline")
-      if f =~ rx and x.to_i != Process.pid.to_i
-        return x
+    Dir.glob("/proc/*/cmdline").each do |x|
+      x.gsub(/^\/proc\/(\d+)\/cmdline$/) do |ln|
+        f = File.read(ln)
+        if f =~ rx and $1.to_i != ::Process.pid.to_i
+          return f
+        end
       end
     end
-	return nil
+    nil
   end
 
   def install_bps
@@ -134,39 +131,47 @@ class Ragweed::Debuggertux
   ## key = Start address of region
   ## value = Size of the region
   def mapped
-      @mapped_regions.clear if @mapped_regions
+    @mapped_regions.clear if @mapped_regions
 
-      File.read("/proc/#{pid}/maps").each_line do |l|
+    File.open("/proc/#{pid}/maps") do |f|
+      f.each_line do |l|
         s,e = l.split('-')
         e = e.split(' ').first
         sz = e.to_i(16) - s.to_i(16)
         @mapped_regions.store(s.to_i(16), sz)
       end
+    end
+    @mapped_regions
   end
 
   ## Return a name for a range if possible
   def get_mapping_name(val)
-    File.read("/proc/#{pid}/maps").each_line do |l|
+    File.open("/proc/#{pid}/maps") do |f|
+      f.each_line do |l|
         base = l.split('-').first
         max = l[0,17].split('-',2)[1]
         if base.to_i(16) <= val && val <= max.to_i(16)
-            return l.split(' ').last
+          return l.split(' ').last
         end
+      end
     end
     nil
   end
 
   ## Return a range via mapping name
   def get_mapping_by_name(name)
-    File.read("/proc/#{pid}/maps").each_line do |l|
+    ret = []
+    File.open("/proc/#{pid}/maps") do |f|
+      f.each_line do |l|
         n = l.split(' ').last
         if n == name
-            base = l.split('-').first
-            max = l[0,17].split('-',2)[1]
-            return [base, max]
+          base = l.split('-').first
+          max = l[0,17].split('-',2)[1]
+          ret << [base, max]
         end
+      end
     end
-    nil
+    ret
   end
 
   ## Helper method for retrieving stack range
@@ -182,30 +187,31 @@ class Ragweed::Debuggertux
   ## Parse procfs and create a hash containing
   ## a listing of each mapped shared object
   def self.shared_libraries(p)
+    raise "pid is 0" if p.to_i == 0
 
-      raise "pid is 0" if p.to_i == 0
+    if @shared_objects
+      @shared_objects.clear
+    else
+      @shared_objects = Hash.new
+    end
 
-      if @shared_objects
-        @shared_objects.clear
-      else
-        @shared_objects = Hash.new
-      end
+    File.open("/proc/#{p}/maps") do |f|
+      f.each_line do |l|
+        if l =~ /[a-zA-Z0-9].so/ && l =~ /xp /
+          lib = l.split(' ', 6)
+          sa = l.split('-', 0)
 
-      File.read("/proc/#{p}/maps").each_line do |l|
-          if l =~ /[a-zA-Z0-9].so/ && l =~ /xp /
-              lib = l.split(' ', 6)
-              sa = l.split('-', 0)
+          if lib[5] =~ /vdso/
+            next
+          end
 
-              if lib[5] =~ /vdso/
-                next
-              end
-
-              lib = lib[5].strip
-              lib.gsub!(/[\s\n]+/, "")
-              @shared_objects.store(sa[0], lib)
-            end
+          lib = lib[5].strip
+          lib.gsub!(/[\s\n]+/, "")
+          @shared_objects.store(sa[0], lib)
         end
-    return @shared_objects
+      end
+    end
+    @shared_objects
   end
 
   ## Search a specific page for a value
@@ -227,15 +233,17 @@ class Ragweed::Debuggertux
   ## Search the heap for a value
   def search_heap(val)
     loc = Array.new
-    File.read("/proc/#{pid}/maps").each_line do |l|
-      if l =~ /\[heap\]/
-        s,e = l.split('-')
-        e = e.split(' ').first
-        s = s.to_i(16)
-        e = e.to_i(16)
-        sz = e - s
-        max = s + sz
-        loc = search_page(s, max, val)
+    File.open("/proc/#{pid}/maps") do |f|
+      f.each_line do |l|
+        if l =~ /\[heap\]/
+          s,e = l.split('-')
+          e = e.split(' ').first
+          s = s.to_i(16)
+          e = e.to_i(16)
+          sz = e - s
+          max = s + sz
+          loc = search_page(s, max, val)
+        end
       end
     end
     loc
@@ -266,7 +274,7 @@ class Ragweed::Debuggertux
   end
 
   def single_step
-	on_single_step
+    on_single_step
     ret = Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::STEP, @pid, 1, 0)
   end
 
@@ -392,14 +400,14 @@ class Ragweed::Debuggertux
   end
 
   def self.threads(pid)
-	begin
-	    a = Dir.entries("/proc/#{pid}/task/")
-	rescue
-		puts "No such PID: #{pid}"
-		return
-	end
-    a.delete_if { |x| x == '.' }
-    a.delete_if { |x| x == '..' }
+    a = []
+    begin
+      a = Dir.entries("/proc/#{pid}/task/")
+      a.delete_if {|x| x == '.' || x == '..'}
+    rescue
+      puts "No such PID: #{pid}"
+    end
+    a
   end
 
   def get_registers
