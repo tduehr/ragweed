@@ -422,7 +422,7 @@ class Ragweed::Debuggerosx
       pipe.each_line do |line|
         next if pipe.lineno < 5
         break if line == "==== Legend\n"
-        if line =~ name
+        if line.match name
           line.gsub /[[:xdigit:]]+-[[:xdigit:]]+/ do |range|
             base, max = range.split("-").map{|x| x.to_i(16)}
             ret << [base, max]
@@ -438,7 +438,7 @@ class Ragweed::Debuggerosx
   end
   
   def get_heap_ranges
-    get_mapping_by_name "MALLOC_"
+    get_mapping_by_name "MALLOC"
   end
 
   private

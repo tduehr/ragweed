@@ -135,54 +135,58 @@ class Ragweed::Debuggertux
 
     File.open("/proc/#{pid}/maps") do |f|
       f.each_line do |l|
-        s,e = l.split('-')
-        e = e.split(' ').first
-        sz = e.to_i(16) - s.to_i(16)
-        @mapped_regions.store(s.to_i(16), sz)
+        e = l.split(' ',2).first
+        s,e = e.split('-').map{|x| x.to_i(16)}
+        sz = e - s
+        @mapped_regions.store(s, sz)
       end
     end
     @mapped_regions
   end
 
-  ## Return a name for a range if possible
+  # Return a name for a range if possible. greedy match
+  # returns the first found
   def get_mapping_name(val)
     File.open("/proc/#{pid}/maps") do |f|
       f.each_line do |l|
-        base = l.split('-').first
-        max = l[0,17].split('-',2)[1]
-        if base.to_i(16) <= val && val <= max.to_i(16)
-          return l.split(' ').last
+        range, perms, offset, dev, inode, pathname  = l.split(" ")
+        base, max = range.split('-').map{|x| x.to_i(16)}
+        if base <= val && val <= max
+          return pathname
         end
       end
     end
     nil
   end
+  alias mapping_name get_mapping_name
 
   ## Return a range via mapping name
   def get_mapping_by_name(name)
     ret = []
     File.open("/proc/#{pid}/maps") do |f|
       f.each_line do |l|
-        n = l.split(' ').last
-        if n == name
-          base = l.split('-').first
-          max = l[0,17].split('-',2)[1]
-          ret << [base, max]
+        range, perms, offset, dev, inode, pathname  = l.split(" ",6)
+        base, max = range.split('-').map{|x| x.to_i(16)}
+        if pathname && pathname.match(name)
+          ret << range.split('-').map{|x| x.to_i(16)}
         end
       end
     end
     ret
   end
+  alias mapping_by_name get_mapping_by_name
 
   ## Helper method for retrieving stack range
   def get_stack_range
-    return get_mapping_by_name("[stack]")
+    get_mapping_by_name('\[stack\]')
   end
+  alias stack_range get_stack_range
 
   ## Helper method for retrieving heap range
   def get_heap_range
-    return get_mapping_by_name("[heap]")
+    get_mapping_by_name('\[heap\]')
   end
+  alias heap_range get_heap_range
 
   ## Parse procfs and create a hash containing
   ## a listing of each mapped shared object
@@ -212,6 +216,12 @@ class Ragweed::Debuggertux
       end
     end
     @shared_objects
+  end
+
+  # instance method for above
+  # returns a hash of the mapped shared libraries
+  def shared_libraries
+    self.class.shared_libraries(@pid)
   end
 
   ## Search a specific page for a value
