@@ -92,7 +92,10 @@ module Ragweed::Wraptux::Wait
 end
 
 module Ragweed::Wraptux::PagePermissions
+    PROT_NONE  = 0x0
     PROT_READ  = 0x1
     PROT_WRITE = 0x2
     PROT_EXEC  = 0x4
+    PROT_GROWSDOWN = 0x01000000
+    PROT_GROWSUP   = 0x02000000
 end
