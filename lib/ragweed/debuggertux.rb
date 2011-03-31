@@ -149,7 +149,7 @@ class Ragweed::Debuggertux
   def get_mapping_name(val)
     File.open("/proc/#{pid}/maps") do |f|
       f.each_line do |l|
-        range, perms, offset, dev, inode, pathname  = l.split(" ")
+        range, perms, offset, dev, inode, pathname  = l.chomp.split(" ")
         base, max = range.split('-').map{|x| x.to_i(16)}
         if base <= val && val <= max
           return pathname
@@ -161,14 +161,18 @@ class Ragweed::Debuggertux
   alias mapping_name get_mapping_name
 
   ## Return a range via mapping name
-  def get_mapping_by_name(name)
+  def get_mapping_by_name(name, exact = true)
     ret = []
     File.open("/proc/#{pid}/maps") do |f|
       f.each_line do |l|
-        range, perms, offset, dev, inode, pathname  = l.split(" ",6)
+        range, perms, offset, dev, inode, pathname  = l.chomp.split(" ",6)
         base, max = range.split('-').map{|x| x.to_i(16)}
-        if pathname && pathname.match(name)
-          ret << range.split('-').map{|x| x.to_i(16)}
+        if pathname
+          if exact && pathname == name
+            ret << range.split('-').map{|x| x.to_i(16)}
+          elsif pathname.match(name)
+            ret << range.split('-').map{|x| x.to_i(16)}
+          end
         end
       end
     end
@@ -178,13 +182,13 @@ class Ragweed::Debuggertux
 
   ## Helper method for retrieving stack range
   def get_stack_range
-    get_mapping_by_name('\[stack\]')
+    get_mapping_by_name('[stack]')
   end
   alias stack_range get_stack_range
 
   ## Helper method for retrieving heap range
   def get_heap_range
-    get_mapping_by_name('\[heap\]')
+    get_mapping_by_name('[heap]')
   end
   alias heap_range get_heap_range
 

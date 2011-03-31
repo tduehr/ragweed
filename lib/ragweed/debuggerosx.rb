@@ -416,17 +416,20 @@ class Ragweed::Debuggerosx
   end
 
   # XXX watch this space for an object to hold this information
-  def get_mapping_by_name name
+  # Return a range via mapping name
+  def get_mapping_by_name name, exact = true
     ret = []
     IO.popen("vmmap -interleaved #{@pid}") do |pipe|
       pipe.each_line do |line|
         next if pipe.lineno < 5
         break if line == "==== Legend\n"
-        if line.match name
-          line.gsub /[[:xdigit:]]+-[[:xdigit:]]+/ do |range|
-            base, max = range.split("-").map{|x| x.to_i(16)}
-            ret << [base, max]
-          end
+        rtype, saddr, eaddr, sz, perms, sm, purpose =
+          line.scan(/^([[:graph:]]+(?:\s[[:graph:]]+)?)\s+([[:xdigit:]]+)-([[:xdigit:]]+)\s+\[\s+([[:digit:]]+[A-Z])\s*\]\s+([-rwx\/]+)\s+SM=(COW|PRV|NUL|ALI|SHM|ZER|S\/A)\s+(.*)$/).
+            first
+        if exact && (rtype == name || purpose == name)
+          ret << [saddr, eaddr].map{|x| x.to_i(16)}
+        elsif rtype.match name || purpose.match name
+          ret << [saddr, eaddr].map{|x| x.to_i(16)}
         end
       end
     end
@@ -434,11 +437,11 @@ class Ragweed::Debuggerosx
   end
   
   def get_stack_ranges
-    get_mapping_by_name "Stack"
+    get_mapping_by_name "Stack", false
   end
   
   def get_heap_ranges
-    get_mapping_by_name "MALLOC"
+    get_mapping_by_name "MALLOC", false
   end
 
   private
