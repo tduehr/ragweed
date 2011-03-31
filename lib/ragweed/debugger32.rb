@@ -312,7 +312,7 @@ class Ragweed::Debugger32
   def wait
     self.attach() if not @attached
 
-    event = ev = Ragweed::Wrap32::wait_for_debug_event
+    @event = ev = Ragweed::Wrap32::wait_for_debug_event
     return if not ev
     case ev.code
     when Ragweed::Wrap32::DebugCodes::CREATE_PROCESS
