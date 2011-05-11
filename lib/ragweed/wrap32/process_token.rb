@@ -27,6 +27,7 @@ module Ragweed::Wrap32
     ffi_convention :stdcall
     attach_function 'OpenProcess', [ :long, :long, :long ], :long
     attach_function 'OpenProcessToken', [:long, :long, :pointer ], :long
+    attach_function 'TerminateProcess', [:long, :uint], :long
 
     # ffi_lib 'advapi32'
     # ffi_convention :stdcall
@@ -59,6 +60,11 @@ module Ragweed::Wrap32
       raise WinX.new(:lookup_privilege_value) if r == 0
       outw.read_long_long
     end
+  end
+  
+  def terminate_process(handle, exit_code)
+    r = Win.TerminateProcess(handle, exit_code)
+    raise WinX.new(:terminate_process) if r != 0
   end
 end
 
