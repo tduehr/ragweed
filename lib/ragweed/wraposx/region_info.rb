@@ -39,6 +39,7 @@ module Ragweed::Wraposx::Vm
   end
 
   class RegionBasicInfo < RegionInfo
+    FLAVOR = Ragweed::Wraposx::Vm::REGION_BASIC_INFO
 
     layout :protection, Ragweed::Wraposx::Libc.find_type(:vm_prot_t),
            :max_protection, Ragweed::Wraposx::Libc.find_type(:vm_prot_t),
@@ -73,6 +74,7 @@ EOM
   end
 
   class RegionBasicInfo64 < RegionInfo
+    FLAVOR = Ragweed::Wraposx::Vm::REGION_BASIC_INFO_64
 
     layout :protection, Ragweed::Wraposx::Libc.find_type(:vm_prot_t),
            :max_protection, Ragweed::Wraposx::Libc.find_type(:vm_prot_t),
@@ -118,6 +120,8 @@ EOM
   #         unsigned char           share_mode;
   # };
   class RegionExtendedInfo < RegionInfo
+    FLAVOR = Ragweed::Wraposx::Vm::REGION_EXTENDED_INFO
+
     layout :protection, Ragweed::Wraposx::Libc.find_type(:vm_prot_t),
            :user_tag, :uint,
            :pages_resident, :uint,
@@ -161,6 +165,8 @@ EOM
   #         unsigned char           share_mode;
   # };
   class RegionTopInfo < RegionInfo
+    FLAVOR = Ragweed::Wraposx::Vm::REGION_TOP_INFO
+
     layout :obj_id, :uint,
            :ref_count, :uint,
            :private_pages_resident, :uint,

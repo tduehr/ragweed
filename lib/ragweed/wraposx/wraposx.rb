@@ -181,7 +181,7 @@ module Ragweed::Wraposx
       port = FFI::MemoryPointer.new :int, 1
       r = Libc.task_for_pid(target, pid, port)
       raise KernelCallError.new(:task_for_pid, r) if r != 0
-      port.read_int
+      port.read_uint
     end  
 
     # Returns an Array of thread IDs for the given task
@@ -215,6 +215,7 @@ module Ragweed::Wraposx
     def task_suspend(task)
       r = Libc.task_suspend(task)
       raise KernelCallError.new(r) if r != 0
+      r
     end
 
     # Sends a signal to a process
@@ -227,6 +228,7 @@ module Ragweed::Wraposx
       FFI::errno = 0
       r = Libc.kill(pid, sig)
       raise SystemCallError.new "kill", FFI::errno if r != 0
+      r
     end
 
     # Reads sz bytes from task's address space starting at addr.
@@ -241,10 +243,10 @@ module Ragweed::Wraposx
     # There is no man page for this function.
     def vm_read(task, addr, sz=256)
       buf = FFI::MemoryPointer.new(sz)
-      len = FFI::MemoryPointer(sz.to_l32)
+      len = FFI::MemoryPointer.new(:uint).write_uint(sz)
       r = Libc.vm_read_overwrite(task, addr, sz, buf, len)
       raise KernelCallError.new(:vm_read, r) if r != 0
-      return buf.to_str(len.to_str(4).to_l32)
+      buf.read_string(len.read_uint)
     end
 
     # Writes val to task's memory space at address addr.
@@ -258,10 +260,10 @@ module Ragweed::Wraposx
     #
     # There is no man page for this function.
     def vm_write(task, addr, val)
-      val = FFI::MemoryPointer.new
+      val = FFI::MemoryPointer.new(val)
       r = Libc.vm_write(task, addr, val, val.size)
       raise KernelCallError.new(:vm_write, r) if r != 0
-      return nil
+      r
     end
 
     # Changes the protection state beginning at addr for size bytes to the mask prot.
@@ -279,7 +281,7 @@ module Ragweed::Wraposx
       setmax = setmax ? 1 : 0
       r = Libc.vm_protect(task, addr, size, setmax, prot)
       raise KernelCallError.new(:vm_protect, r) if r != 0
-      return nil
+      r
     end
 
     # Allocates a page in the memory space of the target task.
@@ -311,6 +313,7 @@ module Ragweed::Wraposx
       addr.write_int(address)
       r = Libc.vm_deallocate(task, addr, size)
       raise KernelCallError.new(r) if r != 0
+      r
     end
 
     # Resumes a suspended thread by id.
@@ -322,6 +325,7 @@ module Ragweed::Wraposx
     def thread_resume(thread)
       r = Libc.thread_resume(thread)
       raise KernelCallError.new(:thread_resume, r) if r != 0
+      r
     end
 
     # Suspends a thread by id.
@@ -333,6 +337,7 @@ module Ragweed::Wraposx
     def thread_suspend(thread)
       r = Libc.thread_suspend(thread)
       raise KernelCallError.new(:thread_suspend, r) if r != 0
+      r
     end
 
     # Changes execution to file in path with *args as though called from command line.

@@ -360,15 +360,16 @@ class Ragweed::Debuggerosx
   # thread: thread to get the register state of
   def get_registers(thread=nil)
     thread = (thread or self.threads.first)
-    Ragweed::Wraposx::ThreadContext.get(thread)
+    Ragweed::Wraposx.thread_get_state(thread, Ragweed::Wraposx::ThreadContext::X86_THREAD_STATE)
   end
 
   # sets the register state of a thread
   # thread: thread id to set registers for
   # regs: Ragweed::Wraposx::ThreadContext object containing the new register state for the thread
   def set_registers(thread, regs)
-    raise "Must supply registers and thread to set" if (not (thread and regs) or not thread.kind_of? Numeric or not regs.kind_of? Ragweed::Wraposx::ThreadContext)
-    regs.set(thread)
+    # XXX - needs updated conditions
+    # raise "Must supply registers and thread to set" if (not (thread and regs) or not thread.kind_of? Numeric or not regs.kind_of? Ragweed::Wraposx::ThreadContext)
+    Ragweed::Wraposx.thread_set_state(thread, regs.class::FLAVOR, regs)
   end
 
   # continue stopped child process.
@@ -400,18 +401,26 @@ class Ragweed::Debuggerosx
   def installed?; @installed; end
 
   def region_info(addr, flavor = :basic)
-    case flavor
+    flav = case flavor
     when :basic
-      return Ragweed::Wraposx::RegionBasicInfo.get(@task, addr)
+      Ragweed::Wraposx::RegionBasicInfo::FLAVOR
 
     # Extended and Top info flavors are included in case Apple re implements them
     when :extended
-      return Ragweed::Wraposx::RegionExtendedInfo.get(@task, addr)
+      Ragweed::Wraposx::RegionExtendedInfo::FLAVOR
     when :top
-      return Ragweed::Wraposx::RegionTopInfo.get(@task, addr)
+      Ragweed::Wraposx::RegionTopInfo::FLAVOR
+    when Integer
+      flavor
     else
       warn "Unknown flavor requested. Returning RegionBasicInfo."
-      return Ragweed::Wraposx::RegionBasicInfo.get(@task, addr)
+      Ragweed::Wraposx::RegionBasicInfo::FLAVOR
+    end
+    
+    if Ragweed::Wraposx.respond_to? :vm_region_64
+      Ragweed::Wraposx.vm_region_64(@task, addr, flav)
+    else
+      Ragweed::Wraposx.vm_region(@task, addr, flav)
     end
   end
 
