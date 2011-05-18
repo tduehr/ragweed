@@ -34,6 +34,14 @@ module Ragweed::Wraposx::ThreadContext
   I386_FLOAT_STATE      = X86_FLOAT_STATE32
   I386_EXCEPTION_STATE  = X86_EXCEPTION_STATE32
 
+  def self.get(thread, flavor = X86_THREAD_STATE)
+    Ragweed::Wraposx.thread_get_state(thread, flavor)
+  end
+
+  def self.set(thread, state)
+    Ragweed::Wraposx.thread_set_state(thread, state.class::FLAVOR, state)
+  end
+
   # struct x86_state_hdr {
   #         int     flavor;
   #         int     count;
@@ -879,8 +887,8 @@ module Ragweed::Wraposx
     #                 thread_state_t                       old_state,
     #                 mach_msg_type_number_t         old_state_count);
     def thread_get_state(thread,flavor)
-      state = FFI::MemoryPointer.new Ragweed::Wraposx::ThreadContext::FLAVOR[flavor][:class], 1
-      count = FFI::MemoryPointer.new(:int, 1).write_int Ragweed::Wraposx::ThreadContext::FLAVOR[flavor][:count]
+      state = FFI::MemoryPointer.new Ragweed::Wraposx::ThreadContext::FLAVORS[flavor][:class], 1
+      count = FFI::MemoryPointer.new(:int, 1).write_int Ragweed::Wraposx::ThreadContext::FLAVORS[flavor][:count]
       r = Libc.thread_get_state(thread, flavor, state, count)
       raise KernelCallError.new(:thread_get_state, r) if r != 0
       Ragweed::Wraposx::ThreadContext::FLAVOR[flavor][:class].new state
