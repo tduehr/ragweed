@@ -236,9 +236,9 @@ module Ragweed::Wraposx
     def vm_region(task, addr, flavor)
       info = FFI::MemoryPointer.new(Vm::FLAVORS[flavor][:class], 1)
       count = FFI::MemoryPointer.new(:int, 1).write_int(Vm::FLAVORS[flavor][:count])
-      address = FFI::MemoryPointer.new(:vm_address_t, 1).write_ulong(addr)
-      sz = FFI::MemoryPointer.new(:vm_size_t, 1)
-      objn = FFI::MemoryPointer.new(:mach_port_t, 1)
+      address = FFI::MemoryPointer.new(Libc.find_type(:vm_address_t), 1).write_ulong(addr)
+      sz = FFI::MemoryPointer.new(Libc.find_type(:vm_size_t), 1)
+      objn = FFI::MemoryPointer.new(Libc.find_type(:mach_port_t), 1)
       
       r = Libc.vm_region(task, address, sz, flavor, info, count, objn)
       raise KernelCallError.new(:vm_region, r) if r != 0
@@ -272,8 +272,8 @@ module Ragweed::Wraposx
       
       r = Libc.vm_region_64(task, address, sz, flavor, info, count, objn)
       raise KernelCallError.new(:vm_region_64, r) if r != 0
-      ret = Vm::Flavors[flavor][:class].new info
-      ret.region_size = size.read_ulong
+      ret = Vm::FLAVORS[flavor][:class].new info
+      ret.region_size = sz.read_ulong
       ret.base_address = address.read_ulong
       ret
     end if Libc.find_function "vm_region_64"

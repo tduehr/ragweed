@@ -403,13 +403,13 @@ class Ragweed::Debuggerosx
   def region_info(addr, flavor = :basic)
     flav = case flavor
     when :basic
-      Ragweed::Wraposx::RegionBasicInfo::FLAVOR
+      Ragweed::Wraposx::Vm::RegionBasicInfo::FLAVOR
 
     # Extended and Top info flavors are included in case Apple re implements them
     when :extended
-      Ragweed::Wraposx::RegionExtendedInfo::FLAVOR
+      Ragweed::Wraposx::Vm::RegionExtendedInfo::FLAVOR
     when :top
-      Ragweed::Wraposx::RegionTopInfo::FLAVOR
+      Ragweed::Wraposx::Vm::RegionTopInfo::FLAVOR
     when Integer
       flavor
     else

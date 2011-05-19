@@ -194,7 +194,7 @@ EOM
            :rflags, :uint64,
            :cs, :uint64,
            :fs, :uint64,
-           :gs, :uint64,
+           :gs, :uint64
 
     module Flags
       CARRY =         0x1
@@ -228,16 +228,16 @@ EOM
       string =<<EOM
       -----------------------------------------------------------------------
       CONTEXT:
-      RIP: #{self.rip.to_s(16).rjust(16, "0")} #{maybe_dis.call(self.eip)}
+      RIP: #{self.rip.to_s(16).rjust(16, "0")} #{maybe_dis.call(self.rip)}
 
-      RAX: #{self.rax.to_s(16).rjust(16, "0")} #{maybe_hex.call(self.eax)}
-      RBX: #{self.rbx.to_s(16).rjust(16, "0")} #{maybe_hex.call(self.ebx)}
-      RCX: #{self.rcx.to_s(16).rjust(16, "0")} #{maybe_hex.call(self.ecx)}
-      RDX: #{self.rdx.to_s(16).rjust(16, "0")} #{maybe_hex.call(self.edx)}
-      RDI: #{self.rdi.to_s(16).rjust(16, "0")} #{maybe_hex.call(self.edi)}
-      RSI: #{self.rsi.to_s(16).rjust(16, "0")} #{maybe_hex.call(self.esi)}
-      RBP: #{self.rbp.to_s(16).rjust(16, "0")} #{maybe_hex.call(self.ebp)}
-      RSP: #{self.rsp.to_s(16).rjust(16, "0")} #{maybe_hex.call(self.esp)}
+      RAX: #{self.rax.to_s(16).rjust(16, "0")} #{maybe_hex.call(self.rax)}
+      RBX: #{self.rbx.to_s(16).rjust(16, "0")} #{maybe_hex.call(self.rbx)}
+      RCX: #{self.rcx.to_s(16).rjust(16, "0")} #{maybe_hex.call(self.rcx)}
+      RDX: #{self.rdx.to_s(16).rjust(16, "0")} #{maybe_hex.call(self.rdx)}
+      RDI: #{self.rdi.to_s(16).rjust(16, "0")} #{maybe_hex.call(self.rdi)}
+      RSI: #{self.rsi.to_s(16).rjust(16, "0")} #{maybe_hex.call(self.rsi)}
+      RBP: #{self.rbp.to_s(16).rjust(16, "0")} #{maybe_hex.call(self.rbp)}
+      RSP: #{self.rsp.to_s(16).rjust(16, "0")} #{maybe_hex.call(self.rsp)}
       RFL: #{(self.rflags & 0xffffffff).to_s(2).rjust(32, "0")} #{Flags.flag_dump(self.rflags & 0xffffffff)}
 EOM
     end
@@ -272,7 +272,7 @@ EOM
       def methods regular=true
         ret = super + self.members.map{|x| [x.to_s, x.to_s + "="]}
         ret += self[:tsh].members.map{|x| [x.to_s, x.to_s + "="]}
-        ret + case self[:tsh][:flavor]
+        ret += case self[:tsh][:flavor]
         when Ragweed::Wraposx::ThreadContext::X86_THREAD_STATE32
           self[:uts].ts32.members.map{|x| [x.to_s, x.to_s + "="]}
         when Ragweed::Wraposx::ThreadContext::X86_THREAD_STATE64
@@ -286,7 +286,7 @@ EOM
       def methods regular=true
         ret = super + self.members.map{|x| [x, (x.to_s + "=").intern]}
         ret += self[:tsh].members.map{|x| [x, (x.to_s + "=").intern]}
-        ret + case self[:tsh][:flavor]
+        ret += case self[:tsh][:flavor]
         when Ragweed::Wraposx::ThreadContext::X86_THREAD_STATE32
           self[:uts].ts32.members.map{|x| [x, (x.to_s + "=").intern]}
         when Ragweed::Wraposx::ThreadContext::X86_THREAD_STATE64
@@ -874,7 +874,7 @@ module Ragweed::Wraposx
   module Libc
     extend FFI::Library
     ffi_lib FFI::Library::LIBC
-    attach_function :thread_get_state, [:thread_act_t, :thread_state_flavor_t, :pointer, :mach_msg_type_number_t], :kern_return_t
+    attach_function :thread_get_state, [:thread_act_t, :thread_state_flavor_t, :pointer, :pointer], :kern_return_t
     attach_function :thread_set_state, [:thread_act_t, :thread_state_flavor_t, :pointer, :mach_msg_type_number_t], :kern_return_t
   end
 
@@ -885,13 +885,13 @@ module Ragweed::Wraposx
     #                (thread_act_t                     target_thread,
     #                 thread_state_flavor_t                   flavor,
     #                 thread_state_t                       old_state,
-    #                 mach_msg_type_number_t         old_state_count);
+    #                 mach_msg_type_number_t         *old_state_count);
     def thread_get_state(thread,flavor)
-      state = FFI::MemoryPointer.new Ragweed::Wraposx::ThreadContext::FLAVORS[flavor][:class], 1
-      count = FFI::MemoryPointer.new(:int, 1).write_int Ragweed::Wraposx::ThreadContext::FLAVORS[flavor][:count]
+      state = FFI::MemoryPointer.new Ragweed::Wraposx::ThreadContext::FLAVORS[flavor][:class]
+      count = FFI::MemoryPointer.new(:int, 1).write_uint Ragweed::Wraposx::ThreadContext::FLAVORS[flavor][:count]
       r = Libc.thread_get_state(thread, flavor, state, count)
       raise KernelCallError.new(:thread_get_state, r) if r != 0
-      Ragweed::Wraposx::ThreadContext::FLAVOR[flavor][:class].new state
+      Ragweed::Wraposx::ThreadContext::FLAVORS[flavor][:class].new state
     end
 
     # Sets the register state of thread.
@@ -900,11 +900,11 @@ module Ragweed::Wraposx
     #                (thread_act_t                     target_thread,
     #                 thread_state_flavor_t                   flavor,
     #                 thread_state_t                       new_state,
-    #                 mach_msg_number_t                  new_state_count);
+    #                 mach_msg_type_number_t         new_state_count);
     def thread_set_state(thread, flavor, state)
       r = Libc.thread_set_state(thread, flavor, state.to_ptr, ThreadContext::FLAVORS[flavor][:count])
       raise KernelCallError.new(:thread_set_state, r) if r!= 0
-      Ragweed::Wraposx::ThreadContext::FLAVOR[flavor][:class].new state
+      Ragweed::Wraposx::ThreadContext::FLAVORS[flavor][:class].new state
     end
   end
 end

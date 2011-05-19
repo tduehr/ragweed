@@ -178,7 +178,7 @@ module Ragweed::Wraposx
     # There is no man page for this call.
     def task_for_pid(pid, target=nil)
       target ||= mach_task_self
-      port = FFI::MemoryPointer.new :int, 1
+      port = FFI::MemoryPointer.new :uint, 1
       r = Libc.task_for_pid(target, pid, port)
       raise KernelCallError.new(:task_for_pid, r) if r != 0
       port.read_uint
@@ -193,11 +193,11 @@ module Ragweed::Wraposx
     #
     #There is no man page for this funtion.    
     def task_threads(port)
-      threads = FFI::MemoryPointer.new :int, 1
+      threads = FFI::MemoryPointer.new :pointer, 1
       count = FFI::MemoryPointer.new :int, 1
       r = Libc.task_threads(port, threads, count)
       raise KernelCallError.new(:task_threads, r) if r != 0
-      threads.read_array_of_int(count.read_int)
+      threads.read_pointer.read_array_of_uint(count.read_uint)
     end
 
     # Decrement the target tasks suspend count
