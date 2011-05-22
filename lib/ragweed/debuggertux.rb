@@ -230,7 +230,6 @@ class Ragweed::Debuggertux
   ## Should be used by most search methods
   def search_page(base, max, val, &block)
     loc = []
-puts "searching #{base.to_s(16)}"
     if self.use_ptrace_for_search == true
         while base.to_i < max.to_i
             r = Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::PEEK_TEXT, @pid, base, 0)
