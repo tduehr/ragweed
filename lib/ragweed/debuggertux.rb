@@ -13,7 +13,7 @@ module Ragweed; end
 ##     that Debuggertux already handles, call "super", too.
 class Ragweed::Debuggertux
   attr_reader :pid, :status, :exited, :signal
-  attr_accessor :breakpoints, :mapped_regions, :process
+  attr_accessor :breakpoints, :mapped_regions, :process, :use_ptrace_for_search
 
   ## Class to handle installing/uninstalling breakpoints
   class Breakpoint
@@ -74,6 +74,7 @@ class Ragweed::Debuggertux
     default_opts(opts)
     @installed = false
     @attached = false
+    @use_ptrace_for_search = false
 
     @mapped_regions = Hash.new
     @breakpoints = Hash.new
@@ -132,7 +133,6 @@ class Ragweed::Debuggertux
   ## value = Size of the region
   def mapped
     @mapped_regions.clear if @mapped_regions
-
     File.open("/proc/#{pid}/maps") do |f|
       f.each_line do |l|
         e = l.split(' ',2).first
@@ -209,9 +209,7 @@ class Ragweed::Debuggertux
           lib = l.split(' ', 6)
           sa = l.split('-', 0)
 
-          if lib[5] =~ /vdso/
-            next
-          end
+          next if lib[5] =~ /vdso/
 
           lib = lib[5].strip
           lib.gsub!(/[\s\n]+/, "")
@@ -229,50 +227,90 @@ class Ragweed::Debuggertux
   end
 
   ## Search a specific page for a value
-  ## Should be used by most of the search_* methods
-  def search_page(base, max, val)
-    loc = Array.new
-
-    while base.to_i < max.to_i
-        r = Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::PEEK_TEXT, @pid, base, 0)
-        if r == val
-            loc.push(base)
+  ## Should be used by most search methods
+  def search_page(base, max, val, &block)
+    loc = []
+puts "searching #{base.to_s(16)}"
+    if self.use_ptrace_for_search == true
+        while base.to_i < max.to_i
+            r = Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::PEEK_TEXT, @pid, base, 0)
+            loc << base if r == val
+            base += 4
+            yield loc if block_given?
         end
-        base += 1
+    else
+        sz = max.to_i - base.to_i
+        d = File.new("/proc/#{pid}/mem")
+        d.seek(base.to_i, IO::SEEK_SET)
+        b = d.read(sz)
+        i = 0
+        while(i < sz)
+          if val == b[i,4].unpack('L')
+            loc << base.to_i + i
+            yield(base.to_i + i) if block_given?
+          end
+          i += 4
+        end
+        d.close
     end
 
     loc
   end
 
-  ## Search the heap for a value
-  def search_heap(val)
-    loc = Array.new
+  def search_mem_by_name(name, val, &block)
+    loc = []
     File.open("/proc/#{pid}/maps") do |f|
       f.each_line do |l|
-        if l =~ /\[heap\]/
+        if l =~ /\[#{name}\]/
           s,e = l.split('-')
           e = e.split(' ').first
           s = s.to_i(16)
           e = e.to_i(16)
           sz = e - s
           max = s + sz
-          loc = search_page(s, max, val)
+          loc << search_page(s, max, val, &block)
         end
       end
     end
-    loc
+    loc    
+  end
+
+  def search_mem_by_permission(perm, val, &block)
+    loc = []
+    File.open("/proc/#{pid}/maps") do |f|
+      f.each_line do |l|
+        if l.split(' ')[1] =~ /#{perm}/
+          s,e = l.split('-')
+          e = e.split(' ').first
+          s = s.to_i(16)
+          e = e.to_i(16)
+          sz = e - s
+          max = s + sz
+          loc << search_page(s, max, val, &block)
+        end
+      end
+    end
+    loc    
+  end
+
+  ## Search the heap for a value, returns an array of matches
+  def search_heap(val, &block)
+    search_mem_by_name('heap', &block)
+  end
+
+  ## Search the stack for a value, returns an array of matches
+  def search_stack(val, &block)
+    search_mem_by_name('stack', &block)
   end
 
   ## Search all mapped regions for a value
-  def search_process(val)
-    loc = Array.new
+  def search_process(val, &block)
+    loc = []
     self.mapped
     @mapped_regions.each_pair do |k,v|
-        if k == 0 or v == 0
-            next
-        end
+        next if k == 0 or v == 0
         max = k+v
-        loc.concat(search_page(k, max, val))
+        loc << search_page(k, max, val, &block)
     end
     loc
   end
