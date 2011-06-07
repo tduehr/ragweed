@@ -264,7 +264,7 @@ module Ragweed::Wraposx
     def vm_region_64(task, addr, flavor)
       # OSX does this as well, so we need to do it ourselves
       flavor = Vm::REGION_BASIC_INFO_64 if flavor == Vm::REGION_BASIC_INFO
-      info = FFI::MemoryPointer.new(:uint8, Vm::FLAVORS[flavor][:size])
+      info = FFI::MemoryPointer.new(Vm::FLAVORS[flavor][:class])
       count = FFI::MemoryPointer.new(Libc.find_type(:mach_msg_type_number_t), 1).write_uint(Vm::FLAVORS[flavor][:count])
       address = FFI::MemoryPointer.new(Libc.find_type(:vm_address_t), 1).write_ulong(addr)
       sz = FFI::MemoryPointer.new(Libc.find_type(:vm_size_t), 1)

@@ -437,7 +437,7 @@ class Ragweed::Debuggerosx
             first
         if exact && (rtype == name || purpose == name)
           ret << [saddr, eaddr].map{|x| x.to_i(16)}
-        elsif rtype.match(name) || purpose.match(name)
+        elsif rtype && purpose && (rtype.match(name) || purpose.match(name))
           ret << [saddr, eaddr].map{|x| x.to_i(16)}
         end
       end
