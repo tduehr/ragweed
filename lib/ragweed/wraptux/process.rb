@@ -8,7 +8,8 @@ class Ragweed::Process
     ## Read/write ranges of data or fixnums to/from the process by address.
     def read(off, sz=4096)
         a = []
-        while off < off+sz
+        max = off+sz
+        while off < max
             a.push(Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::PEEK_TEXT, @pid, off, 0))
             return a.pack('L*') if a.last == -1 and FFI.errno != 0
             off+=4
