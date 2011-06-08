@@ -253,14 +253,14 @@ class Ragweed::Debuggerosx
   # resumes thread that has been suspended via thread_suspend
   # thread: thread id of thread to be resumed
   def resume(thread = nil)
-    thread = (thread or self.threads.first)
+    thread ||= self.threads.first)
     Ragweed::Wraposx::thread_resume(thread)
   end
 
   # suspends thread
   # thread: thread id of thread to be suspended
   def suspend(thread = nil)
-    thread = (thread or self.threads.first)
+    thread ||= self.threads.first)
     Ragweed::Wraposx::thread_suspend(thread)
   end
 
