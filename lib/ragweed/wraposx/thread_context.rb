@@ -50,6 +50,20 @@ module Ragweed::Wraposx::ThreadContext
     include Ragweed::FFIStructInclude
     layout :flavor, :int,
            :count, :int
+    def is_64?
+      case self[:flavor]
+      when 1, 2, 3, 10
+        false
+      when 4, 5, 6, 11
+        true
+      else
+        nil
+      end
+    end
+    
+    def is_32?
+      !is_64?
+    end
   end
 
   # _STRUCT_X86_THREAD_STATE32
@@ -264,6 +278,10 @@ EOM
     layout :tsh, Ragweed::Wraposx::ThreadContext::X86StateHdr,
            :uts, Ragweed::Wraposx::ThreadContext::UnionThreadState
 
+    def is_64?; self[:tsh].is_64?; end
+    def is_32?; !is_64?; end
+    def header; self[:fsh]; end
+    
     # We have rubified this FFI structure by creating a bunch of proxy
     # methods that are normally only accessible via self.v.x.y which is
     # a lot to type. You can still use that method however these proxy
@@ -274,9 +292,9 @@ EOM
         ret += self[:tsh].members.map{|x| [x.to_s, x.to_s + "="]}
         ret += case self[:tsh][:flavor]
         when Ragweed::Wraposx::ThreadContext::X86_THREAD_STATE32
-          self[:uts].ts32.members.map{|x| [x.to_s, x.to_s + "="]}
+          self[:uts][:ts32].members.map{|x| [x.to_s, x.to_s + "="]}
         when Ragweed::Wraposx::ThreadContext::X86_THREAD_STATE64
-          self[:uts].ts64.members.map{|x| [x.to_s, x.to_s + "="]}
+          self[:uts][:ts64].members.map{|x| [x.to_s, x.to_s + "="]}
         else
           []
         end
@@ -288,9 +306,9 @@ EOM
         ret += self[:tsh].members.map{|x| [x, (x.to_s + "=").intern]}
         ret += case self[:tsh][:flavor]
         when Ragweed::Wraposx::ThreadContext::X86_THREAD_STATE32
-          self[:uts].ts32.members.map{|x| [x, (x.to_s + "=").intern]}
+          self[:uts][:ts32].members.map{|x| [x, (x.to_s + "=").intern]}
         when Ragweed::Wraposx::ThreadContext::X86_THREAD_STATE64
-          self[:uts].ts64.members.map{|x| [x, (x.to_s + "=").intern]}
+          self[:uts][:ts64].members.map{|x| [x, (x.to_s + "=").intern]}
         else
           []
         end
@@ -310,9 +328,9 @@ EOM
         else
           case self[:tsh][:flavor]
           when Ragweed::Wraposx::ThreadContext::X86_THREAD_STATE32
-            self[:uts].ts32.__send__(:[]=, mth, *args)
+            self[:uts][:ts32].__send__(:[]=, mth, *args)
           when Ragweed::Wraposx::ThreadContext::X86_THREAD_STATE64
-            self[:uts].ts64.__send__(:[]=, mth, *args)
+            self[:uts][:ts64].__send__(:[]=, mth, *args)
           end
         end
       else
@@ -324,9 +342,9 @@ EOM
         else
           case self[:tsh][:flavor]
           when Ragweed::Wraposx::ThreadContext::X86_THREAD_STATE32
-            self[:uts].ts32.__send__(:[], meth, *args)
+            self[:uts][:ts32].__send__(:[], meth, *args)
           when Ragweed::Wraposx::ThreadContext::X86_THREAD_STATE64
-            self[:uts].ts64.__send__(:[], meth, *args)
+            self[:uts][:ts64].__send__(:[], meth, *args)
           end
         end
       end
@@ -435,6 +453,10 @@ EOM
     layout :dsh, Ragweed::Wraposx::ThreadContext::X86StateHdr,
            :uds, Ragweed::Wraposx::ThreadContext::UnionDebugState
 
+     def is_64?; self[:dsh].is_64?; end
+     def is_32?; !is_64?; end
+     def header; self[:dsh]; end
+
     # We have rubified this FFI structure by creating a bunch of proxy
     # methods that are normally only accessible via self.v.x.y which is
     # a lot to type. You can still use that method however these proxy
@@ -443,11 +465,11 @@ EOM
       def methods regular=true
         ret = super + self.members.map{|x| [x.to_s, x.to_s + "="]}
         ret += self[:dsh].members.map{|x| [x.to_s, x.to_s + "="]}
-        ret + case self[:dsh][:flavor]
+        ret += case self[:dsh][:flavor]
         when Ragweed::Wraposx::ThreadContext::X86_DEBUG_STATE32
-          self[:uds].ds32.members.map{|x| [x.to_s, x.to_s + "="]}
+          self[:uds][:ds32].members.map{|x| [x.to_s, x.to_s + "="]}
         when Ragweed::Wraposx::ThreadContext::X86_DEBUG_STATE64
-          self[:uds].ds64.members.map{|x| [x.to_s, x.to_s + "="]}
+          self[:uds][:ds64].members.map{|x| [x.to_s, x.to_s + "="]}
         else
           []
         end
@@ -457,11 +479,11 @@ EOM
       def methods regular=true
         ret = super + self.members.map{|x| [x, (x.to_s + "=").intern]}
         ret += self[:dsh].members.map{|x| [x, (x.to_s + "=").intern]}
-        ret + case self[:dsh][:flavor]
+        ret += case self[:dsh][:flavor]
         when Ragweed::Wraposx::ThreadContext::X86_DEBUG_STATE32
-          self[:uds].ds32.members.map{|x| [x, (x.to_s + "=").intern]}
+          self[:uds][:ds32].members.map{|x| [x, (x.to_s + "=").intern]}
         when Ragweed::Wraposx::ThreadContext::X86_DEBUG_STATE64
-          self[:uds].ds64.members.map{|x| [x, (x.to_s + "=").intern]}
+          self[:uds][:ds64].members.map{|x| [x, (x.to_s + "=").intern]}
         else
           []
         end
@@ -481,9 +503,9 @@ EOM
         else
           case self[:dsh][:flavor]
           when Ragweed::Wraposx::ThreadContext::X86_DEBUG_STATE32
-            self[:uds].ds32.__send__(:[]=, mth, *args)
+            self[:uds][:ds32].__send__(:[]=, mth, *args)
           when Ragweed::Wraposx::ThreadContext::X86_DEBUG_STATE64
-            self[:uds].ds64.__send__(:[]=, mth, *args)
+            self[:uds][:ds64].__send__(:[]=, mth, *args)
           end
         end
       else
@@ -495,9 +517,9 @@ EOM
         else
           case self[:dsh][:flavor]
           when Ragweed::Wraposx::ThreadContext::X86_DEBUG_STATE32
-            self[:uds].ds32.__send__(:[], meth, *args)
+            self[:uds][:ds32].__send__(:[], meth, *args)
           when Ragweed::Wraposx::ThreadContext::X86_DEBUG_STATE64
-            self[:uds].ds64.__send__(:[], meth, *args)
+            self[:uds][:ds64].__send__(:[], meth, *args)
           end
         end
       end
@@ -575,7 +597,11 @@ EOM
     layout :esh, Ragweed::Wraposx::ThreadContext::X86StateHdr,
            :ues, Ragweed::Wraposx::ThreadContext::UnionExceptionState
 
-    #comment
+
+    def is_64?; self[:esh].is_64?; end
+    def is_32?; !is_64?; end
+    def header; self[:esh]; end
+
     # We have rubified this FFI structure by creating a bunch of proxy
     # methods that are normally only accessible via self.v.x.y which is
     # a lot to type. You can still use that method however these proxy
@@ -584,11 +610,11 @@ EOM
       def methods regular=true
         ret = super + self.members.map{|x| [x.to_s, x.to_s + "="]}
         ret += self[:esh].members.map{|x| [x.to_s, x.to_s + "="]}
-        ret + case self[:esh][:flavor]
+        ret += case self[:esh][:flavor]
         when Ragweed::Wraposx::ThreadContext::X86_EXCEPTION_STATE32
-          self[:ues].es32.members.map{|x| [x.to_s, x.to_s + "="]}
+          self[:ues][:es32].members.map{|x| [x.to_s, x.to_s + "="]}
         when Ragweed::Wraposx::ThreadContext::X86_EXCEPTION_STATE64
-          self[:ues].es64.members.map{|x| [x.to_s, x.to_s + "="]}
+          self[:ues][:es64].members.map{|x| [x.to_s, x.to_s + "="]}
         else
           []
         end
@@ -598,11 +624,11 @@ EOM
       def methods regular=true
         ret = super + self.members.map{|x| [x, (x.to_s + "=").intern]}
         ret += self[:esh].members.map{|x| [x, (x.to_s + "=").intern]}
-        ret + case self[:esh][:flavor]
+        ret += case self[:esh][:flavor]
         when Ragweed::Wraposx::ThreadContext::X86_EXCEPTION_STATE32
-          self[:ues].es32.members.map{|x| [x, (x.to_s + "=").intern]}
+          self[:ues][:es32].members.map{|x| [x, (x.to_s + "=").intern]}
         when Ragweed::Wraposx::ThreadContext::X86_EXCEPTION_STATE64
-          self[:ues].es64.members.map{|x| [x, (x.to_s + "=").intern]}
+          self[:ues][:es64].members.map{|x| [x, (x.to_s + "=").intern]}
         else
           []
         end
@@ -622,9 +648,9 @@ EOM
         else
           case self[:esh][:flavor]
           when Ragweed::Wraposx::ThreadContext::X86_EXCEPTION_STATE32
-            self[:ues].es32.__send__(:[]=, mth, *args)
+            self[:ues][:es32].__send__(:[]=, mth, *args)
           when Ragweed::Wraposx::ThreadContext::X86_EXCEPTION_STATE64
-            self[:ues].es64.__send__(:[]=, mth, *args)
+            self[:ues][:es64].__send__(:[]=, mth, *args)
           end
         end
       else
@@ -636,9 +662,9 @@ EOM
         else
           case self[:esh][:flavor]
           when Ragweed::Wraposx::ThreadContext::X86_EXCEPTION_STATE32
-            self[:ues].es32.__send__(:[], meth, *args)
+            self[:ues][:es32].__send__(:[], meth, *args)
           when Ragweed::Wraposx::ThreadContext::X86_EXCEPTION_STATE64
-            self[:ues].es64.__send__(:[], meth, *args)
+            self[:ues][:es64].__send__(:[], meth, *args)
           end
         end
       end
@@ -851,6 +877,83 @@ EOM
     FLAVOR = 8
     layout :fsh, Ragweed::Wraposx::ThreadContext::X86StateHdr,
            :ufs, Ragweed::Wraposx::ThreadContext::UnionFloatState
+
+    def is_64?; self[:fsh].is_64?; end
+    def is_32?; !is_64?; end
+    def header; self[:fsh]; end
+
+    # We have rubified this FFI structure by creating a bunch of proxy
+    # methods that are normally only accessible via self.v.x.y which is
+    # a lot to type. You can still use that method however these proxy
+    # methods should allow for considerably clearer code
+    if RUBY_VERSION < "1.9"
+      def methods regular=true
+        ret = super + self.members.map{|x| [x.to_s, x.to_s + "="]}
+        ret += self[:fsh].members.map{|x| [x.to_s, x.to_s + "="]}
+        ret += case self[:fsh][:flavor]
+        when Ragweed::Wraposx::ThreadContext::X86_FLOAT_STATE32
+          self[:ufs][:fs32].members.map{|x| [x.to_s, x.to_s + "="]}
+        when Ragweed::Wraposx::ThreadContext::X86_FLOAT_STATE64
+          self[:ufs][:fs64].members.map{|x| [x.to_s, x.to_s + "="]}
+        else
+          []
+        end
+        ret.flatten
+      end
+    else
+      def methods regular=true
+        ret = super + self.members.map{|x| [x, (x.to_s + "=").intern]}
+        ret += self[:fsh].members.map{|x| [x, (x.to_s + "=").intern]}
+        ret += case self[:fsh][:flavor]
+        when Ragweed::Wraposx::ThreadContext::X86_FLOAT_STATE32
+          self[:ufs][:fs32].members.map{|x| [x, (x.to_s + "=").intern]}
+        when Ragweed::Wraposx::ThreadContext::X86_FLOAT_STATE64
+          self[:ufs][:fs64].members.map{|x| [x, (x.to_s + "=").intern]}
+        else
+          []
+        end
+        ret.flatten
+      end
+    end
+
+    def method_missing meth, *args
+      super unless self.respond_to? meth
+      if meth.to_s =~ /=$/
+        mth = meth.to_s.gsub(/=$/,'').intern
+        if self.members.include? mth
+          # don't proxy
+          self.__send__(:[]=, mth, *args)
+        elsif self[:fsh].members.include? meth
+          self[:fsh].__send__(:[]=, mth, *args)
+        else
+          case self[:fsh][:flavor]
+          when Ragweed::Wraposx::ThreadContext::X86_EXCEPTION_STATE32
+            self[:ufs][:fs32].__send__(:[]=, mth, *args)
+          when Ragweed::Wraposx::ThreadContext::X86_EXCEPTION_STATE64
+            self[:ufs][:fs64].__send__(:[]=, mth, *args)
+          end
+        end
+      else
+        if self.members.include? meth
+          # don't proxy
+          self.__send__(:[], meth, *args)
+        elsif self[:fsh].members.include? meth
+          self[:fsh].__send__(:[], meth, *args)
+        else
+          case self[:fsh][:flavor]
+          when Ragweed::Wraposx::ThreadContext::X86_EXCEPTION_STATE32
+            self[:ufs][:fs32].__send__(:[], meth, *args)
+          when Ragweed::Wraposx::ThreadContext::X86_EXCEPTION_STATE64
+            self[:ufs][:fs64].__send__(:[], meth, *args)
+          end
+        end
+      end
+    end
+
+    def respond_to? meth, include_priv=false
+      mth = meth.to_s.gsub(/=$/,'') # may not be needed anymore
+      self.methods.include? mth || super
+    end
   end
 
   FLAVORS = {

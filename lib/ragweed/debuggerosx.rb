@@ -217,7 +217,7 @@ class Ragweed::Debuggerosx
     on_attach
     self.hook(opts) if (opts[:hook] and not @hooked)
     self.install_bps if (opts[:install] and not @installed)
-    return r
+    return r.first
   end
 
   # remove breakpoints and release child
@@ -229,7 +229,7 @@ class Ragweed::Debuggerosx
     @attached = false
     on_detach
     self.unhook(opts) if opts[:hook] and @hooked
-    return r
+    return r.first
   end
 
   # get task port for @pid and store in @task so mach calls can be made
@@ -253,14 +253,14 @@ class Ragweed::Debuggerosx
   # resumes thread that has been suspended via thread_suspend
   # thread: thread id of thread to be resumed
   def resume(thread = nil)
-    thread = (thread or self.threads.first)
+    thread ||= self.threads.first)
     Ragweed::Wraposx::thread_resume(thread)
   end
 
   # suspends thread
   # thread: thread id of thread to be suspended
   def suspend(thread = nil)
-    thread = (thread or self.threads.first)
+    thread ||= self.threads.first)
     Ragweed::Wraposx::thread_suspend(thread)
   end
 
@@ -359,7 +359,7 @@ class Ragweed::Debuggerosx
   # returns a Ragweed::Wraposx::ThreadContext object containing the register states
   # thread: thread to get the register state of
   def get_registers(thread=nil)
-    thread = (thread or self.threads.first)
+    thread ||= self.threads.first)
     Ragweed::Wraposx.thread_get_state(thread, Ragweed::Wraposx::ThreadContext::X86_THREAD_STATE)
   end
 
@@ -437,7 +437,7 @@ class Ragweed::Debuggerosx
             first
         if exact && (rtype == name || purpose == name)
           ret << [saddr, eaddr].map{|x| x.to_i(16)}
-        elsif rtype.match(name) || purpose.match(name)
+        elsif rtype && purpose && (rtype.match(name) || purpose.match(name))
           ret << [saddr, eaddr].map{|x| x.to_i(16)}
         end
       end
