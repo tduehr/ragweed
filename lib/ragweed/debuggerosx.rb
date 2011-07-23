@@ -253,14 +253,14 @@ class Ragweed::Debuggerosx
   # resumes thread that has been suspended via thread_suspend
   # thread: thread id of thread to be resumed
   def resume(thread = nil)
-    thread ||= self.threads.first)
+    thread ||= self.threads.first
     Ragweed::Wraposx::thread_resume(thread)
   end
 
   # suspends thread
   # thread: thread id of thread to be suspended
   def suspend(thread = nil)
-    thread ||= self.threads.first)
+    thread ||= self.threads.first
     Ragweed::Wraposx::thread_suspend(thread)
   end
 
@@ -359,7 +359,7 @@ class Ragweed::Debuggerosx
   # returns a Ragweed::Wraposx::ThreadContext object containing the register states
   # thread: thread to get the register state of
   def get_registers(thread=nil)
-    thread ||= self.threads.first)
+    thread ||= self.threads.first
     Ragweed::Wraposx.thread_get_state(thread, Ragweed::Wraposx::ThreadContext::X86_THREAD_STATE)
   end
 
