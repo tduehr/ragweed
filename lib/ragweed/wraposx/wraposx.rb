@@ -46,7 +46,7 @@ module Ragweed::Wraposx
     attach_function :task_for_pid, [:mach_port_name_t, :int, :pointer], :kern_return_t
     attach_function :task_threads, [:task_t, :pointer, :pointer], :kern_return_t
     attach_function :kill, [:pid_t, :int], :int
-    attach_function :vm_read_overwrite, [:vm_map_t, :vm_address_t, :vm_size_t, :vm_address_t, :pointer], :kern_return_t
+    attach_function :vm_read_overwrite, [:vm_map_t, :vm_address_t, :vm_size_t, :pointer, :pointer], :kern_return_t
     attach_function :vm_write, [:vm_map_t, :vm_address_t, :vm_offset_t, :mach_msg_type_number_t], :kern_return_t
     attach_function :vm_protect, [:vm_map_t, :vm_address_t, :vm_size_t, :boolean_t, :vm_prot_t], :kern_return_t
     attach_function :vm_allocate, [:vm_map_t, :pointer, :vm_size_t, :int], :kern_return_t
