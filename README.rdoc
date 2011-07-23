@@ -4,21 +4,20 @@
 
 == DESCRIPTION:
 
-* Ragweed is a set of scriptable debugging tools written mostly in native ruby.
+* Ragweed is a set of scriptable debugging tools written in native ruby.
 
-* Where required the Ruby/DL and Win32API libraries are used to interface the machine
+* Where required the FFI and Win32API libraries are used to interface the machine
   and OS native system calls.
+
+* There are no third party dependencies
 
 == Supported Platforms
 
 Ragweed is supported and has been tested on the following platforms (32bit intel only):
 
-  Windows 7
-  Windows XP
-  Linux Ubuntu 10.4
-  Linux Ubuntu 9.10
-  Mac OS X 10.6
-  Mac OS X 10.5
+  Windows XP, 7
+  Linux Ubuntu 9.04 -> 11.04
+  Mac OS X 10.5, 10.6
 
 Ragweed works with Ruby 1.8.7, 1.9.1 and 1.9.2 and should work with any Ruby that includes FFI support on 32bit WinXP, Win7, Linux 2.6 and OSX 10.6.
 We are actively investigating 64 bit support for each platform. Unfortunately, this will require significant changes to Ragweed.
@@ -48,7 +47,8 @@ Please see the examples directory for more. There are hit tracers for each platf
 == INSTALL:
 
   sudo gem install ragweed
-  # relax with a tasty beverage, you're done
+
+  # yep, thats it. you're done.
 
 == LICENSE:
 
