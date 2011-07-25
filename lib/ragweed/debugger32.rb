@@ -12,14 +12,14 @@ require ::File.join(::File.dirname(__FILE__),'wrap32')
 class Ragweed::Debugger32
   include Ragweed
 
-  ## This will preserve the last event seen, but as read only
-  ## useful if you want to pass around the ragweed object after
-  ## an event has occured (post-mortem crash analysis)
+  # This will preserve the last event seen, but as read only
+  # useful if you want to pass around the ragweed object after
+  # an event has occured (post-mortem crash analysis)
   attr_reader :event
 
-  ## Breakpoint class. Handles the actual setting,
-  ## removal and triggers for breakpoints.
-  ## no user servicable parts.
+  # Breakpoint class. Handles the actual setting,
+  # removal and triggers for breakpoints.
+  # no user servicable parts.
   class Breakpoint
 
     INT3 = 0xCC
@@ -64,9 +64,9 @@ class Ragweed::Debugger32
     end
 
     def call(*args); @callable.call(*args); end    
-  end ## End Breakpoint class
+  end # End Breakpoint class
 
-  ## Get a handle to the process so you can mess with it.
+  # Get a handle to the process so you can mess with it.
   def process; @p; end
   
   def self.find_by_regex(rx)
@@ -79,7 +79,7 @@ class Ragweed::Debugger32
   end
 
   def initialize(p)
-    ## grab debug privilege at least once
+    # grab debug privilege at least once
     @@token ||= Ragweed::Wrap32::ProcessToken.new.grant('seDebugPrivilege')
 
     p = Process.new(p) if p.kind_of? Numeric
@@ -96,10 +96,10 @@ class Ragweed::Debugger32
     @ntdll_dbg_break_point = @p.get_proc_remote('ntdll!DbgBreakPoint')
   end
 
-  ## single-step the thread (by TID). "callable" is something that honors
-  ## .call, like a Proc. In a dubious design decision: the "handle" to the
-  ## single stepper is the Proc object itself. See Debugger#on_breakpoint
-  ## for an example of how to use this.
+  # single-step the thread (by TID). "callable" is something that honors
+  # .call, like a Proc. In a dubious design decision: the "handle" to the
+  # single stepper is the Proc object itself. See Debugger#on_breakpoint
+  # for an example of how to use this.
   def step(tid, callable)
     if @steppers.empty?
       Ragweed::Wrap32::open_thread(tid) do |h|
@@ -111,9 +111,9 @@ class Ragweed::Debugger32
     @steppers << callable    
   end
 
-  ## turn off single-stepping for one callable (you can have more than one
-  ## at a time). In other words, when you pass a Proc to Debugger#step, save
-  ## it somewhere, and later pass it to "unstep" to turn it off. 
+  # turn off single-stepping for one callable (you can have more than one
+  # at a time). In other words, when you pass a Proc to Debugger#step, save
+  # it somewhere, and later pass it to "unstep" to turn it off. 
   def unstep(tid, callable)
     @steppers = @steppers.reject {|x| x == callable}
     if @steppers.empty?
@@ -125,7 +125,7 @@ class Ragweed::Debugger32
     end
   end
 
-  ## convenience: either from a TID or a BreakpointEvent, get the thread context.
+  # convenience: either from a TID or a BreakpointEvent, get the thread context.
   def context(tid_or_event)
     if not tid_or_event.kind_of? Numeric
       tid = tid_or_event.tid
@@ -135,16 +135,16 @@ class Ragweed::Debugger32
     Ragweed::Wrap32::open_thread(tid) { |h| Ragweed::Wrap32::get_thread_context(h) }
   end
 
-  ## set a breakpoint given an address, which can also be a string in the form
-  ## "module!function", as in, "user32!SendMessageW". Be aware that the symbol
-  ## lookup takes place in an injected thread; it's safer to use literal addresses
-  ## when possible.
+  # set a breakpoint given an address, which can also be a string in the form
+  # "module!function", as in, "user32!SendMessageW". Be aware that the symbol
+  # lookup takes place in an injected thread; it's safer to use literal addresses
+  # when possible.
   #
-  ## to handle the breakpoint, pass a block to this method, which will be called
-  ## when the breakpoint hits.
+  # to handle the breakpoint, pass a block to this method, which will be called
+  # when the breakpoint hits.
   #
-  ## breakpoints are always re-set after firing. If you don't want them to be
-  ## re-set, unset them manually.
+  # breakpoints are always re-set after firing. If you don't want them to be
+  # re-set, unset them manually.
   def breakpoint_set(ip, callable=nil, &block)
     if not callable and block_given?
       callable = block
@@ -152,7 +152,7 @@ class Ragweed::Debugger32
 
     def_status = false
 
-    ## This is usually 'Module!Function' or 'Module!0x1234'
+    # This is usually 'Module!Function' or 'Module!0x1234'
     if @p.is_breakpoint_deferred(ip) == true
         def_status = true
     else
@@ -160,23 +160,23 @@ class Ragweed::Debugger32
         ip = @p.get_proc_remote(ip)
     end
 
-    ## If we cant immediately set the breakpoint
-    ## mark it as deferred and wait till later
-    ## Sometimes *_proc_remote() will return the
-    ## name indicating failure (just in case)
+    # If we cant immediately set the breakpoint
+    # mark it as deferred and wait till later
+    # Sometimes *_proc_remote() will return the
+    # name indicating failure (just in case)
     if ip == 0 or ip == 0xFFFFFFFF or ip.kind_of? String
       def_status = true
     else
       def_status = false
     end
 
-    ## Dont want duplicate breakpoint objects
+    # Dont want duplicate breakpoint objects
     @breakpoints.each_key { |k| if k == ip then return end }
     bp = Breakpoint.new(@p, ip, def_status, callable)
     @breakpoints[ip] = bp
   end
 
-  ## Clear a breakpoint by ip
+  # Clear a breakpoint by ip
   def breakpoint_clear(ip)
     bp = @breakpoints[ip]
 
@@ -188,8 +188,8 @@ class Ragweed::Debugger32
     @breakpoints.delete(ip)
   end 
   
-  ## handle a breakpoint event:
-  ## call handlers for the breakpoint, step past and reset it.
+  # handle a breakpoint event:
+  # call handlers for the breakpoint, step past and reset it.
   def on_breakpoint(ev)
       ctx = context(ev)
       eip = ev.exception_address
@@ -200,34 +200,34 @@ class Ragweed::Debugger32
 
       @breakpoints[eip].uninstall
 
-      ## Call the block passed to breakpoint_set
-      ## which may have been passed through hook()
+      # Call the block passed to breakpoint_set
+      # which may have been passed through hook()
       @breakpoints[eip].call(ev, ctx)
 
-      ## single step past the instruction...
+      # single step past the instruction...
       step(ev.tid, (onestep = lambda do |ev, ctx|
         if ev.exception_address != eip
-          ## ... then re-install the breakpoint ...
+          # ... then re-install the breakpoint ...
           if not @breakpoints[eip].nil?
             @breakpoints[eip].install
           end
-          ## ... and stop single-stepping.
+          # ... and stop single-stepping.
           unstep(ev.tid, onestep)
         end
       end))
 
-      ## Put execution back where it's supposed to be...
+      # Put execution back where it's supposed to be...
       Ragweed::Wrap32::open_thread(ev.tid) do |h|
         ctx = context(ev)
         ctx.eip = eip ## eip was ev.exception_address
         Ragweed::Wrap32::set_thread_context(h, ctx)
       end
   
-    ## Tell the target to stop handling this event
+    # Tell the target to stop handling this event
     @handled = Ragweed::Wrap32::ContinueCodes::CONTINUE
   end
 
-  ## FIX: this method should be a bit more descriptive in its naming
+  # FIX: this method should be a bit more descriptive in its naming
   def get_dll_name(ev)
     name = Ragweed::Wrap32::get_mapped_filename(@p.handle, ev.base_of_dll, 256)
     name.gsub!(/[\n]+/,'')
@@ -264,7 +264,7 @@ class Ragweed::Debugger32
     end
   end
 
-  ## handle a single-step event  
+  # handle a single-step event  
   def on_single_step(ev)
     ctx = context(ev)
     Ragweed::Wrap32::open_thread(ev.tid) do |h|
@@ -279,36 +279,54 @@ class Ragweed::Debugger32
     @handled = Ragweed::Wrap32::ContinueCodes::CONTINUE
   end
 
-  ## This is sort of insane but most of my programs are just
-  ## debug loops, so if you don't do this, they just hang when
-  ## the target closes.
+  # This is sort of insane but most of my programs are just
+  # debug loops, so if you don't do this, they just hang when
+  # the target closes.
   def on_exit_process(ev)
     exit(1)
   end
 
-  ## TODO: Implement each of these
+  # @abstract
   def on_create_process(ev)       end
+  # @abstract
   def on_create_thread(ev)        end
+  # @abstract
   def on_exit_thread(ev)          end
+  # @abstract
   def on_output_debug_string(ev)  end
+  # @abstract
   def on_rip(ev)                  end
+  # @abstract
   def on_unload_dll(ev)           end
+  # @abstract
   def on_guard_page(ev)           end
+  # @abstract
   def on_alignment(ev)            end
+  # @abstract
   def on_bounds(ev)               end
+  # @abstract
   def on_divide_by_zero(ev)       end
+  # @abstract
   def on_int_overflow(ev)         end
+  # @abstract
   def on_invalid_handle(ev)       end
+  # @abstract
   def on_illegal_instruction(ev)  end
+  # @abstract
   def on_priv_instruction(ev)     end
+  # @abstract
   def on_stack_overflow(ev)       end
+  # @abstract
   def on_heap_corruption(ev)      end
+  # @abstract
   def on_buffer_overrun(ev)       end
+  # @abstract
   def on_invalid_disposition(ev)  end
+  # @abstract
   def on_attach()                 end
 
-  ## Read through me to see all the random events
-  ## you can hook in a subclass.
+  # Read through me to see all the random events
+  # you can hook in a subclass.
   def wait
     self.attach() if not @attached
 
@@ -370,15 +388,15 @@ class Ragweed::Debugger32
     @handled = Ragweed::Wrap32::ContinueCodes::UNHANDLED
   end
 
-  ## Debug loop
+  # Debug loop
   def loop
     while true
       wait
     end
   end
   
-  ## This is called implicitly by Debugger#wait.
-  ## Attaches to the child process for debugging
+  # This is called implicitly by Debugger#wait.
+  # Attaches to the child process for debugging
   def attach
     Ragweed::Wrap32::debug_active_process(@p.pid)
     Ragweed::Wrap32::debug_set_process_kill_on_exit
@@ -389,7 +407,7 @@ class Ragweed::Debugger32
     end
   end
 
-  ## Let go of the target.
+  # Let go of the target.
   def release
     Ragweed::Wrap32::debug_active_process_stop(@p.pid)
     @attached = false

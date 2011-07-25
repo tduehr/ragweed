@@ -1,4 +1,5 @@
 module Ragweed; end
+
 module Ragweed::Wraposx::ThreadInfo
   # info interfaces
   BASIC_INFO = 3  #basic information
@@ -9,8 +10,8 @@ module Ragweed::Wraposx::ThreadInfo
   SCHED_RR_INFO = 11
   # SCHED_FIFO_INFO = 12
 
+  # Thread run states
   module State
-    #Thread run states
     RUNNING = 1 #/* thread is running normally */
     STOPPED = 2 #/* thread is stopped */
     WAITING = 3 #/* thread is waiting normally */
@@ -31,8 +32,9 @@ module Ragweed::Wraposx::ThreadInfo
   # };
   class Basic < FFI::Struct
     include Ragweed::FFIStructInclude
+
+    # Thread flags (flags field).
     module Flags
-      #Thread flags (flags field).
       SWAPPED = 0x1 #/* thread is swapped out */
       IDLE = 0x2 #/* thread is an idle thread */
     end
@@ -142,7 +144,7 @@ end
 module Ragweed::Wraposx
   class << self
 
-    # Returns the packed string representation of the thread_info_t struct for later parsing.
+    # Returns the thread_info_t struct.
     #
     # kern_return_t   thread_info
     #                (thread_act_t                     target_thread,

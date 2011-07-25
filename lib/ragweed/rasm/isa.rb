@@ -1,3 +1,4 @@
+module Ragweed; end
 ## ------------------------------------------------------------------------
 
 # Rasm: a half-assed X86 assembler.
@@ -9,7 +10,6 @@
 # to inject trampoline functions and detours into remote processes. This
 # is Ruby code; you'd never use it where performance matters. It's not
 # enough to write a decent compiler, but it's enough to fuck up programs.
-module Ragweed; end
 module Ragweed::Rasm
   class NotImp < RuntimeError; end
   class Insuff < RuntimeError; end

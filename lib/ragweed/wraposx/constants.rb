@@ -1,5 +1,7 @@
 module Ragweed; end
 module Ragweed::Wraposx;end
+
+# PTRACE request constants
 module Ragweed::Wraposx::Ptrace
   TRACE_ME = 0 # child declares it's being traced
   #(READ|WRITE)_[IDU] are not valid in OSX but defined in ptrace.h
@@ -22,10 +24,11 @@ module Ragweed::Wraposx::Ptrace
   FIRSTMACH = 32 # for machine-specific requests
 end
 
+# the Ruby module Signal also has this information.
+# in reality, that is a better source since it's based on the signals
+# available at the time ruby was compiled.
+# @deprecated - Just use ::Signal
 module Ragweed::Wraposx::Signal
-  # the Ruby module Signal also has this information.
-  # in reality, that is a better source since it's based on the signals
-  # available at the time ruby was compiled.
   SIGHUP = 1 # hangup
   SIGINT = 2 # interrupt
   SIGQUIT = 3 # quit
@@ -68,6 +71,7 @@ module Ragweed::Wraposx::Signal
   SIGUSR2 = 31 # user defined signal 2
 end
 
+# options for wait()
 module Ragweed::Wraposx::Wait
   NOHANG = 0x01 # [XSI] no hang in wait/no child to reap
   UNTRACED = 0x02 # [XSI] notify on stop, untraced child
@@ -78,8 +82,9 @@ module Ragweed::Wraposx::Wait
 end
 
 module Ragweed::Wraposx::Vm; end
+
+# vm_protect permission flags for memory spaces
 module Ragweed::Wraposx::Vm::Prot
-  # vm_protect permission flags for memory spaces
   READ = 0x1 #read permission
   WRITE = 0x2 #write permission
   EXECUTE = 0x4 #execute permission
@@ -87,8 +92,8 @@ module Ragweed::Wraposx::Vm::Prot
   ALL = 0x7 #all permissions
 end
 
+# share mode constants
 module Ragweed::Wraposx::Vm::Sm
-  # share mode constants
   COW = 1
   PRIVATE = 2
   EMPTY = 3
@@ -98,6 +103,7 @@ module Ragweed::Wraposx::Vm::Sm
   SHARED_ALIASED = 7
 end
 
+# dyld constants
 module Ragweed::Wraposx::Dl
   RTLD_LAZY = 0x1
   RTLD_NOW = 0x2

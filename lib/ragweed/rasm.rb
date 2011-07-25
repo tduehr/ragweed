@@ -1,6 +1,3 @@
-# Dir[File.expand_path("#{File.dirname(__FILE__)}/rasm/*.rb")].each do |file|
-#   require file
-# end
 module Ragweed; end
 module Ragweed::Rasm
 
@@ -49,8 +46,6 @@ module Ragweed::Rasm
         ::File.join(::File.dirname(fname), dir, '**', '*.rb'))
     
     Dir.glob(search_me).sort.each {|rb| require rb}
-    # require File.dirname(File.basename(__FILE__)) + "/#{x}"
-
   end
 end  # module Ragweed::Rasm
 

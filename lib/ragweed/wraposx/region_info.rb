@@ -192,10 +192,10 @@ EOM
     end
   end
 
-  #define VM_REGION_BASIC_INFO_COUNT ((mach_msg_type_number_t) (sizeof(vm_region_basic_info_data_t)/sizeof(int)))
-  #define VM_REGION_BASIC_INFO_COUNT_64 ((mach_msg_type_number_t) (sizeof(vm_region_basic_info_data_64_t)/sizeof(int)))
-  #define VM_REGION_EXTENDED_INFO_COUNT   ((mach_msg_type_number_t) (sizeof(vm_region_extended_info_data_t)/sizeof(int)))
-  #define VM_REGION_TOP_INFO_COUNT ((mach_msg_type_number_t) (sizeof(vm_region_top_info_data_t)/sizeof(int)))
+  # define VM_REGION_BASIC_INFO_COUNT ((mach_msg_type_number_t) (sizeof(vm_region_basic_info_data_t)/sizeof(int)))
+  # define VM_REGION_BASIC_INFO_COUNT_64 ((mach_msg_type_number_t) (sizeof(vm_region_basic_info_data_64_t)/sizeof(int)))
+  # define VM_REGION_EXTENDED_INFO_COUNT   ((mach_msg_type_number_t) (sizeof(vm_region_extended_info_data_t)/sizeof(int)))
+  # define VM_REGION_TOP_INFO_COUNT ((mach_msg_type_number_t) (sizeof(vm_region_top_info_data_t)/sizeof(int)))
   FLAVORS = { REGION_BASIC_INFO => {:size => 30, :count => 8, :class => RegionBasicInfo},
       REGION_BASIC_INFO_64 => {:size => 30, :count => 9, :class => RegionBasicInfo64},
       REGION_EXTENDED_INFO => {:size => 32, :count => 8, :class => RegionExtendedInfo},

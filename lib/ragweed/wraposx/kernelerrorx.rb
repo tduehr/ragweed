@@ -1,8 +1,7 @@
-# Exception objects for kernel errors likely in Wraposx
-# If this were a C extension I'd use #ifdef on each to only create the required ones.
-
 module Ragweed; end
 module Ragweed::Wraposx; end
+
+# Exception objects for kernel errors likely in Wraposx
 module Ragweed::Wraposx::KernelReturn
   SUCCESS =               { :value => 0, :message => 'Not an error'}
   INVALID_ADDRESS =       { :value => 1, :message => 'Specified address is not currently valid.'}

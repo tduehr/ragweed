@@ -5,7 +5,7 @@ class Ragweed::Process
 
     def initialize(pid); @pid = pid; end
 
-    ## Read/write ranges of data or fixnums to/from the process by address.
+    # Read/write ranges of data or fixnums to/from the process by address.
     def read(off, sz=4096)
         a = []
         max = off+sz
@@ -17,9 +17,9 @@ class Ragweed::Process
         a.pack('L*')
     end
 
-    ## ptrace sucks, writing 8 or 16 bytes will probably
-    ## result in failure unless you PTRACE_POKE first and
-    ## get the rest of the original value at the address
+    # ptrace sucks, writing 8 or 16 bytes will probably
+    # result in failure unless you PTRACE_POKE first and
+    # get the rest of the original value at the address
     def write(off, data)
         while off < data.size
             Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::POKE_TEXT, @pid, off, data[off,4].unpack('L').first)

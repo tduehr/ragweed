@@ -21,7 +21,6 @@ class Ragweed::Debuggerosx
   attr_accessor :breakpoints
 
   class Breakpoint
-    #    include Ragweed::Wraposx
     INT3 = 0xCC
     attr_accessor :orig
     attr_accessor :bpid
@@ -70,14 +69,14 @@ class Ragweed::Debuggerosx
     def method_missing(meth, *args); @bp.send(meth, *args); end
   end
 
-  #init object
-  #p: pid of process to be debugged
-  #opts: default options for automatically doing things (attach, install, and hook)
+  # init object
+  # p: pid of process to be debugged
+  # opts: default options for automatically doing things (attach, install, and hook)
   def initialize(p,opts={})
     if p.kind_of? Numeric
       @pid = p
     else
-      #coming soon: find process by name
+      # coming soon: find process by name
       raise "Provide a PID"
     end
     @opts = opts
@@ -97,8 +96,11 @@ class Ragweed::Debuggerosx
     @opts.each {|k, v| try(k) if v}
   end
 
-  #loop calls to wait
-  #times: number of times to loop
+  # loop calls to wait.
+  # This is the main mode this class will be used at runtime.
+  # First, install the desired breakpoints. Then, run loop().
+  # 
+  # times: number of times to loop
   #       if nil this will loop until @exited is set
   def loop(times=nil)
     if times.kind_of? Numeric
@@ -111,6 +113,7 @@ class Ragweed::Debuggerosx
   end
 
   # wait for process and run callback on return then continue child
+  # This is usually called by loop()
   # FIXME - need to do signal handling better (loop through threads only for breakpoints and stepping)
   # opts: option flags to waitpid(2)
   #
@@ -165,27 +168,39 @@ class Ragweed::Debuggerosx
   end
 
   # these event functions are stubs. Implementations should override these
+
+  # Fired when attaching to the child process succeeds.
   def on_attach
   end
 
+  # Fired when detaching from the child process succeeds.
   def on_detach
   end
 
+  # Fired when single stepping at every step
+  # Not currently used in OSX
   def on_single_step
     #puts Ragweed::Wraposx::ThreadInfo.get(thread).inspect
   end
 
+  # Called with the child process's status on exit
+  # Implementations overriding this function should either set @exited to true or call super.
   def on_exit(status)
     @exited = true
   end
 
+  # Called with the signal used to exit kill the child process
+  # Implementations overriding this function should either set @exited to true or call super.
   def on_signal(signal)
     @exited = true
   end
 
+  # Called when the child process is stopped with the signal used.
   def on_stop(signal)
   end
 
+  # Called when the child process is continued.
+  # If used by an implementation, this will be a very noisy function.
   def on_continue
   end
 
@@ -235,16 +250,19 @@ class Ragweed::Debuggerosx
   # get task port for @pid and store in @task so mach calls can be made
   # opts is a hash for automatically firing other functions as an overide for @opts
   # returns the task port for @pid
+  # @deprecated - This function will change to attach_mach and instead become similar to the Debugger32#hook function used for tracing the entry and exit of functions in the child.
   def hook(opts=@opts)
     @task = Ragweed::Wraposx::task_for_pid(@pid)
     @hooked = true
     self.attach(opts) if opts[:attach] and not @attached
     return @task
   end
+  alias hook attach_mach
 
   # theoretically to close the task port but,
   # no way to close the port has yet been found.
   # This function currently does little/nothing.
+  # @deprecated - This will be removed at some point.
   def unhook(opts=@opts)
     self.detach(opts) if opts[:attach] and @attached
     self.unintsall_bps if opts[:install] and @installed
@@ -257,8 +275,8 @@ class Ragweed::Debuggerosx
     Ragweed::Wraposx::thread_resume(thread)
   end
 
-  # suspends thread
-  # thread: thread id of thread to be suspended
+  # suspends thread (increments the suspend count)
+  # thread: thread id of thread to be suspended defaults to first thread
   def suspend(thread = nil)
     thread ||= self.threads.first
     Ragweed::Wraposx::thread_suspend(thread)
@@ -310,24 +328,24 @@ class Ragweed::Debuggerosx
   # thread: id of the thread stopped at a breakpoint
   def on_breakpoint(thread)
     r = self.get_registers(thread)
-    #rewind eip to correct position
+    # rewind eip to correct position
     r.eip -= 1
-    #don't use r.eip since it may be changed by breakpoint callback
+    # don't use r.eip since it may be changed by breakpoint callback
     eip = r.eip
-    #clear stuff set by INT3
-    #r.esp -=4
-    #r.ebp = r.esp
-    #fire callback
+    # clear stuff set by INT3
+    # r.esp -=4
+    # r.ebp = r.esp
+    # fire callback
     @breakpoints[eip].call(thread, r, self)
     if @breakpoints[eip].first.installed?
-      #uninstall breakpoint to continue past it
+      # uninstall breakpoint to continue past it
       @breakpoints[eip].first.uninstall
-      #set trap flag so we don't go too far before reinserting breakpoint
+      # set trap flag so we don't go too far before reinserting breakpoint
       r.eflags |= Ragweed::Wraposx::EFlags::TRAP
-      #set registers to commit eip and eflags changes
+      # set registers to commit eip and eflags changes
       self.set_registers(thread, r)
 
-      #step once
+      # step once
       self.stepp
 
       # now we wait() to prevent a race condition that'll SIGBUS us
@@ -335,7 +353,7 @@ class Ragweed::Debuggerosx
       # instruction before the parent completes many
       Ragweed::Wraposx::waitpid(@pid,0)
 
-      #reset breakpoint
+      # reset the breakpoint
       @breakpoints[eip].first.install
     end
   end
@@ -400,6 +418,10 @@ class Ragweed::Debuggerosx
   def attached?; @attached; end
   def installed?; @installed; end
 
+  # returns information about a memory region
+  # addr: address contained in the memory region - usually the start address
+  # flavor: type of information to retrieve. May be specified as either symbol [:basic, :extended, :top] or by integer flavor id.
+  #   Currently, only the basic flavor is supported by Apple.
   def region_info(addr, flavor = :basic)
     flav = case flavor
     when :basic
@@ -425,7 +447,9 @@ class Ragweed::Debuggerosx
   end
 
   # XXX watch this space for an object to hold this information
-  # Return a range via mapping name
+  # Get memory ranges by mapping name
+  # name: name of memory range to search for
+  # exact: if true require an exact match, otherwise use regex
   def get_mapping_by_name name, exact = true
     ret = []
     IO.popen("vmmap -interleaved #{@pid}") do |pipe|

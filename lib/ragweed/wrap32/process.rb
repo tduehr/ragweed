@@ -35,25 +35,22 @@ class Ragweed::Process
   def is_hex(s)
     s = s.strip
 
-    ## Strip leading 0s and 0x prefix
+    # Strip leading 0s and 0x prefix
     while s[0..1] == '0x' or s[0..1] == '00'
-        s = s[2..-1]
+      s = s[2..-1]
     end
 
     o = s
 
-    if s.hex.to_s(16) == o
-        return true
-    end
-        return false
+    s.hex.to_s(16) == o
   end
 
-  ## This only gets called for breakpoints in modules
-  ## that have just been loaded and detected by a LOAD_DLL
-  ## event. It is called from on_load_dll() -> deferred_install()
+  # This only gets called for breakpoints in modules
+  # that have just been loaded and detected by a LOAD_DLL
+  # event. It is called from on_load_dll() -> deferred_install()
   def get_deferred_proc_remote(name, handle, base_of_dll)
     if !name.kind_of?String
-        return name
+      return name
     end
 
     mod, meth = name.split "!"
@@ -64,7 +61,7 @@ class Ragweed::Process
 
     modh = handle
 
-    ## Location is an offset
+    # Location is an offset
     if is_hex(meth)
         baseaddr = 0
         modules.each do |m|
@@ -75,15 +72,15 @@ class Ragweed::Process
 
         ret = base_of_dll + meth.hex
     else
-        ## Location is a symbolic name
-        ## Win32 should have successfully loaded the DLL
+        # Location is a symbolic name
+        # Win32 should have successfully loaded the DLL
         ret = remote_call "kernel32!GetProcAddress", modh, meth
     end
     ret
   end
 
-  ## This only gets called for breakpoints
-  ## in modules that are already loaded
+  # This only gets called for breakpoints
+  # in modules that are already loaded
   def get_proc_remote(name)
     if !name.kind_of?String
         return name
@@ -95,11 +92,10 @@ class Ragweed::Process
         raise "can not set this breakpoint: #{name}"
     end
 
-#    modh = remote_call "kernel32!GetModuleHandleW", mod.to_utf16
     modh = remote_call "kernel32!GetModuleHandleA", mod
     raise "no such module #{ mod }" if not modh
 
-    ## Location is an offset
+    # Location is an offset
     if is_hex(meth)
         baseaddr = 0
         modules.each do |m|
@@ -109,26 +105,26 @@ class Ragweed::Process
             end
         end
 
-        ## Somehow the module does not appear to be
-        ## loaded. This should have been caught by
-        ## Process::is_breakpoint_deferred either way
-        ## Process::initialize should catch this return
+        # Somehow the module does not appear to be
+        # loaded. This should have been caught by
+        # Process::is_breakpoint_deferred either way
+        # Process::initialize should catch this return
         if baseaddr == 0 or baseaddr == -1
             return name
         end
 
         ret = baseaddr + meth.hex
     else
-        ## Location is a symbolic name
+        # Location is a symbolic name
         ret = remote_call "kernel32!GetProcAddress", modh, meth
     end
     ret
   end
 
-  ## Check if breakpoint location is deferred
-  ## This method expects a string 'module!function'
-  ## true is the module is not yet loaded
-  ## false is the module is loaded
+  # Check if breakpoint location is deferred
+  # This method expects a string 'module!function'
+  # true is the module is not yet loaded
+  # false is the module is loaded
   def is_breakpoint_deferred(ip)
     if !ip.kind_of? String
         return false
@@ -149,8 +145,8 @@ class Ragweed::Process
     return true
   end
 
-  ## Look up a process by name or regex, returning an array of all
-  ## matching processes, as objects.
+  # Look up a process by name or regex, returning an array of all
+  # matching processes, as objects.
   def self.by_name(n)
     n = Regexp.new(n) if not n.kind_of? Regexp
     p = []

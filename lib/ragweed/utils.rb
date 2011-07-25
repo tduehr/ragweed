@@ -1,6 +1,6 @@
 require 'iconv'
 
-#do not rely on this extension to range. it'll be removed at some point.
+# @deprecated - unused this will be removed at some point.
 class Range
   module RangeExtensions
     def each_backwards
@@ -47,11 +47,11 @@ class Object
       end
     end
 
-    ## This is from Topher Cyll's Stupd IRB tricks
+    # This is from Topher Cyll's Stupd IRB tricks
     def mymethods
       (self.methods - self.class.superclass.methods).sort
     end
-    # self-evident
+
     def callable?; respond_to? :call; end
     def number?; kind_of? Numeric; end
 
@@ -69,9 +69,13 @@ class Object
 end
 
 class String
+  # to little endian 32bit integer
   def to_l32; unpack("L").first; end
+  # to big endian 32bit integer
   def to_b32; unpack("N").first; end
+  # to little endian 16bit short
   def to_l16; unpack("v").first; end
+  # to big endian 16bit short
   def to_b16; unpack("n").first; end
   def to_u8; self[0]; end
   def shift_l32; shift(4).to_l32; end

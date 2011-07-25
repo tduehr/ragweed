@@ -6,7 +6,7 @@ class Ragweed::Debugger32
   def hook(ip, nargs, callable=nil, &block)
 
     callable ||= block || lambda do |ev,ctx,dir,args|
-      #puts args.map{|a| "%08x" % a}.join(',')
+      # puts args.map{|a| "%08x" % a}.join(',')
     end
 
     breakpoint_set(ip) do |ev,ctx|
@@ -17,13 +17,13 @@ class Ragweed::Debugger32
         args = (1..nargs).map {|i| process.read32(ctx.esp + 4*i)}
       end
 
-      ## set exit bpoint
-      ## We cant always set a leave bp due to
-      ## calling conventions but we can avoid
-      ## a crash by setting a breakpoint on
-      ## the wrong address. So we attempt to
-      ## get an idea of where the instruction
-      ## is mapped.
+      # set exit bpoint
+      # We cant always set a leave bp due to
+      # calling conventions but we can avoid
+      # a crash by setting a breakpoint on
+      # the wrong address. So we attempt to
+      # get an idea of where the instruction
+      # is mapped.
       eip = ctx.eip
       if esp != 0 #and esp > (eip & 0xf0000000)
         breakpoint_set(esp) do |ev,ctx|
@@ -32,7 +32,7 @@ class Ragweed::Debugger32
         end.install
       end
 
-      ## Call the block sent to hook()
+      # Call the block sent to hook()
       callable.call(ev, ctx, :enter, args)
     end
   end

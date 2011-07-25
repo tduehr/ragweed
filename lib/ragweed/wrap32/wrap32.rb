@@ -129,8 +129,8 @@ module Ragweed::Wrap32
     attach_function 'malloc', [ :long ], :long
     attach_function 'memcpy', [ :pointer, :pointer, :long ], :long
 
-    ## XXX This shouldnt be in psapi in win7, need to clean this up
-    ## XXX Also the unicode version should be supported, this is NOT complete
+    # XXX This shouldnt be in psapi in win7, need to clean this up
+    # XXX Also the unicode version should be supported, this is NOT complete
     ffi_lib 'psapi'
     ffi_convention :stdcall
     attach_function 'GetMappedFileNameA', [ :long, :long, :pointer, :long ], :long
@@ -201,7 +201,7 @@ module Ragweed::Wrap32
 
     # Read from a remote process given an address and length, returning a string.
     def read_process_memory(h, ptr, len)
-#      val = FFI::MemoryPointer.from_string("\x00" * len)
+      # val = FFI::MemoryPointer.from_string("\x00" * len)
       val = "\x00" * len
       r = Win.ReadProcessMemory(h, ptr.to_i, val, len, NULL)
       raise WinX.new(:read_process_memory) if r == 0
@@ -215,6 +215,7 @@ module Ragweed::Wrap32
         return val
     end
 
+    # @deprecated - will be replaced with a proper object
     def str2memory_basic_info(mbi)
       s = OpenStruct.new
       s.BaseAddress,
@@ -304,6 +305,7 @@ module Ragweed::Wrap32
       raise WinX.new(:wait_for_single_object) if r == -1
     end
 
+    # @deprecated - will be replaced with a proper object
     def str2process_info(str)
       ret = OpenStruct.new
       ret.dwSize,
@@ -337,6 +339,7 @@ module Ragweed::Wrap32
       end
     end
 
+    # @deprecated - will be replaced with a proper object
     def str2module_info(str)
       ret = OpenStruct.new
       ret.dwSize,
@@ -392,6 +395,7 @@ module Ragweed::Wrap32
       nil
     end
 
+    # @deprecated - will be replaced with a proper object
     def str2thread_info(str)
       ret = OpenStruct.new
       ret.dwSize,
