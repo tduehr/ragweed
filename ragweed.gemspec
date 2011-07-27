@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{ragweed}
-  s.version = "0.2.3"
+  s.version = "0.2.4"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
-  s.authors = ["tduehr", "struct", "tqbf"]
-  s.date = %q{2011-06-09}
+  s.authors = [%q{tduehr}, %q{struct}, %q{tqbf}]
+  s.date = %q{2011-07-27}
   s.description = %q{General debugging tool written in Ruby for OSX/Win32/Linux}
   s.email = %q{td@matasano.com}
   s.extra_rdoc_files = [
@@ -71,9 +71,9 @@ Gem::Specification.new do |s|
     "test/test_ragweed.rb"
   ]
   s.homepage = %q{http://github.com/tduehr/ragweed}
-  s.rdoc_options = ["--inline-source", "--line-numbers", "--main", "README.rdoc"]
-  s.require_paths = ["lib"]
-  s.rubygems_version = %q{1.5.2}
+  s.rdoc_options = [%q{--inline-source}, %q{--line-numbers}, %q{--main}, %q{README.rdoc}]
+  s.require_paths = [%q{lib}]
+  s.rubygems_version = %q{1.8.6}
   s.summary = %q{Scriptable debugger}
 
   if s.respond_to? :specification_version then
