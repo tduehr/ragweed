@@ -180,7 +180,6 @@ class Ragweed::Debuggerosx
   # Fired when single stepping at every step
   # Not currently used in OSX
   def on_single_step
-    #puts Ragweed::Wraposx::ThreadInfo.get(thread).inspect
   end
 
   # Called with the child process's status on exit
@@ -257,7 +256,7 @@ class Ragweed::Debuggerosx
     self.attach(opts) if opts[:attach] and not @attached
     return @task
   end
-  alias hook attach_mach
+  alias attach_mach hook
 
   # theoretically to close the task port but,
   # no way to close the port has yet been found.

@@ -142,6 +142,12 @@ EOM
 end
 
 module Ragweed::Wraposx
+  module Libc
+    extend FFI::Library
+    ffi_lib FFI::Library::LIBC
+    attach_function :thread_info, [:thread_act_t, :thread_flavor_t, :pointer, :pointer], :kern_return_t
+  end
+
   class << self
 
     # Returns the thread_info_t struct.

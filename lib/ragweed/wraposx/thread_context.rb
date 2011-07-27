@@ -355,6 +355,14 @@ EOM
       self.methods.include? mth || super
     end
 
+    def dump(&block)
+      case self[:tsh][:flavor]
+      when Ragweed::Wraposx::ThreadContext::X86_THREAD_STATE32
+        self[:uts][:ts32].dump(&block)
+      when Ragweed::Wraposx::ThreadContext::X86_THREAD_STATE64
+        self[:uts][:ts64].dump(&block)
+      end
+    end
   end
 
   # _STRUCT_X86_DEBUG_STATE32
