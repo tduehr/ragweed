@@ -508,6 +508,8 @@ class Ragweed::Debuggertux
   # @abstract
   def on_attach()              end
   # @abstract
+  def on_detach()              end
+  # @abstract
   def on_single_step()         end
   # @abstract
   def on_continue()            end
