@@ -1,6 +1,6 @@
 == Ragweed
     by tduehr, crohlf, and tqbf
-    http://chargen.matasano.com
+    http://www.matasano.com/research/ragweed/
 
 == DESCRIPTION:
 
@@ -46,7 +46,7 @@ Please see the examples directory for more. There are hit tracers for each platf
 
 == INSTALL:
 
-  sudo gem install ragweed
+  gem install ragweed
 
   # yep, thats it. you're done.
 
