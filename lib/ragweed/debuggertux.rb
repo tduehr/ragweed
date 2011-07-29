@@ -182,23 +182,13 @@ class Ragweed::Debuggertux
 
   # Helper method for retrieving stack range
   def get_stack_range
-    r = get_mapping_by_name('[stack]')
-    if r.empty?
-        return [[0,0]]
-    else
-        return r
-    end
+    get_mapping_by_name('[stack]')
   end
   alias stack_range get_stack_range
 
   # Helper method for retrieving heap range
   def get_heap_range
-    r = get_mapping_by_name('[heap]')
-    if r.empty?
-        return [[0,0]]
-    else
-        return r
-    end
+    get_mapping_by_name('[heap]')
   end
   alias heap_range get_heap_range
 
