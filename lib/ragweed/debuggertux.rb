@@ -165,12 +165,12 @@ class Ragweed::Debuggertux
     ret = []
     File.open("/proc/#{pid}/maps") do |f|
       f.each_line do |l|
-        range, perms, offset, dev, inode, pathname  = l.chomp.split(" ",6)
+        range, perms, offset, dev, inode, pathname = l.chomp.split(" ",6)
         base, max = range.split('-').map{|x| x.to_i(16)}
         if pathname
           if exact && pathname == name
             ret << range.split('-').map{|x| x.to_i(16)}
-          elsif pathname.match(name)
+          elsif pathname.match(name) and exact == false
             ret << range.split('-').map{|x| x.to_i(16)}
           end
         end
@@ -182,13 +182,23 @@ class Ragweed::Debuggertux
 
   # Helper method for retrieving stack range
   def get_stack_range
-    get_mapping_by_name('[stack]')
+    r = get_mapping_by_name('[stack]')
+    if r.empty?
+        return [[0,0]]
+    else
+        return r
+    end
   end
   alias stack_range get_stack_range
 
   # Helper method for retrieving heap range
   def get_heap_range
-    get_mapping_by_name('[heap]')
+    r = get_mapping_by_name('[heap]')
+    if r.empty?
+        return [[0,0]]
+    else
+        return r
+    end
   end
   alias heap_range get_heap_range
 
@@ -294,12 +304,12 @@ class Ragweed::Debuggertux
 
   # Search the heap for a value, returns an array of matches
   def search_heap(val, &block)
-    search_mem_by_name('heap', &block)
+    search_mem_by_name('heap', val, &block)
   end
 
   # Search the stack for a value, returns an array of matches
   def search_stack(val, &block)
-    search_mem_by_name('stack', &block)
+    search_mem_by_name('stack', val, &block)
   end
 
   # Search all mapped regions for a value
