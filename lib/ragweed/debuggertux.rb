@@ -62,7 +62,7 @@ class Ragweed::Debuggertux
   # init object
   # p: pid of process to be debugged
   # opts: default options for automatically doing things (attach and install)
-  def initialize(pid, opts) ## Debuggertux Class
+  def initialize(pid, opts = {}) # Debuggertux Class
     if p.to_i.kind_of? Fixnum
       @pid = pid.to_i
     else
