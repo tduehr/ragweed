@@ -109,6 +109,9 @@ class Ragweed::Debuggertux
     @installed = false
   end
 
+  def installed? @installed; end
+  def attached? @attached; end
+
   # This has not been fully tested yet
   def set_options(option)
     r = Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::SETOPTIONS, @pid, 0, option)
