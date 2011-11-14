@@ -99,7 +99,7 @@ class Ragweed::Process
     if is_hex(meth)
         baseaddr = 0
         modules.each do |m|
-            if m.szModule == mod
+            if m.szModule.to_s.match(/#{mod}/)
                 baseaddr = m.modBaseAddr
                 break
             end
