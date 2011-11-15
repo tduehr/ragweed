@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{ragweed}
-  s.version = "0.2.5"
+  s.version = "0.2.6"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = [%q{tduehr}, %q{struct}, %q{tqbf}]
-  s.date = %q{2011-07-27}
+  s.date = %q{2011-07-31}
   s.description = %q{General debugging tool written in Ruby for OSX/Win32/Linux}
   s.email = %q{td@matasano.com}
   s.extra_rdoc_files = [
@@ -70,7 +70,7 @@ Gem::Specification.new do |s|
     "spec/spec_helper.rb",
     "test/test_ragweed.rb"
   ]
-  s.homepage = %q{http://github.com/tduehr/ragweed}
+  s.homepage = %q{http://www.matasano.com/research/ragweed/}
   s.rdoc_options = [%q{--inline-source}, %q{--line-numbers}, %q{--main}, %q{README.rdoc}]
   s.require_paths = [%q{lib}]
   s.rubygems_version = %q{1.8.6}
