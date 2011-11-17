@@ -49,26 +49,18 @@ class Ragweed::Process
   # that have just been loaded and detected by a LOAD_DLL
   # event. It is called from on_load_dll() -> deferred_install()
   def get_deferred_proc_remote(name, handle, base_of_dll)
-    if !name.kind_of?String
-      return name
-    end
+    return name if !name.kind_of?String
 
     mod, meth = name.split "!"
 
-    if mod.nil? or meth.nil?
-        raise "can not set this breakpoint: #{name}"
-    end
+    raise "can not set this breakpoint: #{name}" if mod.nil? or meth.nil?
 
     modh = handle
 
     # Location is an offset
     if is_hex(meth)
         baseaddr = 0
-        modules.each do |m|
-            if m.szModule == mod
-                break
-            end
-        end
+        modules.each { |m| break if m.szModule == mod }
 
         ret = base_of_dll + meth.hex
     else

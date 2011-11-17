@@ -108,6 +108,7 @@ class String
   # String#trim
   def asciiz
     begin
+      return self if self.index("\x00") == nil
       self[0..self.index("\x00")-1]
     rescue
       self
