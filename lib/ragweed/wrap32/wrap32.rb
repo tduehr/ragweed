@@ -67,6 +67,29 @@ module Ragweed::Wrap32
     GENERIC_ALL = 0x10000000
   end
 
+  module PipeOpenMode
+    PIPE_ACCESS_DUPLEX = 0x00000003
+    PIPE_ACCESS_INBOUND = 0x00000001
+    PIPE_ACCESS_OUTBOUND = 0x00000002
+    FILE_FLAG_FIRST_PIPE_INSTANCE = 0x00080000
+    FILE_FLAG_WRITE_THROUGH = 0x80000000
+    FILE_FLAG_OVERLAPPED = 0x40000000
+    WRITE_DAC = 0x00040000
+    WRITE_OWNER = 0x00080000
+    ACCESS_SYSTEM_SECURITY = 0x01000000
+  end
+
+  module PipeMode
+    PIPE_TYPE_BYTE = 0x00000000
+    PIPE_TYPE_MESSAGE = 0x00000004
+    PIPE_READMODE_BYTE = 0x00000000
+    PIPE_READMODE_MESSAGE = 0x00000002
+    PIPE_WAIT = 0x00000000
+    PIPE_NOWAIT = 0x00000001
+    PIPE_ACCEPT_REMOTE_CLIENTS = 0x00000000
+    PIPE_REJECT_REMOTE_CLIENTS = 0x00000008
+  end
+
   module FormatArgs
     FROM_SYSTEM = 4096
     ALLOCATE_BUFFER = 256
@@ -108,6 +131,7 @@ module Ragweed::Wrap32
     attach_function 'Sleep', [ :long ], :long
     attach_function 'DuplicateHandle', [ :long, :long, :long, :pointer, :long, :long, :long ], :long
     attach_function 'CreateFileA', [ :pointer, :long, :long, :pointer, :long, :long, :pointer ], :long
+    attach_function 'CreateNamedPipeA', [ :pointer, :long, :long, :long, :long, :long, :long, :pointer ], :long
     attach_function 'OpenEventA', [ :long, :long, :pointer ], :long
     attach_function 'CreateEventA', [ :long, :long, :long, :pointer ], :long
     attach_function 'SetEvent', [ :long ], :long
@@ -466,8 +490,18 @@ module Ragweed::Wrap32
       opts[:access] ||= FileAccess::GENERIC_ALL
       opts[:flags] ||= 0
 
-      r = Win.CreateFileA(name, opts[:access], opts[:sharing], NULL, opts[:disposition], opts[:flags], NULL)
+      r = Win.CreateFileA(name, opts[:access], opts[:sharing], FFI::Pointer::NULL, opts[:disposition], opts[:flags], FFI::Pointer::NULL)
       raise WinX.new(:create_file) if r == -1
+      return r
+    end
+
+    def create_named_pipe(name, opts={})
+      opts[:open_mode] ||= PipeOpenMode::PIPE_ACCESS_DUPLEX | PipeOpenMode::FILE_FLAG_OVERLAPPED
+      opts[:pipe_mode] ||= PipeMode::PIPE_TYPE_MESSAGE | PipeMode::PIPE_READMODE_MESSAGE | PipeMode::PIPE_WAIT
+      opts[:max_inst] ||= 4
+      opts[:def_timeout] ||= 5000
+      r = Win.CreateNamedPipeA(name, opts[:open_mode], opts[:pipe_mode], opts[:max_inst], opts[:out_buf_sz], opts[:in_buf_sz], opts[:def_timeout], FFI::Pointer::NULL)
+      raise WinX.new(:create_named_pipe) if r == -1
       return r
     end
     
@@ -533,7 +567,7 @@ module Ragweed::Wrap32
       return buf, outw.unpack("L").first
     end
 
-    def device_io_control(h, code, inbuf, outbuf, overlapped=NULL)
+    def device_io_control(h, code, inbuf, outbuf, overlapped=FFI::Pointer::NULL)
       overlapped = overlapped.to_s if overlapped
       outw = "\x00" * 4
       r = Win.DeviceIoControl(h, code, inbuf, inbuf.size, outbuf, outbuf.size, outw, overlapped)

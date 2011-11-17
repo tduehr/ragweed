@@ -37,9 +37,7 @@ class Ragweed::Debugger32
     def addr; @addr; end
     
     def install
-        if @addr == 0 or @deferred == true
-          return
-        end
+        return if @addr == 0 or @deferred == true
 
         o = @process.read8(@addr)
 
@@ -146,9 +144,7 @@ class Ragweed::Debugger32
   # breakpoints are always re-set after firing. If you don't want them to be
   # re-set, unset them manually.
   def breakpoint_set(ip, callable=nil, &block)
-    if not callable and block_given?
-      callable = block
-    end
+    callable = block if not callable and block_given?
 
     def_status = false
 
@@ -229,10 +225,10 @@ class Ragweed::Debugger32
 
   # FIX: this method should be a bit more descriptive in its naming
   def get_dll_name(ev)
-    name = Ragweed::Wrap32::get_mapped_filename(@p.handle, ev.base_of_dll, 256)
+    name = Ragweed::Wrap32::get_mapped_filename(@p.handle, ev.base_of_dll, 1024)
     name.gsub!(/[\n]+/,'')
     name.gsub!(/[^\x21-\x7e]/,'')
-    i = name.index('0')
+    i = name.index('\0')
     i ||= name.size
     return name[0, i]
   end
@@ -240,19 +236,20 @@ class Ragweed::Debugger32
   def on_load_dll(ev)
     dll_name = get_dll_name(ev)
 
-    @breakpoints.each_pair do |k,bp|
-        if !bp.addr.kind_of?String
-            next
-        end
+    ## Temporary breakpoint dup is used because
+    ## Ruby 1.9 will not support insertion into
+    ## @breakpoints while iterating through it
+    tmp_bp = @breakpoints.dup
+    tmp_bp.each_pair do |k,bp|
+        ## If the bp is a string its probably deferred
+        next if !bp.addr.kind_of?String
 
         m,f = bp.addr.split('!')
 
         if dll_name =~ /#{m}/i
             deferred = bp.deferred
 
-            if deferred == true
-                bp.deferred = false
-            end
+            bp.deferred = false if deferred == true
 
             new_addr = bp.deferred_install(ev.file_handle, ev.base_of_dll)
 
