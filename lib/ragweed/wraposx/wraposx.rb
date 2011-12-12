@@ -348,13 +348,14 @@ module Ragweed::Wraposx
     def execv(path, *args)
       FFI.errno = 0
       args.flatten!
-      argv = FFI::MemoryPointer.new(:pointer, args.size + 1)
+      argv = FFI::MemoryPointer.new(:pointer, args.size + 2)
+      argv[0].put_pointer(0, FFI::MemoryPointer.from_string(path.to_s))
       args.each_with_index do |arg, i|
-        argv[i].put_pointer(0, FFI::MemoryPointer.from_string(arg.to_s))
+        argv[i + 1].put_pointer(0, FFI::MemoryPointer.from_string(arg.to_s))
       end
-      argv[args.size].put_pointer(0, nil)
+      argv[args.size + 1].put_pointer(0, nil)
 
-      r = Libc.execv(path, argv)
+      Libc.execv(path, argv)
       # if this ever returns, there's been an error
       raise SystemCallError(:execv, FFI.errno)
     end
