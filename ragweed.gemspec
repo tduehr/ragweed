@@ -4,14 +4,14 @@
 # -*- encoding: utf-8 -*-
 
 Gem::Specification.new do |s|
-  s.name = %q{ragweed}
-  s.version = "0.2.8"
+  s.name = "ragweed"
+  s.version = "0.2.9"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
-  s.authors = [%q{tduehr}, %q{struct}, %q{tqbf}]
-  s.date = %q{2011-12-12}
-  s.description = %q{General debugging tool written in Ruby for OSX/Win32/Linux}
-  s.email = %q{td@matasano.com}
+  s.authors = ["tduehr", "struct", "tqbf"]
+  s.date = "2012-07-23"
+  s.description = "General debugging tool written in Ruby for OSX/Win32/Linux"
+  s.email = "td@matasano.com"
   s.extra_rdoc_files = [
     "README.rdoc",
     "README.txt"
@@ -70,11 +70,11 @@ Gem::Specification.new do |s|
     "spec/spec_helper.rb",
     "test/test_ragweed.rb"
   ]
-  s.homepage = %q{http://www.matasano.com/research/ragweed/}
-  s.rdoc_options = [%q{--inline-source}, %q{--line-numbers}, %q{--main}, %q{README.rdoc}]
-  s.require_paths = [%q{lib}]
-  s.rubygems_version = %q{1.8.6}
-  s.summary = %q{Scriptable debugger}
+  s.homepage = "http://www.matasano.com/research/ragweed/"
+  s.rdoc_options = ["--inline-source", "--line-numbers", "--main", "README.rdoc"]
+  s.require_paths = ["lib"]
+  s.rubygems_version = "1.8.24"
+  s.summary = "Scriptable debugger"
 
   if s.respond_to? :specification_version then
     s.specification_version = 3
