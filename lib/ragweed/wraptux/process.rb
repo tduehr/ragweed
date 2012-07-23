@@ -21,10 +21,12 @@ class Ragweed::Process
     # result in failure unless you PTRACE_POKE first and
     # get the rest of the original value at the address
     def write(off, data)
-        while off < data.size
-            Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::POKE_TEXT, @pid, off, data[off,4].unpack('L').first)
-            off += 4
-        end
+      data_off = 0
+      while data_off < data.size
+        Ragweed::Wraptux::ptrace(Ragweed::Wraptux::Ptrace::POKE_TEXT, @pid, off, data[data_off,4].unpack('L').first)
+        off += 4
+        data_off +=4
+      end
     end
 
     def read32(off); read(off, 4).unpack("L").first; end
